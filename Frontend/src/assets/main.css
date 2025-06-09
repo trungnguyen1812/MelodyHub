@@ -1,0 +1,49 @@
+/* main.css */
+html::-webkit-scrollbar {
+  width: 10px !important;
+  height: 8px !important;
+}
+
+html::-webkit-scrollbar-track {
+  background: #0b0b0b !important;
+  border-radius: 10px !important;
+}
+
+html::-webkit-scrollbar-thumb {
+  background: #041114 !important;
+  border-radius: 10px !important;
+  border: 2px solid transparent !important;
+  background-clip: content-box !important;
+}
+
+html::-webkit-scrollbar-thumb:hover {
+  background: #0077B6 !important;
+}
+
+/* Hỗ trợ Firefox */
+html {
+  scrollbar-width: thin;
+  scrollbar-color: #041114 #1e1e1e;
+}
+
+/* Áp dụng cho dropdown nếu cần */
+.dropdown-content::-webkit-scrollbar {
+  width: 10px !important;
+  height: 8px !important;
+}
+
+.dropdown-content::-webkit-scrollbar-track {
+  background: #1e1e1e !important;
+  border-radius: 10px !important;
+}
+
+.dropdown-content::-webkit-scrollbar-thumb {
+  background: #041114 !important;
+  border-radius: 10px !important;
+  border: 2px solid transparent !important;
+  background-clip: content-box !important;
+}
+
+.dropdown-content::-webkit-scrollbar-thumb:hover {
+  background: #0077B6 !important;
+}

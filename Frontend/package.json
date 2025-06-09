@@ -1,0 +1,35 @@
+{
+  "name": "vue-project",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@coreui/chartjs": "^4.0.0",
+    "@coreui/coreui": "^5.4.0",
+    "@coreui/vue": "^5.5.0",
+    "apexcharts": "^4.7.0",
+    "nprogress": "^0.2.0",
+    "pinia": "^3.0.3",
+    "simplebar": "^6.3.1",
+    "simplebar-vue": "^2.4.1",
+    "vue": "^3.5.13",
+    "vue-router": "^4.5.1",
+    "vue3-apexcharts": "^1.8.0",
+    "vue3-carousel": "^0.15.1"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^5.2.3",
+    "autoprefixer": "^10.4.21",
+    "postcss": "^8.5.4",
+    "sass": "^1.89.1",
+    "sass-embedded": "^1.89.1",
+    "tailwindcss": "^4.1.8",
+    "vite": "^6.2.4",
+    "vite-plugin-vue-devtools": "^7.7.2"
+  }
+}
