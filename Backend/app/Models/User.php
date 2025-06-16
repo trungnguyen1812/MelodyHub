@@ -2,47 +2,69 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
-use Illuminate\Notifications\Notifiable;
+use Illuminate\Contracts\Auth\Access\Authorizable;
+use Illuminate\Foundation\Auth\Access\Authorizable as AuthorizableTrait;
+use Laravel\Sanctum\HasApiTokens;
 
-class User extends Authenticatable
+class User extends Authenticatable implements Authorizable
 {
-    /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasFactory, Notifiable;
+     use HasApiTokens, AuthorizableTrait;
+     
+    // 1. Khai báo tên bảng (bắt buộc vì khác với quy ước Laravel)
+    protected $table = 'users';
 
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var list<string>
-     */
+    // 2. Khai báo trường có thể fill (mass assignment)
     protected $fillable = [
         'name',
         'email',
         'password',
+        'email_verified_at',
+        'role'
     ];
 
-    /**
-     * The attributes that should be hidden for serialization.
-     *
-     * @var list<string>
-     */
+    // 3. Tắt/mở timestamps (nếu bảng không có created_at/updated_at)
+    public $timestamps = true;
+
+    // 4. Định dạng kiểu dữ liệu (nếu cần)
+    protected $casts = [
+        'email_verified_at' => 'datetime',
+    ];
+
     protected $hidden = [
         'password',
         'remember_token',
     ];
 
-    /**
-     * Get the attributes that should be cast.
-     *
-     * @return array<string, string>
-     */
-    protected function casts(): array
+    // Helper methods để kiểm tra role
+    public function isAdmin():bool
     {
-        return [
-            'email_verified_at' => 'datetime',
-            'password' => 'hashed',
-        ];
+        return $this->role === 'admin';
+    }
+
+    public function isUser():bool
+    {
+        return $this->role === 'user';
+    }
+
+    // Relationships
+    public function playlists()
+    {
+        return $this->hasMany(Playlist::class, 'user_id');
+    }
+
+    public function songPlays()
+    {
+        return $this->hasMany(SongPlay::class, 'user_id');
+    }
+
+    public function comments()
+    {
+        return $this->hasMany(Comment::class, 'user_id');
+    }
+
+    public function songLikes()
+    {
+        return $this->hasMany(SongLike::class, 'user_id');
     }
 }

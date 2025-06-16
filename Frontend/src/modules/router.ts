@@ -7,6 +7,7 @@ import Artists from '@client/artists/routers/index.allartists.router';
 import Musics from '@client/music/routers/index.allmusic.router';
 // router admin
 import DashboardAdmin from '@admin/dashboard/routers/index.dashboard.router';
+import AuthAdmin from '@admin/auth/routers/index.auth.router';
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -18,6 +19,7 @@ const router = createRouter({
     ...Musics,
     //router admin 
     ...DashboardAdmin,
+    ...AuthAdmin,
   ],
 });
 
