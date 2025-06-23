@@ -1,10 +1,11 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\API\Admin;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Models\User;
+use App\Http\Controllers\Controller;
 
 class AuthController extends Controller
 {
@@ -12,7 +13,7 @@ class AuthController extends Controller
     {
         $credentials = $request->validate([
             'email' => 'required|email',
-            'password' => 'required'
+            'password' => 'required',
         ]);
 
         if (!Auth::attempt($credentials)) {
@@ -21,11 +22,16 @@ class AuthController extends Controller
             ], 401);
         }
 
-        if (!$request->user()->isAdmin()) {
+        /** @var User $user */
+        $user = Auth::user();
+
+        // Kiểm tra role admin
+        if (!$user->isAdmin()) {
+            Auth::logout();
             return response()->json(['error' => 'Unauthorized'], 403);
         }
 
-        $user = User::where('email', $request->email)->first();
+        // Tạo token
         $token = $user->createToken('auth_token')->plainTextToken;
 
         return response()->json([
@@ -36,7 +42,16 @@ class AuthController extends Controller
 
     public function logout(Request $request)
     {
-        $request->user()->currentAccessToken()->delete();
+        /** @var User $user */
+        $user = $request->user();
+
+        /** @var \Laravel\Sanctum\PersonalAccessToken|null $token */
+        $token = $user->currentAccessToken();
+
+        if ($token) {
+            $token->delete();
+        }
+
         return response()->json(['message' => 'Logged out']);
     }
 }

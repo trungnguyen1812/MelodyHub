@@ -1,20 +1,99 @@
 <template>
-  <div class="container">
-    <div class="vinyl-form-wrapper">
-      <div class="vinyl"></div>
-      <form class="form">
-        <img class="logo" src="@/assets/images/logo/melody-high-resolution-logo-white.png" alt="">
-        <input placeholder="Username" class="input" type="text" />
-        <input placeholder="Password" class="input" type="password" />
-        <button class="submit btn" type="submit">Login</button>
-      </form>
+    <div class="container">
+        <div class="vinyl-form-wrapper">
+            <div class="vinyl"></div>
+            <form class="form" @submit.prevent="handleLogin">
+                <img
+                    class="logo"
+                    src="@/assets/images/logo/melody-high-resolution-logo-white.png"
+                    alt="Logo"
+                />
+                <input 
+                    placeholder="Email" 
+                    class="input" 
+                    type="email" 
+                    v-model="form.email" 
+                    :class="{ 'error-border': errors.email }" 
+                />
+                <span v-if="errors.email" class="error-message">{{ errors.email }}</span>
+                
+                <input 
+                    placeholder="Password" 
+                    class="input" 
+                    type="password" 
+                    v-model="form.password" 
+                    :class="{ 'error-border': errors.password }" 
+                />
+                <span v-if="errors.password" class="error-message">{{ errors.password }}</span>
+                
+                <span v-if="errors.general" class="error-message general-error">
+                    {{ errors.general }}
+                </span>
+                
+                <button class="submit btn" type="submit" :disabled="isLoading">
+                    Login
+                </button>
+            </form>
+        </div>
     </div>
-  </div>
 </template>
 
+<script setup lang="ts">
+import { ref } from "vue";
+import { useAuthStore } from "@/stores/auth";
+import { useRouter } from "vue-router";
+
+const router = useRouter();
+const authStore = useAuthStore();
+
+const form = ref({
+    email: "",
+    password: "",
+});
+
+const errors = ref({
+    email: "",
+    password: "",
+    general: "",
+});
+
+const isLoading = ref(false);
+
+const handleLogin = async () => {
+    try {
+        isLoading.value = true;
+        errors.value = { 
+            email: "",
+            password: "",
+            general: "",
+        };
+
+        await authStore.login({
+            email: form.value.email,
+            password: form.value.password,
+        });
+
+        // Redirect sau khi login thành công
+        router.push({ name: "admin" });
+    } catch (error: any) {
+        if (error.response?.status === 422) {
+            // Xử lý validation errors từ Laravel
+            errors.value.email = error.response.data.errors?.email?.[0] || "";
+            errors.value.password = error.response.data.errors?.password?.[0] || "";
+        } else {
+            errors.value.general =
+                error.response?.data.message || "Login failed. Please try again.";
+        }
+    } finally {
+        isLoading.value = false;
+    }
+};
+</script>
+
+
 <style scoped>
-.logo{
-    height: 100px;
+.logo {
+  height: 100px;
 }
 
 ::selection {
@@ -45,7 +124,8 @@
   background: black;
   border-radius: 50%;
   position: absolute;
-  left: -190px; /* Half of vinyl width to shift it left */
+  left: -190px;
+  /* Half of vinyl width to shift it left */
   z-index: 5;
   box-shadow: 0 0 10px rgb(0, 0, 0);
 }
@@ -125,7 +205,8 @@
 @media (max-width: 768px) {
   .vinyl {
     width: 200px;
-    left: -100px; /* Adjusted for smaller vinyl */
+    left: -100px;
+    /* Adjusted for smaller vinyl */
   }
 
   .form {

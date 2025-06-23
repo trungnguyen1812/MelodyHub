@@ -21,8 +21,8 @@ class CheckAdmin
             ], 401);
         }
 
-        // ✅ Gọi đúng method từ User model
         if (!$user->isAdmin()) {
+            Auth::logout();
             return response()->json([
                 'error' => 'Forbidden',
                 'message' => 'Admin access only'

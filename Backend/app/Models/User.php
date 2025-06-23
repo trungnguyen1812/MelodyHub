@@ -9,8 +9,8 @@ use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable implements Authorizable
 {
-     use HasApiTokens, AuthorizableTrait;
-     
+    use HasApiTokens, AuthorizableTrait;
+
     // 1. Khai báo tên bảng (bắt buộc vì khác với quy ước Laravel)
     protected $table = 'users';
 
@@ -36,18 +36,18 @@ class User extends Authenticatable implements Authorizable
         'remember_token',
     ];
 
-    // Helper methods để kiểm tra role
-    public function isAdmin():bool
+    // ✅ Helper methods để kiểm tra role
+    public function isAdmin(): bool
     {
         return $this->role === 'admin';
     }
 
-    public function isUser():bool
+    public function isUser(): bool
     {
         return $this->role === 'user';
     }
 
-    // Relationships
+    // ✅ Relationships
     public function playlists()
     {
         return $this->hasMany(Playlist::class, 'user_id');
