@@ -1,95 +1,101 @@
 <template>
-    <div class="container">
-        <div class="vinyl-form-wrapper">
-            <div class="vinyl"></div>
-            <form class="form" @submit.prevent="handleLogin">
-                <img
-                    class="logo"
-                    src="@/assets/images/logo/melody-high-resolution-logo-white.png"
-                    alt="Logo"
-                />
-                <input 
-                    placeholder="Email" 
-                    class="input" 
-                    type="email" 
-                    v-model="form.email" 
-                    :class="{ 'error-border': errors.email }" 
-                />
-                <span v-if="errors.email" class="error-message">{{ errors.email }}</span>
-                
-                <input 
-                    placeholder="Password" 
-                    class="input" 
-                    type="password" 
-                    v-model="form.password" 
-                    :class="{ 'error-border': errors.password }" 
-                />
-                <span v-if="errors.password" class="error-message">{{ errors.password }}</span>
-                
-                <span v-if="errors.general" class="error-message general-error">
-                    {{ errors.general }}
-                </span>
-                
-                <button class="submit btn" type="submit" :disabled="isLoading">
-                    Login
-                </button>
-            </form>
-        </div>
+  <div class="container">
+    <div class="vinyl-form-wrapper">
+      <div class="vinyl"></div>
+      <form class="form" @submit.prevent="handleLogin">
+        <img
+          class="logo"
+          src="@/assets/images/logo/melody-high-resolution-logo-white.png"
+          alt="Logo"
+        />
+        <input
+          placeholder="Email"
+          class="input"
+          type="email"
+          v-model="form.email"
+          :class="{ 'error-border': errors.email }"
+        />
+        <span v-if="errors.email" class="error-message">{{
+          errors.email
+        }}</span>
+
+        <input
+          placeholder="Password"
+          class="input"
+          type="password"
+          v-model="form.password"
+          :class="{ 'error-border': errors.password }"
+        />
+        <span v-if="errors.password" class="error-message">{{
+          errors.password
+        }}</span>
+
+        <span v-if="errors.general" class="error-message general-error">
+          {{ errors.general }}
+        </span>
+
+        <button class="submit btn" type="submit" :disabled="isLoading">
+          <template v-if="isLoading">
+            <span class="spinner"></span> currently logged in...
+          </template>
+          <template v-else> Login </template>
+        </button>
+      </form>
     </div>
+  </div>
 </template>
 
 <script setup lang="ts">
 import { ref } from "vue";
-import { useAuthStore } from "@/stores/auth";
+import { useAuthStore } from "@admin/auth/stores/auth.store";
 import { useRouter } from "vue-router";
 
 const router = useRouter();
 const authStore = useAuthStore();
 
 const form = ref({
-    email: "",
-    password: "",
+  email: "",
+  password: "",
 });
 
 const errors = ref({
-    email: "",
-    password: "",
-    general: "",
+  email: "",
+  password: "",
+  general: "",
 });
 
 const isLoading = ref(false);
 
 const handleLogin = async () => {
-    try {
-        isLoading.value = true;
-        errors.value = { 
-            email: "",
-            password: "",
-            general: "",
-        };
+  try {
+    isLoading.value = true;
+    errors.value = {
+      email: "",
+      password: "",
+      general: "",
+    };
 
-        await authStore.login({
-            email: form.value.email,
-            password: form.value.password,
-        });
+    await authStore.login({
+      email: form.value.email,
+      password: form.value.password,
+    });
 
-        // Redirect sau khi login thành công
-        router.push({ name: "admin" });
-    } catch (error: any) {
-        if (error.response?.status === 422) {
-            // Xử lý validation errors từ Laravel
-            errors.value.email = error.response.data.errors?.email?.[0] || "";
-            errors.value.password = error.response.data.errors?.password?.[0] || "";
-        } else {
-            errors.value.general =
-                error.response?.data.message || "Login failed. Please try again.";
-        }
-    } finally {
-        isLoading.value = false;
+    // Redirect sau khi login thành công
+    router.push({ name: "admin" });
+  } catch (error: any) {
+    if (error.response?.status === 422) {
+      // Xử lý validation errors từ Laravel
+      errors.value.email = error.response.data.errors?.email?.[0] || "";
+      errors.value.password = error.response.data.errors?.password?.[0] || "";
+    } else {
+      errors.value.general =
+        error.response?.data.message || "Login failed. Please try again.";
     }
+  } finally {
+    isLoading.value = false;
+  }
 };
 </script>
-
 
 <style scoped>
 .logo {
@@ -218,4 +224,23 @@ const handleLogin = async () => {
     gap: 1.5rem;
   }
 }
+
+.spinner {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  margin-right: 8px;
+  border: 2px solid #fff;
+  border-top: 2px solid transparent;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  vertical-align: middle;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 </style>

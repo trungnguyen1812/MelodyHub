@@ -11,8 +11,10 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('player_songs', function (Blueprint $table) {
-            $table->id();
+        Schema::create('genres', function (Blueprint $table) {
+            $table->bigIncrements('id');
+            $table->string('name', 100)->unique();
+            $table->string('slug')->unique();
             $table->timestamps();
         });
     }
@@ -22,6 +24,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('player_songs');
+        Schema::dropIfExists('genres');
     }
 };

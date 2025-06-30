@@ -6,6 +6,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Models\User;
 use App\Http\Controllers\Controller;
+use Laravel\Sanctum\PersonalAccessToken;
+use Laravel\Sanctum\TransientToken;
 
 class AuthController extends Controller
 {
@@ -40,17 +42,12 @@ class AuthController extends Controller
         ]);
     }
 
+
     public function logout(Request $request)
     {
-        /** @var User $user */
-        $user = $request->user();
-
-        /** @var \Laravel\Sanctum\PersonalAccessToken|null $token */
-        $token = $user->currentAccessToken();
-
-        if ($token) {
-            $token->delete();
-        }
+        Auth::guard('web')->logout(); // xoá session của Laravel
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
 
         return response()->json(['message' => 'Logged out']);
     }

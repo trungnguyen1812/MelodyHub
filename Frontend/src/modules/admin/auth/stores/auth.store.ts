@@ -1,68 +1,74 @@
 import { defineStore } from 'pinia';
-import http from "@/utils/http";
+import { ref } from "vue";
+import http from '@/utils/http';
+import type { User } from '@/modules/admin/auth/interfaces/auth.interface';
 
-import type {
-  User,
-  LoginCredentials,
-  LoginResponse,
-  AuthState,
-} from "../interfaces/auth.interface";
+interface LoginResponse {
+    token: string;
+    user: User;
+}
 
-export const useAuthStore = defineStore('adminAuth', {
-    state: (): AuthState => ({
-        user: null,
-        isAuthenticated: false,
-        token: null, // Thêm token vào state để persist
-    }),
+interface Credentials {
+    email: string;
+    password: string;
+}
 
-    actions: {
-        async login(credentials: LoginCredentials): Promise<LoginResponse> {
-            try {
-                // Lấy CSRF cookie trước
-                await http.get("/sanctum/csrf-cookie");
-                await new Promise(resolve => setTimeout(resolve, 100));
-                
-                const { data } = await http.post<LoginResponse>("/api/admin/login", credentials);
-                
-                // Cập nhật state thay vì localStorage trực tiếp
-                this.token = data.token;
-                this.user = data.user;
-                this.isAuthenticated = true;
-                
-                return data;
-            } catch (error: any) {
-                console.error('Login error:', error.response?.data || error);
-                throw error.response?.data || error;
-            }
-        },
+export const useAuthStore = defineStore('auth', () => {
+    const user = ref<User | null>(null);
+    const isAuthenticated = ref(false);
 
-        async fetchUser(): Promise<User> {
-            try {
-                const { data } = await http.get<User>("/api/admin/user");
-                this.user = data;
-                this.isAuthenticated = true;
-                return data;
-            } catch (error: any) {
-                this.logout();
-                throw error;
-            }
-        },
+    const login = async (credentials: Credentials): Promise<LoginResponse> => {
+        try {
+            // Sửa đường dẫn thành '/sanctum/csrf-cookie' (nếu dùng Sanctum)
+            await http.get('/sanctum/csrf-cookie');
+            
+            // Sửa đường dẫn API cho đúng với backend (thêm '/api' nếu cần)
+            const { data } = await http.post<LoginResponse>('/api/login', credentials);
 
-        async logout(): Promise<void> {
-            try {
-                await http.post("/api/logout");
-            } finally {
-                this.clearAuth();
-            }
-        },
+            localStorage.setItem('auth_token', data.token);
+            user.value = data.user;
+            isAuthenticated.value = true;
 
-        clearAuth(): void {
-            // Không cần xóa localStorage trực tiếp nữa
-            this.token = null;
-            this.user = null;
-            this.isAuthenticated = false;
-        },
-    },
-    
-    // Bỏ persist: true vì đã có plugin tự custom
+            return data;
+        } catch (error: any) {
+            throw error.response?.data || error;
+        }
+    };
+
+    const fetchUser = async (): Promise<User> => {
+        try {
+            // Sửa đường dẫn API cho đúng với backend
+            const { data } = await http.get<User>('/api/admin/user');
+            user.value = data;
+            isAuthenticated.value = true;
+            return data;
+        } catch (error: any) {
+            logout();
+            throw error;
+        }
+    };
+
+    const logout = async (): Promise<void> => {
+        try {
+            // Sửa đường dẫn API cho đúng với backend
+            await http.post('/api/logout');
+        } finally {
+            clearAuth();
+        }
+    };
+
+    const clearAuth = (): void => {
+        localStorage.removeItem('auth_token');
+        user.value = null;
+        isAuthenticated.value = false;
+    };
+
+    return {
+        user,
+        isAuthenticated,
+        login,
+        fetchUser,
+        logout,
+        clearAuth
+    };
 });

@@ -55,11 +55,39 @@ return [
             'collation' => env('DB_COLLATION', 'utf8mb4_unicode_ci'),
             'prefix' => '',
             'prefix_indexes' => true,
-            'strict' => true,
+            'strict' => false, // ← Thay đổi từ true sang false cho localhost
             'engine' => null,
+
+            // ✨ TỐI ỨU HÓA CHO LOCALHOST
             'options' => extension_loaded('pdo_mysql') ? array_filter([
                 PDO::MYSQL_ATTR_SSL_CA => env('MYSQL_ATTR_SSL_CA'),
+
+                // Tăng hiệu suất kết nối
+                PDO::ATTR_EMULATE_PREPARES => true,
+                PDO::MYSQL_ATTR_USE_BUFFERED_QUERY => true,
+                PDO::ATTR_PERSISTENT => true, // Sử dụng persistent connection
+
+                // Tối ưu timeout
+                PDO::ATTR_TIMEOUT => 5,
+                PDO::MYSQL_ATTR_INIT_COMMAND => "SET sql_mode='TRADITIONAL'",
+
+                // Tắt SSL cho localhost (tăng tốc)
+                PDO::MYSQL_ATTR_SSL_VERIFY_SERVER_CERT => false,
+
+                // Compression cho dữ liệu lớn
+                PDO::MYSQL_ATTR_COMPRESS => true,
+
             ]) : [],
+
+            // ⚡ POOL CONNECTIONS (Laravel 8+)
+            'pool' => [
+                'min_connections' => 1,
+                'max_connections' => 10,
+                'connect_timeout' => 10,
+                'wait_timeout' => 3,
+                'heartbeat' => -1,
+                'max_idle_time' => 60,
+            ],
         ],
 
         'mariadb' => [
@@ -147,7 +175,7 @@ return [
 
         'options' => [
             'cluster' => env('REDIS_CLUSTER', 'redis'),
-            'prefix' => env('REDIS_PREFIX', Str::slug(env('APP_NAME', 'laravel'), '_').'_database_'),
+            'prefix' => env('REDIS_PREFIX', Str::slug(env('APP_NAME', 'laravel'), '_') . '_database_'),
             'persistent' => env('REDIS_PERSISTENT', false),
         ],
 
