@@ -11,12 +11,14 @@ class AdminUserSeeder extends Seeder
 {
     public function run(): void
     {
+        $adminRoleId = DB::table('roles')->where('name', 'admin')->value('id');
+
         DB::table('users')->insert([
             'uuid' => Str::uuid(),
             'email' => 'admin@melodyhub.com',
-            'password' => Hash::make('admin123'), // 🔒 mã hóa
+            'password' => Hash::make('admin123'),
             'display_name' => 'Melody Admin',
-            'role_id' => 1, // hoặc id role tương ứng
+            'role_id' => $adminRoleId,
             'status' => 'active',
             'is_verified' => true,
             'created_at' => now(),

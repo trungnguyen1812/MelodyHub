@@ -70,7 +70,7 @@
         <p class="p line">Or With</p>
 
         <div class="flex-row">
-          <button class="btn google">
+          <button class="btn google" @click.prevent="loginWithGoogle">
             <svg
               version="1.1"
               width="20"
@@ -123,6 +123,11 @@ const RegisterView = () => {
   router.push({
     name: "Register",
   });
+};
+
+//handel login witch google 
+const loginWithGoogle = () => {
+  window.location.href = 'http://localhost:8000/auth/redirect';
 };
 </script>
 <style scoped>

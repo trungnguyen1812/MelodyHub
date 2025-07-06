@@ -10,17 +10,17 @@
         <!-- Logo -->
         <div class="flex items-center h-10 w-24 sm:h-16 sm:w-32 flex-shrink-0">
           <router-link to="/">
-             <img
-            :src="logo"
-            alt="Melody Logo"
-            class="h-full w-full object-contain"
-          />
+            <img
+              :src="logo"
+              alt="Melody Logo"
+              class="h-full w-full object-contain"
+            />
           </router-link>
         </div>
 
         <!-- Navigation (Hidden on mobile) -->
         <nav class="hidden sm:flex items-center space-x-4">
-          <router-link 
+          <router-link
             to="/"
             class="text-sm font-medium text-white hover:text-cyan-400 drop-shadow-[0_0_10px_#22d3ee] transition-colors duration-200"
           >
@@ -74,22 +74,30 @@
       <!-- Right Side: Auth + Hamburger Menu -->
       <div class="flex items-center space-x-3">
         <!-- Auth Buttons (Hidden on mobile) -->
-        <div class="hidden sm:flex space-x-3">
+        <!-- Hiển thị nút Try for Free nếu chưa đăng nhập -->
+        <div class="hidden sm:flex space-x-3" v-if="!authStore.isAuthenticated">
           <button
-            @click="handleRegister"
+            @click="handleLogin"
             class="text-cyan-400 drop-shadow-[0_0_10px_#22d3ee] px-3 py-1.5 rounded-md hover:bg-white/10 transition-colors duration-200 text-sm font-medium"
             aria-label="Register"
           >
             Try for Free
           </button>
-          <button
-            @click="handleLogin"
-            class="bg-gray-700 text-white px-3 py-1.5 rounded-md hover:info-content transition-colors duration-200 text-sm font-medium"
-            aria-label="Login"
+        </div>
+
+        <!-- Nếu đã đăng nhập, hiển thị avatar hoặc menu -->
+        <div class="hidden sm:flex space-x-3" v-else>
+          <span class="text-white text-sm font-medium"
+            >Hello, {{ authStore.user?.name || "User" }}</span
           >
-            Sign In
+          <button
+            @click="handleLogout"
+            class="text-red-400 hover:text-red-500 text-sm font-medium"
+          >
+            Logout
           </button>
         </div>
+
         <!-- Hamburger Menu (Visible on mobile) -->
         <button
           class="sm:hidden text-white focus:outline-none"
@@ -158,11 +166,11 @@
       <aside class="grid-flow-col items-center">
         <div class="flex items-center h-10 w-24 sm:h-16 sm:w-32 flex-shrink-0">
           <router-link to="/">
-             <img
-            :src="logo"
-            alt="Melody Logo"
-            class="h-full w-full object-contain"
-          />
+            <img
+              :src="logo"
+              alt="Melody Logo"
+              class="h-full w-full object-contain"
+            />
           </router-link>
         </div>
         <p>Copyright © {new Date().getFullYear()} - All right reserved</p>
@@ -214,9 +222,17 @@
 
 <script setup lang="ts">
 import { ref, onMounted, onBeforeUnmount } from "vue";
+import { useClientAuthStore } from "@client/auth/stores/auth.store";
 import { useRouter } from "vue-router";
 
 const router = useRouter();
+const authStore = useClientAuthStore();
+
+//hadle logout client 
+const handleLogout = async() =>{
+  await authStore.logout();
+  router.push({name: "Login"});
+};
 
 const isDropdownOpen = ref(false);
 const isMobileMenuOpen = ref(false);

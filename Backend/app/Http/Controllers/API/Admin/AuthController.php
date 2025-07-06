@@ -8,9 +8,13 @@ use App\Models\User;
 use App\Http\Controllers\Controller;
 use Laravel\Sanctum\PersonalAccessToken;
 use Laravel\Sanctum\TransientToken;
+use Illuminate\Support\Facades\Log;
+
 
 class AuthController extends Controller
 {
+
+
     public function login(Request $request)
     {
         $credentials = $request->validate([
@@ -18,23 +22,27 @@ class AuthController extends Controller
             'password' => 'required',
         ]);
 
+        Log::info('Attempting login', ['email' => $request->email]);
+
         if (!Auth::attempt($credentials)) {
-            return response()->json([
-                'message' => 'Invalid credentials'
-            ], 401);
+            Log::error('Invalid credentials', ['email' => $request->email]);
+            return response()->json(['message' => 'Invalid credentials'], 401);
         }
 
         /** @var User $user */
         $user = Auth::user();
+        Log::info('User authenticated', ['user_id' => $user->id, 'email' => $user->email, 'role_id' => $user->role_id]);
 
         // Kiểm tra role admin
         if (!$user->isAdmin()) {
+            Log::warning('User not admin', ['user_id' => $user->id, 'role_id' => $user->role_id]);
             Auth::logout();
             return response()->json(['error' => 'Unauthorized'], 403);
         }
 
         // Tạo token
         $token = $user->createToken('auth_token')->plainTextToken;
+        Log::info('Token created', ['token' => $token, 'user_id' => $user->id]);
 
         return response()->json([
             'token' => $token,

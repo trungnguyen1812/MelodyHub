@@ -1,5 +1,6 @@
 import LoginView from "@client/auth/views/login.vue";
 import RegisterView from "@client/auth/views/register.vue";
+import LoginSuccessView from '@client/auth/views/LoginSuccess.vue';
 
 // ========================== ROUTER =============================
 export const ROUTER_AUTH = [
@@ -15,5 +16,14 @@ export const ROUTER_AUTH = [
     name: "Register",
     component: RegisterView,
     meta: { layout: "none" },
+  },
+
+  {
+    path: "/login-success",
+    name: "login.success",
+    component: LoginSuccessView,
+    meta: {
+      layout: "none",
+    },
   },
 ];

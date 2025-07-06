@@ -51,7 +51,13 @@ import { useAuthStore } from "@admin/auth/stores/auth.store";
 import { useRouter } from "vue-router";
 
 const router = useRouter();
+
+// Debug auth store
+console.log("=== AUTH STORE DEBUG ===");
 const authStore = useAuthStore();
+console.log("Auth store:", authStore);
+console.log("Auth store methods:", Object.keys(authStore));
+console.log("Login method type:", typeof authStore.login);
 
 const form = ref({
   email: "",
@@ -67,6 +73,21 @@ const errors = ref({
 const isLoading = ref(false);
 
 const handleLogin = async () => {
+  console.log("Form submitted with:", form.value);
+
+  // Validation cơ bản
+  if (!form.value.email || !form.value.password) {
+    errors.value.general = "Please fill in all fields";
+    return;
+  }
+
+  // Kiểm tra auth store trước khi sử dụng
+  if (!authStore || typeof authStore.login !== 'function') {
+    console.error("Auth store is not properly initialized:", authStore);
+    errors.value.general = "Authentication system error. Please refresh the page.";
+    return;
+  }
+
   try {
     isLoading.value = true;
     errors.value = {
@@ -75,21 +96,29 @@ const handleLogin = async () => {
       general: "",
     };
 
+    console.log("Calling authStore.login...");
     await authStore.login({
       email: form.value.email,
       password: form.value.password,
     });
 
-    // Redirect sau khi login thành công
+    console.log("Login successful, redirecting...");
     router.push({ name: "admin" });
+    
   } catch (error: any) {
+    console.error("Login error in component:", error);
+    
     if (error.response?.status === 422) {
-      // Xử lý validation errors từ Laravel
       errors.value.email = error.response.data.errors?.email?.[0] || "";
       errors.value.password = error.response.data.errors?.password?.[0] || "";
+    } else if (error.response?.status === 401) {
+      errors.value.general = "Invalid email or password";
+    } else if (error.response) {
+      errors.value.general = error.response.data?.message || `Server error: ${error.response.status}`;
+    } else if (error.request) {
+      errors.value.general = "Network error. Please check your connection.";
     } else {
-      errors.value.general =
-        error.response?.data.message || "Login failed. Please try again.";
+      errors.value.general = error.message || "Login failed. Please try again.";
     }
   } finally {
     isLoading.value = false;
@@ -242,5 +271,4 @@ const handleLogin = async () => {
     transform: rotate(360deg);
   }
 }
-
 </style>

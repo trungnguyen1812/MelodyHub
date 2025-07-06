@@ -1,6 +1,5 @@
 import axios, { type AxiosInstance } from "axios";
 import type { HttpRequestConfig } from "@/types/http.type";
-import { useAuthStore } from "@/stores/auth"; // Đường dẫn tới auth store của bạn
 
 const http: AxiosInstance = axios.create({
   baseURL: import.meta.env.VITE_API_URL || "http://localhost:8000",
@@ -11,17 +10,44 @@ const http: AxiosInstance = axios.create({
   },
 });
 
+// Helper function để lấy token
+const getAuthToken = (): string | null => {
+  // Thử lấy từ localStorage đơn giản trước
+  let token = localStorage.getItem("auth_token");
+  
+  // Nếu không có, thử lấy từ pinia store
+  if (!token) {
+    try {
+      const piniaAuth = localStorage.getItem("pinia_adminAuth");
+      if (piniaAuth) {
+        const parsed = JSON.parse(piniaAuth);
+        token = parsed.token || null;
+      }
+    } catch (e) {
+      console.error('Error parsing pinia auth:', e);
+    }
+  }
+  
+  return token;
+};
+
+// Helper function để clear tất cả auth data
+const clearAllAuth = (): void => {
+  localStorage.removeItem("auth_token");
+  localStorage.removeItem("pinia_adminAuth");
+};
+
 http.interceptors.request.use((config: HttpRequestConfig) => {
-  // Lưu ý: Không thể sử dụng useAuthStore() trực tiếp ở đây vì Pinia chưa được khởi tạo
-  const token = localStorage.getItem("pinia_adminAuth")
-    ? JSON.parse(localStorage.getItem("pinia_adminAuth")!).token
-    : null;
+  console.log('Request interceptor - URL:', config.url); // Debug
+  
+  const token = getAuthToken();
+  console.log('Token found:', !!token); // Debug (không log token thật)
 
   if (token && config.headers) {
     config.headers.Authorization = `Bearer ${token}`;
   }
 
-  // Xử lý CSRF token như trước
+  // Xử lý CSRF token
   const xsrfToken = document.cookie
     .split("; ")
     .find((row) => row.startsWith("XSRF-TOKEN="))
@@ -34,12 +60,21 @@ http.interceptors.request.use((config: HttpRequestConfig) => {
   return config;
 });
 
-// ... giữ nguyên phần interceptors.response
 http.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    console.log('Response success for:', response.config.url); // Debug
+    return response;
+  },
   (error) => {
+    console.error('Response error:', {
+      url: error.config?.url,
+      status: error.response?.status,
+      message: error.message
+    }); // Debug
+    
     if (error.response?.status === 401) {
-      localStorage.removeItem("auth_token");
+      console.log('401 error - clearing all auth data'); // Debug
+      clearAllAuth();
       window.location.href = "/admin/login";
     }
     return Promise.reject(error);

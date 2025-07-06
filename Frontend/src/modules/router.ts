@@ -25,9 +25,17 @@ const router = createRouter({
 
 // Bắt đầu khi chuyển route
 router.beforeEach((to, from, next) => {
-  NProgress.start()
-  next()
-})
+  NProgress.start();
+
+  const token = localStorage.getItem('auth_token');
+
+  // Nếu vào /admin (hoặc bất kỳ route nào bắt đầu bằng /admin) mà chưa có token
+  if (to.path.startsWith('/admin') && to.path !== '/admin/login' && !token) {
+    return next({ path: '/admin/login' });
+  }
+
+  next(); // Cho phép chuyển route nếu hợp lệ
+});
 
 // Kết thúc khi chuyển xong
 router.afterEach(() => {

@@ -165,7 +165,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from "vue";
-import { useAuthStore } from "@/stores/auth";
+import { useAuthStore } from "@admin/auth/stores/auth.store";
 import { useRouter } from "vue-router";
 // Props
 defineProps({
@@ -227,7 +227,7 @@ const closeDropdowns = (event) => {
   }
 };
 
-//handle logout 
+//handle logout ư
 const handleLogout = async () =>{
   await authStore.logout();
   await authStore.clearAuth();

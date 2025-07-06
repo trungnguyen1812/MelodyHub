@@ -3,6 +3,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\API\Admin\AuthController;
 use App\Http\Controllers\API\Admin\AdminController;
 
+
 // Route login - bỏ CSRF cho API login
 Route::post('/login', [AuthController::class, 'login'])
     ->middleware(['guest:sanctum']);

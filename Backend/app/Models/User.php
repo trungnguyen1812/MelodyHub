@@ -11,22 +11,19 @@ class User extends Authenticatable implements Authorizable
 {
     use HasApiTokens, AuthorizableTrait;
 
-    // 1. Khai báo tên bảng (bắt buộc vì khác với quy ước Laravel)
     protected $table = 'users';
 
-    // 2. Khai báo trường có thể fill (mass assignment)
     protected $fillable = [
-        'name',
+        'uuid',
         'email',
         'password',
+        'display_name',
+        'role_id', // ✅ dùng role_id thay vì 'role'
         'email_verified_at',
-        'role'
     ];
 
-    // 3. Tắt/mở timestamps (nếu bảng không có created_at/updated_at)
     public $timestamps = true;
 
-    // 4. Định dạng kiểu dữ liệu (nếu cần)
     protected $casts = [
         'email_verified_at' => 'datetime',
     ];
@@ -36,18 +33,40 @@ class User extends Authenticatable implements Authorizable
         'remember_token',
     ];
 
-    // ✅ Helper methods để kiểm tra role
+
+    public function role()
+    {
+        return $this->belongsTo(Role::class, 'role_id');
+    }
+
+    public function hasRole(string $roleName): bool
+    {
+        $role = $this->role;
+        return $role instanceof \App\Models\Role && $role->name === $roleName;
+    }
+
     public function isAdmin(): bool
     {
-        return $this->role === 'admin';
+        return $this->hasRole('admin');
     }
+
 
     public function isUser(): bool
     {
-        return $this->role === 'user';
+        return $this->hasRole('user');
     }
 
-    // ✅ Relationships
+    public function isVip(): bool
+    {
+        return $this->hasRole('vip_user');
+    }
+
+    public function isProvider(): bool
+    {
+        return $this->hasRole('provider');
+    }
+
+    // ✅ Relationships khác
     public function playlists()
     {
         return $this->hasMany(Playlist::class, 'user_id');
