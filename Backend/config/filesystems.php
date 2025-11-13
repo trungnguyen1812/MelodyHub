@@ -77,4 +77,16 @@ return [
         public_path('storage') => storage_path('app/public'),
     ],
 
+    
+    // config/filesystems.php
+    'cloudinary' => [
+        'driver' => 'cloudinary',
+        'cloud_name' => env('CLOUDINARY_CLOUD_NAME'),
+        'api_key'    => env('CLOUDINARY_API_KEY'),
+        'api_secret' => env('CLOUDINARY_API_SECRET'),
+        'url' => [
+            'secure' => true, // bắt buộc dùng HTTPS
+        ],
+    ],
+
 ];

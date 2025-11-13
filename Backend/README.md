@@ -1,61 +1,172 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# 🎵 MelodyHub Backend — Laravel 12 API Documentation
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+## 🧱 Giới thiệu
 
-## About Laravel
+Dự án **MelodyHub Backend** được xây dựng trên **Laravel 12**, theo mô hình **API-First Architecture**.  
+Mục tiêu: tách biệt rõ ràng giữa **xử lý HTTP**, **nghiệp vụ**, và **truy cập dữ liệu** để dễ mở rộng, test và bảo trì.
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+---
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## ⚙️ Cấu trúc thư mục tổng thể
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+```
+Backend/
+├── app/
+│   ├── Helpers/
+│   ├── Http/
+│   │   ├── Controllers/
+│   │   │   └── Api/
+│   │   ├── Requests/
+│   │   │   └── User/
+│   │   └── Resources/
+│   ├── Models/
+│   ├── Providers/
+│   ├── Repositories/
+│   └── Services/
+│
+├── bootstrap/
+│   ├── cache/
+│   ├── app.php
+│   └── providers.php
+│
+├── config/
+├── database/
+├── public/
+├── resources/
+├── routes/
+├── storage/
+├── tests/
+├── vendor/
+└── .editorconfig
+```
 
-## Learning Laravel
+---
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+## 📂 Giải thích chi tiết thư mục
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+### `app/`
+Chứa toàn bộ code ứng dụng.
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+#### 🔹 `Helpers/`
+- Dành cho **hàm tiện ích hoặc class helper**.
+- Hai cách sử dụng:
+  - Hàm toàn cục → khai báo trong `composer.json`:
+    ```json
+    "files": ["app/Helpers/helpers.php"]
+    ```
+  - Class helper → autoload:
+    ```json
+    "App\\Helpers\\": "app/Helpers/"
+    ```
 
-## Laravel Sponsors
+#### 🔹 `Http/Controllers/Api/`
+- Nơi định nghĩa **endpoint API**.  
+- Controller **chỉ nên điều phối**, không chứa logic nghiệp vụ.
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+#### 🔹 `Http/Requests/`
+- Chứa **class validate request input**.
 
-### Premium Partners
+#### 🔹 `Http/Resources/`
+- Định nghĩa **format JSON trả về**.
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+#### 🔹 `Models/`
+- Đại diện cho các bảng trong DB (Eloquent ORM).
 
-## Contributing
+#### 🔹 `Repositories/`
+- Chứa các lớp thao tác trực tiếp với DB.
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+#### 🔹 `Services/`
+- Chứa **business logic** (nghiệp vụ chính).
 
-## Code of Conduct
+#### 🔹 `Providers/`
+- Đăng ký **service container** hoặc binding interface → implementation.
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+---
 
-## Security Vulnerabilities
+### `bootstrap/`
+- Là nơi **khởi tạo ứng dụng**.  
+- Laravel 12 đã bỏ `Kernel.php`; thay vào đó cấu hình được đặt ở `bootstrap/app.php`.
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+#### 🔸 `app.php`
+- Đăng ký middleware, routes, commands, exception handlers.
 
-## License
+#### 🔸 `providers.php`
+- Danh sách các provider được load tự động.
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+---
+
+### Các thư mục khác
+
+| Thư mục | Vai trò |
+|----------|----------|
+| `config/` | File cấu hình ứng dụng |
+| `database/` | Migration, Seeder, Factory |
+| `public/` | File public (index.php, assets) |
+| `resources/` | View, ngôn ngữ, template email |
+| `routes/` | `api.php`, `web.php`, `console.php` |
+| `storage/` | Log, cache, upload |
+| `tests/` | Unit và Feature test |
+| `vendor/` | Thư viện Composer |
+
+---
+
+## ⚡ Autoload cấu hình chuẩn (`composer.json`)
+
+```json
+"autoload": {
+    "psr-4": {
+        "App\\": "app/",
+        "App\\Helpers\\": "app/Helpers/",
+        "Database\\Factories\\": "database/factories/",
+        "Database\\Seeders\\": "database/seeders/"
+    },
+    "files": [
+        "app/Helpers/helpers.php"
+    ]
+}
+```
+
+Sau khi sửa, chạy:
+```bash
+composer dump-autoload
+```
+
+---
+
+## 🧠 Quy ước viết API
+
+| Tầng | Vai trò | Không nên làm |
+|------|----------|----------------|
+| **Controller** | Gọi service, trả JSON | Không viết logic DB |
+| **Service** | Xử lý nghiệp vụ | Không gọi request hoặc response |
+| **Repository** | Truy cập dữ liệu | Không xử lý nghiệp vụ |
+| **Model** | Đại diện bảng DB | Không chứa nghiệp vụ |
+| **Request / Resource** | Chuẩn hoá input / output | Không truy cập DB |
+
+---
+
+## 🧰 Lệnh Artisan hữu ích
+
+| Lệnh | Mục đích |
+|------|-----------|
+| `php artisan migrate` | Chạy migration |
+| `php artisan migrate:fresh` | Xoá toàn DB và tạo lại |
+| `php artisan make:model Song -mcr` | Tạo model + migration + controller + resource |
+| `php artisan make:request StoreUserRequest` | Tạo form request |
+| `php artisan make:resource UserResource` | Tạo resource JSON |
+| `php artisan key:generate` | Tạo APP_KEY mới |
+| `php artisan optimize:clear` | Xoá cache config, route, view |
+
+---
+
+## 🧩 Gợi ý tiếp theo
+
+- Triển khai **Sanctum hoặc JWT** cho xác thực API.
+- Tạo **Global Exception Handler** trong `bootstrap/app.php`.
+- Sử dụng **Service Container binding** trong `AppServiceProvider` cho Repository pattern.
+
+---
+
+**Tác giả:** Nguyen Trung  
+**Framework:** Laravel 12  
+**Cấu trúc:** API-Oriented Clean Architecture  

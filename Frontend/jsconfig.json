@@ -1,16 +1,36 @@
+// {
+//   "compilerOptions": {
+//     "target": "es2020",
+//     "module": "es2020",
+//     "moduleResolution": "node",
+//     "baseUrl": "./",
+//     "paths": {
+//       "@/*": ["src/*"],
+//       "@client/*": ["src/modules/client/*"],
+//       "@admin/*": ["src/modules/admin/*"],
+//       "@common/*": ["src/modules/common/*"]
+//     },
+//     "types": ["vite/client"],
+//     "esModuleInterop": true
+//   }
+// }
+
 {
   "compilerOptions": {
-    "target": "es2020",
-    "module": "es2020",
-    "moduleResolution": "node",
-    "baseUrl": "./",
+    "target": "ESNext",
+    "useDefineForClassFields": true,
+    "module": "ESNext",
+    "moduleResolution": "Node",
+    "strict": true,
+    "jsx": "preserve",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "esModuleInterop": true,
+    "lib": ["ESNext", "DOM"],
+    "baseUrl": ".",
     "paths": {
-      "@/*": ["src/*"],
-      "@client/*": ["src/modules/client/*"],
-      "@admin/*": ["src/modules/admin/*"],
-      "@common/*": ["src/modules/common/*"]
-    },
-    "types": ["vite/client"],
-    "esModuleInterop": true
-  }
+      "@/*": ["src/*"]
+    }
+  },
+  "include": ["src/**/*.ts", "src/**/*.d.ts", "src/**/*.tsx", "src/**/*.vue"]
 }

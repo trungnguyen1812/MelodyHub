@@ -37,11 +37,7 @@ return [
 
     'guards' => [
         'web' => [
-            'driver' => 'session', // ✔️ PHẢI là 'session' (không phải 'sanctum')
-            'provider' => 'users',
-        ],
-        'api' => [
-            'driver' => 'sanctum', // ✔️ Dành cho API
+            'driver' => 'session',
             'provider' => 'users',
         ],
     ],
