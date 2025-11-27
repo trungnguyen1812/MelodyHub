@@ -166,7 +166,7 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from "vue";
 import { useAuthStore } from "@admin/auth/stores/auth.store";
-import { useRouter } from "vue-router";
+import { useRouter } from "vue-router"; 
 // Props
 defineProps({
   sidebarCollapsed: {

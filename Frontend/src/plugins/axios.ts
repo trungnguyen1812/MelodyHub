@@ -1,18 +1,24 @@
-import api from "axios";
-import { useAuthStore } from "@/store/authStore";
+import axios, { InternalAxiosRequestConfig } from "axios";
 
-const instance = api.create({
+const api = axios.create({
   baseURL: "http://localhost:8000/api",
-  withCredentials: false,
+  headers: {
+    "Content-Type": "application/json",
+    "Accept": "application/json",
+  },
+  withCredentials: true,
 });
 
-instance.interceptors.request.use((config) => {
-  // Lấy store trong hàm, khi Pinia đã active
-  const authStore = useAuthStore(); 
-  if (authStore.token) {
-    config.headers.Authorization = `Bearer ${authStore.token}`;
-  }
-  return config;
-});
+api.interceptors.request.use(
+  (config: InternalAxiosRequestConfig) => {
+    const token = localStorage.getItem("auth_token");
 
-export default instance;
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
+
+export default api;

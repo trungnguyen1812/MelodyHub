@@ -1,22 +1,80 @@
 import { defineStore } from "pinia";
-import { ref } from "vue";
+import AuthService from "@/services/auth.services";
 
-export const useAuthStore = defineStore("auth", () => {
-  const token = ref<string | null>(null);
-  const user = ref<any>(null);
+interface User {
+  id: number;
+  name: string;
+  email: string;
+  avatar?: string;
+  // thêm các trường khác nếu có
+}
 
-  function setToken(newToken: string) {
-    token.value = newToken;
-  }
+interface AuthState {
+  isAuthenticated: boolean;
+  user: User | null;
+  token: string;
+}
 
-  function setUser(data: any) {
-    user.value = data;
-  }
+export const useAuthStore = defineStore("auth", {
+  state: (): AuthState => ({
+    isAuthenticated: !!localStorage.getItem("auth_token"),
+    user: JSON.parse(localStorage.getItem("auth_user") || "null"),
+    token: localStorage.getItem("auth_token") || "",
+  }),
 
-  function logout() {
-    token.value = null;
-    user.value = null;
-  }
+  getters: {
+    // Thêm getter để kiểm tra nhanh
+    isLoggedIn: (state) => state.isAuthenticated && !!state.token,
+  },
 
-  return { token, user, setToken, setUser, logout };
+  actions: {
+    async login(emailInput: string, passwordInput: string) {
+      try {
+        const data = await AuthService.login(emailInput, passwordInput);
+        this.isAuthenticated = true;
+        this.token = data.token;
+        this.user = data.user;
+        
+        // Lưu vào localStorage
+        localStorage.setItem("auth_token", data.token);
+        localStorage.setItem("auth_user", JSON.stringify(data.user));
+        
+        return data;
+      } catch (error) {
+        // Reset state nếu login thất bại
+        this.logout();
+        throw error;
+      }
+    },
+
+    logout() {
+      try {
+        AuthService.logout();
+      } catch (error) {
+        console.error("Logout error:", error);
+      } finally {
+        this.isAuthenticated = false;
+        this.token = "";
+        this.user = null;
+        localStorage.removeItem("auth_token");
+        localStorage.removeItem("auth_user");
+      }
+    },
+
+    // Thêm action để khôi phục state từ localStorage
+    initializeAuth() {
+      const token = localStorage.getItem("auth_token");
+      const user = localStorage.getItem("auth_user");
+      
+      if (token && user) {
+        this.isAuthenticated = true;
+        this.token = token;
+        this.user = JSON.parse(user);
+      } else {
+        this.isAuthenticated = false;
+        this.token = "";
+        this.user = null;
+      }
+    }
+  },
 });

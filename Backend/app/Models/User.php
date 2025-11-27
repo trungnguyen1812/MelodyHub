@@ -3,13 +3,15 @@
 /**
  * Created by Reliese Model.
  */
-
 namespace App\Models;
 
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Laravel\Sanctum\HasApiTokens;
+use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Notifications\Notifiable;
 
 /**
  * Class User
@@ -87,11 +89,11 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  *
  * @package App\Models
  */
-class User extends Model
+class User extends Authenticatable
 {
+	use HasApiTokens, Notifiable, SoftDeletes;
 	use SoftDeletes;
 	protected $table = 'users';
-
 	protected $casts = [
 		'email_verified_at' => 'datetime',
 		'phone_verified_at' => 'datetime',
@@ -336,4 +338,20 @@ class User extends Model
 	{
 		return $this->hasOne(UserTasteProfile::class);
 	}
+
+	
+    public function getRoleFlags(): array
+	{
+		$allRoles = ['admin','boss','content_manager','partner','moderator','user_vip_yearly','user_vip_monthly','user_free'];
+		$userRoles = $this->roles()->pluck('name')->toArray();
+
+		$flags = [];
+		foreach($allRoles as $role){
+			$flags['is_'.$role] = in_array($role, $userRoles);
+		}
+
+		return $flags;
+	}
+
+
 }

@@ -1,7 +1,9 @@
 <template>
+   <Notification />
   <component :is="layout">
     <router-view />
   </component>
+ 
 </template>
 
 <script setup lang="ts">
@@ -12,6 +14,7 @@ import { computed } from "vue";
 import DefaultLayout from "@/layouts/ClientLayout.vue";
 import AdminLayout from "@/layouts/AdminLayout.vue";
 import NoneLayout from '@/layouts/NoneLayout.vue';
+import Notification from '@/components/common/VcNotification/Notification.vue'; 
 
 const route = useRoute();
 
@@ -24,8 +27,8 @@ const layout = computed(() => {
   return DefaultLayout; // mặc định là client
 });
 </script>
-<style>
 
+<style>
 html,
 body {
   height: 100%;
@@ -36,4 +39,3 @@ body {
   font-family: sans-serif; /* tùy chọn */
 }
 </style>
-

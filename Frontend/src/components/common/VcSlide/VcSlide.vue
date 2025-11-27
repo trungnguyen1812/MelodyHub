@@ -17,7 +17,7 @@
       @click="prevSlide"
       :disabled="currentIndex === 0"
     >
-      <i class="bx bx-chevron-left"></i>
+      <i class="fa-solid fa-caret-left"></i>
     </button>
 
     <button
@@ -25,7 +25,7 @@
       @click="nextSlide"
       :disabled="currentIndex === slides.length - 1"
     >
-      <i class="bx bx-chevron-right"></i>
+      <i class="fa-solid fa-caret-right"></i>
     </button>
   </div>
 </template>

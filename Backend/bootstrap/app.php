@@ -1,9 +1,10 @@
 <?php
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
+use Illuminate\Auth\Middleware\Authenticate; // Laravel 12
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Middleware\HandleCors; 
-use App\Http\Middleware\CheckAdmin;
+use App\Http\Middleware\CheckRole;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -15,9 +16,10 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware) {
         // Middleware laravel built-in
         $middleware->prepend(HandleCors::class);
-        // Middleware custom admin
-        $middleware->append(CheckAdmin::class); 
-
+        $middleware->alias([
+                'checkrole' => CheckRole::class,
+                'authapi'   => Authenticate::class,
+            ]);
     })
     
     ->withExceptions(function (Exceptions $exceptions) {

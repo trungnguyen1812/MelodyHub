@@ -1,4 +1,3 @@
-```vue
 <template>
   <div class="layout-container min-h-screen bg-gray-900 text-white">
     <!-- Header -->
@@ -86,16 +85,42 @@
         </div>
 
         <!-- Nếu đã đăng nhập, hiển thị avatar hoặc menu -->
-        <div class="hidden sm:flex space-x-3" v-else>
-          <span class="text-white text-sm font-medium"
-            >Hello, {{ authStore.user?.name || "User" }}</span
-          >
+        <div class="hidden sm:flex relative" ref="profileDropdownRef" v-else>
+          <!-- Trigger dropdown -->
           <button
-            @click="handleLogout"
-            class="text-red-400 hover:text-red-500 text-sm font-medium"
+            @click.prevent="toggleProfileDropdown"
+            class="flex items-center space-x-2 text-white text-sm font-medium hover:text-cyan-400 drop-shadow-[0_0_10px_#22d3ee] transition-colors duration-200 focus:outline-none"
           >
-            Logout
+            <img
+              :src="authStore.user?.avatar || '../../public/default-avatar.jpg'"
+              alt="avatar"
+              class="w-6 h-6 rounded-full object-cover"
+            />
+            <span>{{ authStore.user?.name?.split(' ').pop() || 'User' }}</span>
+            <span class="ml-1 text-xs">▼</span>
           </button>
+
+          <!-- Dropdown menu -->
+          <div
+            v-show="dropdownProfileOpen"
+            class="absolute right-[-70px] mt-[28px] w-44 bg-[#161f2b]/90 text-white rounded-lg shadow-lg z-50 transition-all duration-200 origin-top "
+          >
+            <button
+              @click=""
+              class="block w-full text-left px-4 py-2 text-sm hover:text-white transition-colors duration-200 drop-shadow-[0_0_10px_#22d3ee]"
+              role="menuitem"
+            >
+              Profile
+            </button>
+            <hr>
+            <button
+              @click="handleLogout"
+              class="block w-full text-left px-4 py-2 text-sm text-red-500 hover:text-white transition-colors duration-200 drop-shadow-[0_0_10px_#22d3ee]"
+              role="menuitem"
+            >
+              Logout
+            </button>
+          </div>
         </div>
 
         <!-- Hamburger Menu (Visible on mobile) -->
@@ -222,11 +247,13 @@
 
 <script setup lang="ts">
 import { ref, onMounted, onBeforeUnmount } from "vue";
-import { useClientAuthStore } from "@client/auth/stores/auth.store";
+import { useAuthStore } from "@/store/authStore";
 import { useRouter } from "vue-router";
 
+
+
 const router = useRouter();
-const authStore = useClientAuthStore();
+const authStore = useAuthStore();
 
 //hadle logout client 
 const handleLogout = async() =>{
@@ -236,13 +263,17 @@ const handleLogout = async() =>{
 
 const isDropdownOpen = ref(false);
 const isMobileMenuOpen = ref(false);
+const dropdownProfileOpen = ref(false);
+const profileDropdownRef = ref<HTMLElement | null>(null);
+const dropdown = ref<HTMLElement | null>(null);
+
 
 const logo = new URL(
   "../assets/images/logo/melody-high-resolution-logo-white.png",
   import.meta.url
 ).href;
 
-const dropdown = ref<HTMLElement | null>(null);
+
 
 const toggleDropdown = () => {
   isDropdownOpen.value = !isDropdownOpen.value;
@@ -251,6 +282,11 @@ const toggleDropdown = () => {
 const toggleMobileMenu = () => {
   isMobileMenuOpen.value = !isMobileMenuOpen.value;
 };
+
+const toggleProfileDropdown = () => {
+  dropdownProfileOpen.value = !dropdownProfileOpen.value;
+};
+
 
 const handleRegister = () => {
   alert("Register clicked!");
@@ -262,13 +298,18 @@ const handleLogin = () => {
 
 const handleClickOutside = (event: MouseEvent) => {
   if (dropdown.value && !dropdown.value.contains(event.target as Node)) {
-    isDropdownOpen.value = false;
+    isDropdownOpen.value  = false;
+  }
+   if (profileDropdownRef.value && !profileDropdownRef.value.contains(event.target as Node)) {
+    dropdownProfileOpen.value = false;
   }
 };
 
 onMounted(() => {
   document.addEventListener("click", handleClickOutside);
 });
+
+
 
 onBeforeUnmount(() => {
   document.removeEventListener("click", handleClickOutside);

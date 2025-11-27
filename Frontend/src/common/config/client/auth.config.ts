@@ -10,7 +10,7 @@ export const ROUTER_AUTH = [
     component: LoginView,
     meta: { layout: "none" },
   },
-
+ 
   {
     path: "/Register",
     name: "Register",
