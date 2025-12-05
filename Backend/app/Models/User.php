@@ -353,5 +353,14 @@ class User extends Authenticatable
 		return $flags;
 	}
 
+	public function assignRole(string $roleName)
+	{
+		$role = Role::where('name', $roleName)->first();
+		if ($role) {
+			$this->roles()->syncWithoutDetaching([$role->id]);
+		}
+	}
+
+
 
 }

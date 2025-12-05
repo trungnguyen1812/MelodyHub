@@ -1,265 +1,317 @@
 <template>
-  <header
-    :class="[
-      'bg-gray-800 border-b border-gray-700 h-16 fixed top-0 right-0 z-20 transition-all duration-300 ease-in-out shadow-md',
-      sidebarCollapsed ? 'left-16' : 'left-64',
-    ]"
-  >
-    <div class="flex items-center justify-between h-full px-6">
-      <!-- Left Section - Page Title & Breadcrumb -->
-      <div class="flex items-center space-x-4">
-        <div>
-          <h1 class="text-xl font-semibold text-white">{{ pageTitle }}</h1>
-          <div class="flex items-center space-x-2 text-sm text-gray-400">
-            <span>Admin</span>
-            <i class="bx bx-chevron-right text-xs"></i>
-            <span>{{ pageTitle }}</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- Center Section - Search Bar -->
-      <div class="hidden md:flex flex-1 max-w-md mx-8">
-        <div class="relative w-full">
-          <input
-            type="text"
-            placeholder="Search music, artists, albums..."
-            class="w-full bg-gray-700 border border-gray-600 rounded-lg pl-10 pr-4 py-2 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            v-model="searchQuery"
-          />
-          <i
-            class="bx bx-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
-          ></i>
-        </div>
-      </div>
-
-      <!-- Right Section - Notifications & User Menu -->
-      <div class="flex items-center space-x-4">
-        <!-- Mobile Search Button -->
-        <button
-          class="md:hidden p-2 rounded-lg bg-gray-700 hover:bg-gray-600 text-gray-300 hover:text-white transition-colors duration-200"
-          @click="toggleMobileSearch"
-        >
-          <i class="bx bx-search text-xl"></i>
-        </button>
-
-        <!-- Notifications -->
-        <div class="relative">
-          <button
-            class="p-2 rounded-lg bg-gray-700 hover:bg-gray-600 text-gray-300 hover:text-white transition-colors duration-200 relative"
-            @click="toggleNotifications"
-          >
-            <i class="bx bx-bell text-xl"></i>
-            <span
-              class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center"
-              >3</span
-            >
-          </button>
-
-          <!-- Notifications Dropdown -->
-          <div
-            v-if="showNotifications"
-            class="absolute right-0 top-12 w-80 bg-gray-800 border border-gray-700 rounded-lg shadow-xl z-50"
-          >
-            <div class="p-4 border-b border-gray-700">
-              <h3 class="text-white font-semibold">Notifications</h3>
+    <header class="header">
+        <!-- Left section: Menu button and logo -->
+        <div class="header-left">
+            <button class="menu-btn">
+                <img src="@/assets/images/icon/menu.png" alt="Menu">
+            </button>
+            <div class="logo-section">
+                <img class="logo-icon" src="@/assets/images/logo/melody-high-resolution-logo-white.png" alt="MelodyHub">
+                <span class="logo-text">MELODYHUB</span>
             </div>
-            <div class="max-h-64 overflow-y-auto">
-              <div
-                v-for="notification in notifications"
-                :key="notification.id"
-                class="p-4 border-b border-gray-700 hover:bg-gray-700"
-              >
-                <div class="flex items-start space-x-3">
-                  <div class="w-2 h-2 bg-blue-500 rounded-full mt-2"></div>
-                  <div>
-                    <p class="text-white text-sm">{{ notification.message }}</p>
-                    <p class="text-gray-400 text-xs mt-1">
-                      {{ notification.time }}
-                    </p>
-                  </div>
+        </div>
+
+        <!-- Center section: Search bar -->
+        <div class="header-center">
+            <div class="search-container">
+                <img src="@/assets/images/icon/search.png" alt="Search" class="search-icon">
+                <input 
+                    type="text" 
+                    class="search-input" 
+                    placeholder="Search songs, artists, albums..."
+                >
+            </div>
+        </div>
+
+        <!-- Right section: User actions -->
+        <div class="header-right">
+            <button class="notification-btn">
+                <img src="@/assets/images/icon/bell.png" alt="Notifications">
+                <span class="notification-badge">3</span>
+            </button>
+            
+            <button class="user-btn">
+                <img src="@/assets/images/icon/user.png" alt="User" class="user-avatar">
+                <div class="user-info">
+                    <span class="user-name">Admin</span>
+                    <span class="user-role">Administrator</span>
                 </div>
-              </div>
-            </div>
-          </div>
+                <img src="@/assets/images/icon/down.png" alt="Dropdown" class="dropdown-icon">
+            </button>
         </div>
-
-        <!-- Messages -->
-        <button
-          class="p-2 rounded-lg bg-gray-700 hover:bg-gray-600 text-gray-300 hover:text-white transition-colors duration-200"
-        >
-          <i class="bx bx-message-dots text-xl"></i>
-        </button>
-
-        <!-- User Profile Dropdown -->
-        <div class="relative">
-          <button
-            @click="toggleUserMenu"
-            class="flex items-center space-x-3 p-2 rounded-lg bg-gray-700 hover:bg-gray-600 transition-colors duration-200"
-          >
-            <div
-              class="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center"
-            >
-              <i class="bx bx-user text-white"></i>
-            </div>
-            <div class="hidden sm:block text-left">
-              <p class="text-white text-sm font-medium">Admin User</p>
-              <p class="text-gray-400 text-xs">Administrator</p>
-            </div>
-            <i class="bx bx-chevron-down text-gray-400"></i>
-          </button>
-
-          <!-- User Menu Dropdown -->
-          <div
-            v-if="showUserMenu"
-            class="absolute right-0 top-12 w-48 bg-gray-800 border border-gray-700 rounded-lg shadow-xl z-50"
-          >
-            <div class="py-2">
-              <a
-                href="#"
-                class="flex items-center px-4 py-2 text-gray-300 hover:bg-gray-700 hover:text-white"
-              >
-                <i class="bx bx-user mr-3"></i>
-                Profile
-              </a>
-              <a
-                href="#"
-                class="flex items-center px-4 py-2 text-gray-300 hover:bg-gray-700 hover:text-white"
-              >
-                <i class="bx bx-cog mr-3"></i>
-                Settings
-              </a>
-              <div class="border-t border-gray-700 my-2"></div>
-              <button
-                type="button"
-                @click="handleLogout"
-                class="flex items-center px-4 py-2 text-gray-300 hover:bg-gray-700 hover:text-white w-full text-left"
-              >
-                <i class="bx bx-log-out mr-3"></i>
-                Logout
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-    <!-- Mobile Search Bar -->
-    <div
-      v-if="showMobileSearch"
-      class="md:hidden absolute top-16 left-0 right-0 bg-gray-800 border-b border-gray-700 p-4"
-    >
-      <div class="relative">
-        <input
-          type="text"
-          placeholder="Search music, artists, albums..."
-          class="w-full bg-gray-700 border border-gray-600 rounded-lg pl-10 pr-4 py-2 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          v-model="searchQuery"
-        />
-        <i
-          class="bx bx-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
-        ></i>
-      </div>
-    </div>
-  </header>
+    </header>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from "vue";
-import { useAuthStore } from "@admin/auth/stores/auth.store";
-import { useRouter } from "vue-router"; 
-// Props
-defineProps({
-  sidebarCollapsed: {
-    type: Boolean,
-    default: false,
-  },
-  pageTitle: {
-    type: String,
-    default: "Dashboard",
-  },
-});
 
-// State
-const authStore = useAuthStore();
-const router = useRouter();
-const searchQuery = ref("");
-const showNotifications = ref(false);
-const showUserMenu = ref(false);
-const showMobileSearch = ref(false);
-const notifications = ref([
-  {
-    id: 1,
-    message: "New song uploaded by Artist John",
-    time: "5 minutes ago",
-  },
-  {
-    id: 2,
-    message: 'Album "Summer Vibes" approved',
-    time: "1 hour ago",
-  },
-  {
-    id: 3,
-    message: "User reported inappropriate content",
-    time: "2 hours ago",
-  },
-]);
-
-// Methods
-const toggleNotifications = () => {
-  showNotifications.value = !showNotifications.value;
-  showUserMenu.value = false;
-};
-
-const toggleUserMenu = () => {
-  showUserMenu.value = !showUserMenu.value;
-  showNotifications.value = false;
-};
-
-const toggleMobileSearch = () => {
-  showMobileSearch.value = !showMobileSearch.value;
-};
-
-// Close dropdowns when clicking outside
-const closeDropdowns = (event) => {
-  if (!event.target.closest("header")) {
-    showNotifications.value = false;
-    showUserMenu.value = false;
-  }
-};
-
-//handle logout ư
-const handleLogout = async () =>{
-  await authStore.logout();
-  await authStore.clearAuth();
-  router.push({name:'admin.login'});
-}
-
-// Lifecycle hooks
-onMounted(() => {
-  document.addEventListener("click", closeDropdowns);
-});
-
-onUnmounted(() => {
-  document.removeEventListener("click", closeDropdowns);
-});
 </script>
 
 <style scoped>
-/* Custom scrollbar for notifications */
-::-webkit-scrollbar {
-  width: 4px;
+.header {
+    height: 70px;
+    width: 98%;
+    top: 20px;
+    margin: 1%;
+    border-radius: 14px;
+    background: rgba(255,255,255,0.08);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(0,170,255,0.65);
+    box-shadow:
+        0 0 8px rgba(0,170,255,0.7),
+        0 0 16px rgba(0,170,255,0.55),
+        0 0 24px rgba(0,170,255,0.35),
+        0 8px 25px rgba(0,0,0,0.45);
+    animation: neonPulse 1.8s infinite ease-in-out;
+    
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 20px;
+    position: relative;
+    z-index: 10;
+    font-family: 'Afacad', sans-serif;
 }
 
-::-webkit-scrollbar-track {
-  background: #374151;
+/* Left section */
+.header-left {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    flex: 1;
 }
 
-::-webkit-scrollbar-thumb {
-  background: #6b7280;
-  border-radius: 2px;
+.menu-btn {
+    background: transparent;
+    border: 1px solid rgba(0,170,255,0.4);
+    border-radius: 10px;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
 }
 
-::-webkit-scrollbar-thumb:hover {
-  background: #9ca3af;
+.menu-btn:hover {
+    background: rgba(0,170,255,0.15);
+    border-color: rgba(0,170,255,0.8);
+    box-shadow: 0 0 10px rgba(0,170,255,0.4);
+}
+
+.menu-btn img {
+    width: 20px;
+    height: 20px;
+    filter: brightness(0) invert(1);
+}
+
+.logo-section {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.logo-icon {
+    height: 32px;
+    width: auto;
+}
+
+.logo-text {
+    font-size: 1.5rem;
+    font-weight: 700;
+    background: white;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    text-shadow: 0 0 10px rgba(0,170,255,0.3);
+}
+
+/* Center section - Search */
+.header-center {
+    flex: 2;
+    display: flex;
+    justify-content: center;
+}
+
+.search-container {
+    position: relative;
+    width: 100%;
+    max-width: 500px;
+}
+
+.search-icon {
+    position: absolute;
+    left: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 18px;
+    height: 18px;
+    filter: brightness(0) invert(0.7);
+}
+
+.search-input {
+    width: 100%;
+    height: 42px;
+    padding: 0 20px 0 45px;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(0,170,255,0.4);
+    border-radius: 12px;
+    color: white;
+    font-size: 14px;
+    font-family: 'Afacad', sans-serif;
+    transition: all 0.3s ease;
+}
+
+.search-input:focus {
+    outline: none;
+    border-color: rgba(0,170,255,0.8);
+    background: rgba(255,255,255,0.1);
+    box-shadow: 0 0 15px rgba(0,170,255,0.3);
+}
+
+.search-input::placeholder {
+    color: rgba(255,255,255,0.5);
+}
+
+/* Right section */
+.header-right {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    flex: 1;
+    justify-content: flex-end;
+}
+
+.notification-btn {
+    position: relative;
+    background: transparent;
+    border: 1px solid rgba(0,170,255,0.4);
+    border-radius: 10px;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.notification-btn:hover {
+    background: rgba(0,170,255,0.15);
+    border-color: rgba(0,170,255,0.8);
+    box-shadow: 0 0 10px rgba(0,170,255,0.4);
+}
+
+.notification-btn img {
+    width: 20px;
+    height: 20px;
+    filter: brightness(0) invert(1);
+}
+
+.notification-badge {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    background: #ff4757;
+    color: white;
+    font-size: 10px;
+    font-weight: bold;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid rgba(0,170,255,0.65);
+}
+
+.user-btn {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(0,170,255,0.4);
+    border-radius: 12px;
+    padding: 6px 15px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.user-btn:hover {
+    background: rgba(0,170,255,0.15);
+    border-color: rgba(0,170,255,0.8);
+    box-shadow: 0 0 15px rgba(0,170,255,0.3);
+}
+
+.user-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: 2px solid rgba(0,170,255,0.6);
+}
+
+.user-info {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+.user-name {
+    color: white;
+    font-weight: 600;
+    font-size: 14px;
+}
+
+.user-role {
+    color: rgba(255,255,255,0.6);
+    font-size: 11px;
+    margin-top: 2px;
+}
+
+.dropdown-icon {
+    width: 16px;
+    height: 16px;
+    filter: brightness(0) invert(0.6);
+    transition: transform 0.3s ease;
+}
+
+.user-btn:hover .dropdown-icon {
+    transform: rotate(180deg);
+}
+
+/* Neon pulse animation */
+
+/* Responsive adjustments */
+@media (max-width: 1200px) {
+    .header-center {
+        flex: 1.5;
+    }
+    
+    .search-container {
+        max-width: 400px;
+    }
+}
+
+@media (max-width: 768px) {
+    .header {
+        padding: 0 15px;
+    }
+    
+    .logo-text {
+        display: none;
+    }
+    
+    .search-container {
+        max-width: 300px;
+    }
+    
+    .user-info {
+        display: none;
+    }
+    
+    .user-btn {
+        padding: 6px 10px;
+    }
 }
 </style>

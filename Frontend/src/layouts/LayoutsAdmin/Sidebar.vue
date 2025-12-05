@@ -1,175 +1,297 @@
 <template>
-  <div
-    class="bg-gray-900 text-white h-screen w-64 fixed left-0 top-0 z-30 shadow-xl"
-  >
-    <!-- Logo Section -->
-    <div class="flex items-center justify-center h-16 border-b border-gray-700">
-      <div v-if="!isCollapsed" class="flex items-center space-x-2">
-        <i class="bx bx-music text-2xl text-blue-400"></i>
-        <span class="text-xl font-bold text-white">MELODY HUB</span>
-      </div>
-      <div v-else class="flex items-center justify-center">
-        <i class="bx bx-music text-2xl text-blue-400"></i>
-      </div>
+  <div class="main">
+    <div class="disc"></div>
+    <div class="topSidebar">
+      <img class="logo" src="@/assets/images/logo/melody-high-resolution-logo-white.png" alt="logoMelodyHub">
     </div>
-
-
-    <!-- Navigation Menu -->
-    <nav class="mt-6">
-      <ul class="space-y-2 px-3">
-        <li v-for="item in menuItems" :key="item.id">
-          <a
-            :href="item.href"
-            :class="[
-              'flex items-center py-3 px-3 rounded-lg transition-all duration-200 hover:bg-gray-800 group',
-              item.active
-                ? 'bg-blue-600 text-white'
-                : 'text-gray-300 hover:text-white',
-            ]"
-          >
-            <i :class="item.icon" class="text-xl"></i>
-            <transition name="slide-fade">
-              <span v-if="!isCollapsed" class="ml-3 font-medium">{{
-                item.title
-              }}</span>
-            </transition>
-            <div
-              v-if="isCollapsed"
-              class="tooltip tooltip-right"
-              :data-tip="item.title"
-            ></div>
-          </a>
+    <div class="mainSidebar">
+      <ul>
+        <li><img src="@/assets/images/icon/dashboard.svg" alt="">Dashboard</li>
+        <li><img src="@/assets/images/icon/customer.svg" alt=""> User Management</li>
+        
+        <!-- Fixed dropdown structure -->
+        <li class="dropdown">
+          <div class="menu-title">
+            <img src="@/assets/images/icon/content.svg" alt=""> <span style="color: white;">Content Management</span>
+            <span class="arrow">▼</span>
+          </div>
+          <ul class="submenu">
+            <li><img src="@/assets/images/icon/songs.svg" alt=""> Songs</li>
+            <li><img src="@/assets/images/icon/artist.svg" alt=""> Artists</li>
+            <li><img src="@/assets/images/icon/album.svg" alt=""> Albums</li>
+            <li><img src="@/assets/images/icon/Genres.png" alt=""> Genres</li>
+          </ul>
+        </li>
+        
+        <li><img src="@/assets/images/icon/heart.png" alt=""> Social interaction</li>
+        <li><img src="@/assets/images/icon/playlist.svg" alt=""> Playlists manager</li>
+        <li><img src="@/assets/images/icon/payment.svg" alt=""> Payment</li>
+        <li><img src="@/assets/images/icon/deal.png" alt=""> Partner Management</li>
+        <li><img src="@/assets/images/icon/ad.png" alt=""> Advertising</li>
+      </ul>
+    </div>
+    <div class="bottomSidebar">
+      <ul>
+        <li class="setting">
+          <img src="@/assets/images/icon/setting.svg" alt=""> 
+          <span>Setting</span>
         </li>
       </ul>
-    </nav>
-
-    <!-- User Profile Section -->
-    <div class="absolute bottom-4 left-0 right-0 px-3">
-      <div
-        :class="[
-          'flex items-center p-3 rounded-lg bg-gray-800 border border-gray-700',
-          isCollapsed ? 'justify-center' : '',
-        ]"
-      >
-        <div
-          class="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center"
-        >
-          <i class="bx bx-user text-white"></i>
-        </div>
-        <transition name="slide-fade">
-          <div v-if="!isCollapsed" class="ml-3">
-            <p class="text-sm font-medium text-white">Admin User</p>
-            <p class="text-xs text-gray-400">admin@melodyhub.com</p>
-          </div>
-        </transition>
-      </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref } from "vue";
 
-// Emits
-const emit = defineEmits(["sidebar-toggle"]);
-
-// State
-const isCollapsed = ref(false);
-const menuItems = ref([
-  {
-    id: 1,
-    title: "Dashboard",
-    icon: "bx bx-home-alt",
-    href: "#",
-    active: true,
-  },
-  {
-    id: 2,
-    title: "Music Library",
-    icon: "bx bx-music",
-    href: "#",
-    active: false,
-  },
-  {
-    id: 3,
-    title: "Artists",
-    icon: "bx bx-user-voice",
-    href: "#",
-    active: false,
-  },
-  {
-    id: 4,
-    title: "Albums",
-    icon: "bx bx-album",
-    href: "#",
-    active: false,
-  },
-  {
-    id: 5,
-    title: "Playlists",
-    icon: "bx bx-list-ul",
-    href: "#",
-    active: false,
-  },
-  {
-    id: 6,
-    title: "Users",
-    icon: "bx bx-group",
-    href: "#",
-    active: false,
-  },
-  {
-    id: 7,
-    title: "Analytics",
-    icon: "bx bx-bar-chart-alt-2",
-    href: "#",
-    active: false,
-  },
-  {
-    id: 8,
-    title: "Settings",
-    icon: "bx bx-cog",
-    href: "#",
-    active: false,
-  },
-]);
-
-// Methods
-const toggleSidebar = () => {
-  isCollapsed.value = !isCollapsed.value;
-  emit("sidebar-toggle", isCollapsed.value);
-};
 </script>
 
 <style scoped>
-.slide-fade-enter-active,
-.slide-fade-leave-active {
+@import url('https://fonts.googleapis.com/css2?family=Afacad&display=swap');
+.main {
+  width: 20%;
+  height: 93%;
+  margin: 2%;
+  border-radius: 14px;
+  background: rgba(255,255,255,0.08);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(0,170,255,0.65);
+  font-family: 'Afacad', sans-serif;
+  box-shadow:
+    0 0 8px rgba(0,170,255,0.7),
+    0 0 16px rgba(0,170,255,0.55),
+    0 0 24px rgba(0,170,255,0.35),
+    0 8px 25px rgba(0,0,0,0.45);
+  animation: neonPulse 1.8s infinite ease-in-out;
+  position: relative;
+  overflow: hidden;
+
+  display: flex;
+  flex-direction: column;
+}
+
+/* ===============================
+      BACKGROUND DISC
+================================ */
+
+.disc{
+  position: absolute;
+  width: 220px;
+  height: 220px;
+  border-radius: 50%;
+  right: -60px;             
+  bottom: -60px;
+  background: radial-gradient(
+    circle,
+    #222 0%,
+    #000 50%,
+    #050505 100%
+  );
+  opacity: 0.65;             
+  z-index: 1; 
+  animation: spin 12s linear infinite;
+}
+
+.disc::after{
+  content:'';
+  position:absolute;
+  top:50%;
+  left:50%;
+  transform:translate(-50%,-50%);
+  width:20px;
+  height:20px;
+  border-radius:50%;
+  background: white;
+  border: 2px solid rgba(0,170,255,0.7);
+  box-shadow: 0 0 8px rgba(0,170,255,0.6);
+}
+
+/* ===============================
+      CONTENT SIDE BAR
+================================ */
+
+.topSidebar,
+.mainSidebar,
+.bottomSidebar{
+  position: relative;
+  z-index: 2;
+  font-size:13pt;
+}
+
+.mainSidebar {
+  top: 40px;
+  height: calc(100% - 40px);
+  overflow-y: auto;
+  padding-right: 8px;
+  flex: 1; /* Chiếm không gian còn lại */
+}
+
+.mainSidebar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.mainSidebar::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 170, 255, 0.6);
+  border-radius: 3px;
+}
+
+.mainSidebar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.mainSidebar > ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.mainSidebar li {
+  margin: 8px 20px;
+  padding: 8px 15px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  border-radius: 8px;
   transition: all 0.3s ease;
 }
 
-.slide-fade-enter-from,
-.slide-fade-leave-to {
-  opacity: 0;
-  transform: translateX(-10px);
+.mainSidebar li:hover {
+  background: rgba(0, 170, 255, 0.15);
 }
 
-.tooltip {
+
+/* ===============================
+      BOTTOM SIDEBAR - FIXED
+================================ */
+
+.bottomSidebar {
+  width: 100%; /* Chiếm toàn bộ chiều rộng */
+  padding: 10px 0;
+  margin-top: auto; /* Đẩy xuống dưới cùng */
+}
+
+.bottomSidebar ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  width: 100%;
+}
+
+.bottomSidebar .setting {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 20px;
+  margin: 20px ;
+  width: 85%;
+  cursor: pointer;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+}
+
+.bottomSidebar .setting:hover {
+  background: rgba(0, 170, 255, 0.15);
+}
+
+.bottomSidebar .setting img {
+  width: 20px;
+  height: 20px;
+}
+
+/* Size logo */
+.logo{
+  width: 70%;
+  max-width: 160px;
+  margin: 1rem auto;
+  display:block;
+}
+
+/* ===============================
+        EFFECT
+================================ */
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ===============================
+        Dropdown - FIXED
+================================ */
+
+.dropdown {
   position: relative;
+  display: flex;
+  flex-direction: column;
 }
 
-.tooltip:hover::after {
-  content: attr(data-tip);
-  position: absolute;
-  left: 100%;
-  top: 50%;
-  transform: translateY(-50%);
-  background: #374151;
-  color: white;
-  padding: 4px 8px;
-  border-radius: 4px;
-  font-size: 12px;
-  white-space: nowrap;
-  z-index: 1000;
-  margin-left: 8px;
+.menu-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 8px 15px;
+}
+
+.menu-title .arrow {
+  margin-left: auto;
+  font-size: 0.7rem;
+  transition: transform 0.3s ease;
+}
+
+.dropdown:hover .menu-title .arrow {
+  transform: rotate(180deg);
+}
+
+.submenu {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 8px;
+  margin-top: 4px;
+  margin-left: 40px;
+  overflow: hidden;
+  max-height: 0;
+  opacity: 0;
+  transform: translateY(-10px);
+  transition: all 0.3s ease;
+}
+
+.dropdown:hover .submenu {
+  max-height: 500px;
+  opacity: 1;
+  transform: translateY(0);
+  display: block;
+}
+
+.submenu li {
+  margin: 0;
+  padding: 8px 15px;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+}
+
+.submenu li:hover {
+  background: rgba(0, 170, 255, 0.25);
+  padding-left: 20px;
+}
+
+/* Neon animation for the sidebar */
+@keyframes neonPulse {
+  0%, 100% {
+    box-shadow:
+      0 0 8px rgba(0,170,255,0.7),
+      0 0 16px rgba(0,170,255,0.55),
+      0 0 24px rgba(0,170,255,0.35),
+      0 8px 25px rgba(0,0,0,0.45);
+  }
+  50% {
+    box-shadow:
+      0 0 12px rgba(0,170,255,0.8),
+      0 0 20px rgba(0,170,255,0.65),
+      0 0 30px rgba(0,170,255,0.45),
+      0 8px 30px rgba(0,0,0,0.5);
+  }
 }
 </style>

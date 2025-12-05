@@ -14,13 +14,26 @@ class AuthService {
     
     const res = await api.post(
       "/logout",
-      {},
+      {}, 
       {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       }
     );
+    return res.data;
+  }
+
+  async register(fullname: string , email:string , password:string){
+    const token = localStorage.getItem("auth_token");
+
+    const res = await api.post(
+      "/register",
+      {
+        fullname,
+        email,
+        password
+      });
     return res.data;
   }
 

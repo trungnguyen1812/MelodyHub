@@ -13,18 +13,15 @@ import { computed } from "vue";
 // Layouts
 import DefaultLayout from "@/layouts/ClientLayout.vue";
 import AdminLayout from "@/layouts/AdminLayout.vue";
-import NoneLayout from '@/layouts/NoneLayout.vue';
 import Notification from '@/components/common/VcNotification/Notification.vue'; 
 
 const route = useRoute();
 
 const layout = computed(() => {
-  const layoutType = route.meta.layout;
-  if (layoutType === "admin") return AdminLayout;
-  else if (layoutType === 'none') {
-    return NoneLayout;
-  }
-  return DefaultLayout; // mặc định là client
+  const l = route.meta.layout;
+  if (l === "admin") return AdminLayout;
+  if (l === "none" || !l) return "EmptyLayout"; // ← fallback an toàn
+  return DefaultLayout;
 });
 </script>
 

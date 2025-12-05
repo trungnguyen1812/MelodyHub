@@ -1,9 +1,10 @@
 import { defineStore } from "pinia";
 import AuthService from "@/services/auth.services";
+import { data } from "autoprefixer";
 
 interface User {
   id: number;
-  name: string;
+  fullname: string;
   email: string;
   avatar?: string;
   // thêm các trường khác nếu có
@@ -18,7 +19,14 @@ interface AuthState {
 export const useAuthStore = defineStore("auth", {
   state: (): AuthState => ({
     isAuthenticated: !!localStorage.getItem("auth_token"),
-    user: JSON.parse(localStorage.getItem("auth_user") || "null"),
+    user: (()=>{
+      try {
+        return JSON.parse(localStorage.getItem("auth_user") || "null");
+      } catch {
+        localStorage.removeItem("auth_user");
+        return null;
+      }
+    })(),
     token: localStorage.getItem("auth_token") || "",
   }),
 
@@ -47,6 +55,22 @@ export const useAuthStore = defineStore("auth", {
       }
     },
 
+    async register(fullname: string , email:string , password:string){
+      try {
+        const data = await AuthService.register(fullname,email,password);
+        this.isAuthenticated = true;
+        this.token = data.token;
+        this.user  = data.user;
+
+        localStorage.setItem("auth_token", data.token);
+        localStorage.setItem("auth_user" , JSON.stringify(data.user));
+
+        return data;
+      } catch (error) {
+        throw error;
+      }
+    },
+
     logout() {
       try {
         AuthService.logout();
@@ -60,6 +84,8 @@ export const useAuthStore = defineStore("auth", {
         localStorage.removeItem("auth_user");
       }
     },
+
+    
 
     // Thêm action để khôi phục state từ localStorage
     initializeAuth() {

@@ -1,10 +1,15 @@
 <template>
+  <Notification 
+        v-if="notificationStore.message" 
+        :type="notificationStore.type" 
+        :message="notificationStore.message" 
+  />
   <!-- From Uiverse.io by Smit-Prajapati -->
   <div
     class="flex flex-col md:flex-row items-center justify-center min-h-screen px-6 py-8 gap-8"
   >
     <div class="p-6 rounded-lg shadow-md">
-      <form class="form">
+      <form class="form" @submit.prevent="handleRegister">
         <div class="flex-column">
           <label>Full Name </label>
         </div>
@@ -21,8 +26,7 @@
               d="M12 12c2.761 0 5-2.239 5-5s-2.239-5-5-5-5 2.239-5 5 2.239 5 5 5zm0 2c-3.313 0-10 1.657-10 5v3h20v-3c0-3.343-6.687-5-10-5z"
             />
           </svg>
-
-          <input type="text" class="input" placeholder="Enter your Full Name" required />
+          <input v-model="fullname" type="text" class="input" placeholder="Enter your Full Name" required />
         </div>
         <div class="flex-column">
           <label>Email </label>
@@ -40,7 +44,7 @@
               ></path>
             </g>
           </svg>
-          <input type="email" class="input" placeholder="Enter your Email" required/>
+          <input v-model="email" type="email" class="input" placeholder="Enter your Email" required/>
         </div>
 
         <div class="flex-column">
@@ -60,12 +64,7 @@
               d="m304 224c-8.832031 0-16-7.167969-16-16v-80c0-52.929688-43.070312-96-96-96s-96 43.070312-96 96v80c0 8.832031-7.167969 16-16 16s-16-7.167969-16-16v-80c0-70.59375 57.40625-128 128-128s128 57.40625 128 128v80c0 8.832031-7.167969 16-16 16zm0 0"
             ></path>
           </svg>
-          <input
-            type="password"
-            class="input"
-            placeholder="Enter your Password"
-            required
-          />
+          <input v-model="password" type="password" class="input" placeholder="Enter your Password" required/>
           <svg
             viewBox="0 0 576 512"
             height="1em"
@@ -80,19 +79,50 @@
         <div class="flex-row">
         </div>
         <button class="button-submit">Sign Up</button>
-       
       </form>
     </div>
   </div>
 </template>
 <script setup lang="ts">
 import router from "@/modules/router";
+import authServices from "@/services/auth.services";
+import { useAuthStore } from "@/store/authStore";
+import { useNotificationStore } from "@/store/notificationStore";
+import { handleError, ref ,nextTick } from "vue";
+
+const fullname=ref("");
+const email   = ref("");
+const password=ref("");
+const auth = useAuthStore();
+const notificationStore = useNotificationStore();
 
 const RegisterView = () => {
   router.push({
     name: "Register",
   });
 };
+
+const handleRegister = async () => {
+  try {
+    const res = await auth.register(fullname.value ,email.value , password.value);
+    notificationStore.notify("Register successful" ,"success");
+    await nextTick();
+
+    setTimeout(() => {
+      const isAdmin = res.roles_flags?.is_admin;
+      router.push(isAdmin ? "/admin/dashboard" : "/");
+    }, 1000);
+
+    setTimeout(()=>
+      notificationStore.clear(), 3000
+    );
+
+  } catch (err: any) {
+    notificationStore.notify(err.response?.data?.message || "Login failed", "error");
+    setTimeout(() => notificationStore.clear(), 3000);
+  }
+}
+
 </script>
 <style scoped>
 /* From Uiverse.io by Praashoo7 */
