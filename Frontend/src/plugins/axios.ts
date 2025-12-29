@@ -2,7 +2,7 @@ import axios, { InternalAxiosRequestConfig, AxiosResponse, AxiosError } from "ax
 import { useRouter } from "vue-router";
 
 const api = axios.create({
-  baseURL: "http://localhost:8000/api",
+  baseURL: "/api/client",
   headers: {
     "Content-Type": "application/json",
     "Accept": "application/json",
@@ -12,8 +12,8 @@ const api = axios.create({
  
 api.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
-    const token = localStorage.getItem("auth_token");
-
+    const token = localStorage.getItem("client_token");
+    
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -26,7 +26,7 @@ api.interceptors.response.use(
   (response: AxiosResponse) => response,
   (error: AxiosError) => {
     if (error.response?.status === 401) {
-      localStorage.removeItem('auth_token');
+      localStorage.removeItem('client_token');
       localStorage.removeItem('user_data');
       
       if (window.location.pathname.startsWith('/admin')) {

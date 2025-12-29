@@ -2,12 +2,44 @@
   <div class="main">
     <div class="disc"></div>
     <div class="topSidebar">
-      <img class="logo" src="@/assets/images/logo/melody-high-resolution-logo-white.png" alt="logoMelodyHub">
+    <a @click="homepage">
+      <img  class="logo" src="@/assets/images/logo/melody-high-resolution-logo-white.png" alt="logoMelodyHub">
+    </a>
     </div>
     <div class="mainSidebar">
       <ul>
-        <li><img src="@/assets/images/icon/dashboard.svg" alt="">Dashboard</li>
-        <li><img src="@/assets/images/icon/customer.svg" alt=""> User Management</li>
+        <router-link 
+          :to="{name:'admin.dashboard'}"
+          custom
+          v-slot="{navigate , isActive}"
+        >
+        <li
+          :class="{ active: isActive }"
+          @click="navigate"
+          @keyup.enter="navigate"
+          role="link"
+          tabindex="0"
+        >
+          <img src="@/assets/images/icon/dashboard.svg" alt=""> Dashboard
+        </li>
+        </router-link>
+        
+        <router-link
+          :to="{ name: 'admin.usermanager' }"
+          custom
+          v-slot="{ navigate, isActive }"
+        >
+          <li
+            :class="{ active: isActive }"
+            @click="navigate"
+            @keyup.enter="navigate"
+            role="link"
+            tabindex="0"
+          >
+            <img src="@/assets/images/icon/customer.svg" alt=""> User Management
+          </li>
+        </router-link>
+        
         
         <!-- Fixed dropdown structure -->
         <li class="dropdown">
@@ -42,7 +74,13 @@
 </template>
 
 <script setup>
+import router from '@/modules/router';
+import { ref, onMounted } from 'vue';
+import { useRouter } from "vue-router";
 
+const homepage=()=>{
+  router.push({name:"client.home"});
+}
 </script>
 
 <style scoped>

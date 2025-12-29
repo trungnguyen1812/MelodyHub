@@ -13,7 +13,7 @@ const http: AxiosInstance = axios.create({
 // Helper function để lấy token
 const getAuthToken = (): string | null => {
   // Thử lấy từ localStorage đơn giản trước
-  let token = localStorage.getItem("auth_token");
+  let token = localStorage.getItem("client_token");
   
   // Nếu không có, thử lấy từ pinia store
   if (!token) {
@@ -33,7 +33,7 @@ const getAuthToken = (): string | null => {
 
 // Helper function để clear tất cả auth data
 const clearAllAuth = (): void => {
-  localStorage.removeItem("auth_token");
+  localStorage.removeItem("client_token");
   localStorage.removeItem("pinia_adminAuth");
 };
 

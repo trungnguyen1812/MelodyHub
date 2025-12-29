@@ -8,7 +8,8 @@
 
 <script setup lang="ts">
 import { useRoute } from "vue-router";
-import { computed } from "vue";
+import { computed, onMounted } from "vue";
+import { useAuthStore } from "@/store/authStore";
 
 // Layouts
 import DefaultLayout from "@/layouts/ClientLayout.vue";
@@ -16,14 +17,28 @@ import AdminLayout from "@/layouts/AdminLayout.vue";
 import Notification from '@/components/common/VcNotification/Notification.vue'; 
 
 const route = useRoute();
+const authStore = useAuthStore();
 
 const layout = computed(() => {
   const l = route.meta.layout;
   if (l === "admin") return AdminLayout;
-  if (l === "none" || !l) return "EmptyLayout"; // ← fallback an toàn
+  if (l === "none" || !l) return "EmptyLayout";
   return DefaultLayout;
 });
+
+onMounted(async () => {
+  if (authStore.isAuthenticated && !authStore.permissionLoaded) {
+    try {
+      await authStore.checkPermission();
+    } catch {
+      authStore.permissionLoaded = true;
+    }
+  } else {
+    authStore.permissionLoaded = true;
+  }
+});
 </script>
+
 
 <style>
 html,

@@ -1,40 +1,78 @@
 <?php
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Api\AuthController;
 use Illuminate\Http\Request;
-use App\Http\Controllers\Api\AdminController;
+use App\Http\Controllers\Api\Admin\AdminController;
+use App\Http\Controllers\Api\Admin\UserManagerController;
+use App\Http\Controllers\Api\Auth\AuthController;
+use App\Http\Controllers\Api\Auth\OTPController;
+use App\Http\Controllers\Api\Auth\AdminAuthController;
 
-// API login
-Route::post('/login', [AuthController::class, 'login']);
-// API register
-Route::post('/register',[AuthController::class,'register']);
-// API admin → middleware checkrole
-Route::middleware(['authapi:sanctum'])->group(function() {
-    // Logout - cần auth nhưng không cần role
-    Route::post('/logout', [AuthController::class, 'logout']);
-    Route::get('/admin/check-permission', function (Request $request) {
+
+/**-------------------
+ * ROUTER FOR CLIENT--
+ *-------------------*/
+Route::prefix('client')->group(function () {
+    // API login
+    Route::post('/login', [AuthController::class, 'login']);
+    // API register
+    Route::post('/register',[AuthController::class,'register']);
+    // API admin → middleware checkrole
+    Route::middleware(['authapi:sanctum'])->group(function() {
+        Route::post('/logout', [AuthController::class, 'logout']);
+    });
+    // kiểm tra admin-token (chỉ check token hợp lệ)
+    Route::middleware(['authapi:sanctum'])->get('/check-permission', function (Request $request) {
+
         $user = $request->user();
         $rolesFlags = $user->getRoleFlags();
-        
-        $isAdmin = $rolesFlags['is_admin'] || 
-                   $rolesFlags['is_boss'] || 
-                   $rolesFlags['is_content_manager'];
-        
+
+        $isAdmin = $rolesFlags['is_admin']
+                || $rolesFlags['is_boss']
+                || $rolesFlags['is_content_manager'];
+
         return response()->json([
-            'is_admin' => $isAdmin,
-            'user' => $user,
+            'is_admin'    => $isAdmin,
+            'user'        => $user,
             'roles_flags' => $rolesFlags,
-            'message' => $isAdmin ? 'Access granted' : 'Access denied'
         ]);
     });
-    // Admin routes - cần cả auth và role
-    Route::middleware(['checkrole:boss,admin,content_manager'])->group(function() {
-        Route::get('/admin', [AdminController::class, 'dashboard']);
-    });
+});
+
+
+
+/**
+ * -------------------------
+ * ADMIN AUTH & OTP APIs
+ * -------------------------
+ */
+Route::prefix('admin/auth')->group(function () {
+    // OTP APIs
+    Route::post('/send-otp', [OTPController::class, 'sendOTP']);
+    Route::post('/verify-otp', [OTPController::class, 'verifyOTP']);
+    Route::post('/check-verification', [OTPController::class, 'checkVerification']);
+    
+    // Token validation APIs (public)
+    Route::post('/check-token', [AdminAuthController::class, 'checkAdminToken']);
+    Route::get('/check-expiry', [AdminAuthController::class, 'checkTokenExpiry']);
     
 });
 
-// Route 404 fallback cho frontend
+/**
+ * -------------------------
+ * ADMIN PROTECTED APIs
+ * -------------------------
+ */
+Route::prefix('admin')->middleware(['admin.token'])->group(function () {
+    // Admin dashboard & management
+    Route::get('/dashboard', [AdminController::class, 'dashboard']);
+    Route::get('/test', [AdminAuthController::class, 'testToken']);
+    // Router user management
+    Route::get('/list-user',[UserManagerController::class,'getAllUser']);
+    // Route::get('/users', [AdminController::class, 'getUsers']);
+    // Route::get('/reports', [AdminController::class, 'getReports']);
+});
+
+// Route 404 fallback
 Route::fallback(function() {
     return response()->json([
         'message' => 'Route not found'

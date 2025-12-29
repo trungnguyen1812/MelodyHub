@@ -1,4 +1,4 @@
-import LoginAdminView from '@admin/auth/views/LoginAdminView.vue'; 
+import LoginAdminView from '@/modules/admin/views/auth/LoginAdminView.vue'; 
 
 export const ROUTER_AUTH_ADMIN = [
   {
@@ -11,5 +11,3 @@ export const ROUTER_AUTH_ADMIN = [
     },
   },
 ];
-
-export default ROUTER_AUTH_ADMIN;

@@ -1,6 +1,6 @@
-import LoginView from "@client/auth/views/login.vue";
-import RegisterView from "@client/auth/views/register.vue";
-import LoginSuccessView from '@client/auth/views/LoginSuccess.vue';
+import LoginView from "@/modules/client/views/auth/login.vue";
+import RegisterView from "@/modules/client/views/auth/register.vue";
+import LoginSuccessView from '@/modules/client/views/auth/LoginSuccess.vue';
 
 // ========================== ROUTER =============================
 export const ROUTER_AUTH = [

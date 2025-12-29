@@ -15,7 +15,7 @@ class AuthHelper
 {
     protected const SESSION_USER_KEY = 'auth_user';
     protected const SESSION_TOKENS_KEY = 'auth_tokens';
-    protected const COOKIE_NAME = 'auth_token';
+    protected const COOKIE_NAME = 'client_token';
     protected const DEFAULT_SECRET = 'change_this_secret';
 
     protected static function ensureSession(): void

@@ -16,7 +16,6 @@
             />
           </router-link>
         </div>
-
         <!-- Navigation (Hidden on mobile) -->
         <nav class="hidden sm:flex items-center space-x-4">
           <router-link
@@ -73,7 +72,7 @@
       <!-- Right Side: Auth + Hamburger Menu -->
       <div class="flex items-center space-x-3">
         <!-- Auth Buttons (Hidden on mobile) -->
-        <!-- Hiển thị nút Try for Free nếu chưa đăng nhập -->
+        <!-- Display the Try for Free button if you are not logged in. -->
         <div class="hidden sm:flex space-x-3" v-if="!authStore.isAuthenticated">
           <button
             @click="handleLogin"
@@ -84,7 +83,7 @@
           </button>
         </div>
 
-        <!-- Nếu đã đăng nhập, hiển thị avatar hoặc menu -->
+        <!-- If you are already logged in, please display your avatar or menu. -->
         <div class="hidden sm:flex relative" ref="profileDropdownRef" v-else>
           <!-- Trigger dropdown -->
           <button
@@ -111,6 +110,14 @@
               role="menuitem"
             >
               Profile
+            </button>
+            <button
+              v-if="authStore.permissionLoaded && authStore.isAdmin"
+              @click="adminPage"
+              class="block w-full text-left px-4 py-2 text-sm hover:text-white transition-colors duration-200 drop-shadow-[0_0_10px_#22d3ee]"
+              role="menuitem"
+            >
+              Admin
             </button>
             <hr>
             <button
@@ -168,6 +175,7 @@
         >
           Try for Free
         </button>
+       
         <button
           @click="handleLogin"
           class="bg-gray-700 text-white px-3 py-1.5 rounded-md hover:bg-gray-600 text-sm font-medium"
@@ -274,7 +282,6 @@ const logo = new URL(
 ).href;
 
 
-
 const toggleDropdown = () => {
   isDropdownOpen.value = !isDropdownOpen.value;
 };
@@ -304,6 +311,10 @@ const handleClickOutside = (event: MouseEvent) => {
     dropdownProfileOpen.value = false;
   }
 };
+
+const adminPage =()=>{
+  router.push({name: "admin.dashboard"})
+}
 
 onMounted(() => {
   document.addEventListener("click", handleClickOutside);
