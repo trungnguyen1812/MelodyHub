@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Log;
 use App\Mail\SendOTP;
 use App\Models\User;
 
@@ -54,7 +55,7 @@ class OTPController extends Controller
                 'email' => $this->maskEmail($email)
             ]);
         } catch (\Exception $e) {
-            \Log::error('Lỗi gửi OTP: ' . $e->getMessage());
+            Log::error('Lỗi gửi OTP: ' . $e->getMessage());
 
             return response()->json([
                 'success' => false,

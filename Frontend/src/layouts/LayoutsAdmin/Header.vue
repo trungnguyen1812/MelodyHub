@@ -11,18 +11,6 @@
             </div>
         </div>
 
-        <!-- Center section: Search bar -->
-        <div class="header-center">
-            <div class="search-container">
-                <img src="@/assets/images/icon/search.png" alt="Search" class="search-icon">
-                <input 
-                    type="text" 
-                    class="search-input" 
-                    placeholder="Search songs, artists, albums..."
-                >
-            </div>
-        </div>
-
         <!-- Right section: User actions -->
         <div class="header-right">
             <button class="notification-btn">

@@ -36,7 +36,6 @@ router.beforeEach(async (to, from) => {
 
   // Không phải admin → cho đi thẳng
   if (!to.path.startsWith('/admin')) {
-    NProgress.done();
     return true;
   }
 
@@ -46,9 +45,11 @@ router.beforeEach(async (to, from) => {
 
   // Chưa login client
   if (!client_token) {
-    NProgress.done();
     return { path: '/login' };
   }
+
+
+ 
 
   try {
     const now = Date.now();
@@ -63,7 +64,6 @@ router.beforeEach(async (to, from) => {
     }
 
     if (!isAdmin) {
-      NProgress.done();
       return { path: '/403' };
     }
 

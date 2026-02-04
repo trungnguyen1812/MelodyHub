@@ -34,5 +34,16 @@ return [
             'channel' => env('SLACK_BOT_USER_DEFAULT_CHANNEL'),
         ],
     ],
+    // config/services.php
+    'sepay' => [
+        'api_url' => env('SEPAY_API_URL'),
+        'api_token' => env('SEPAY_API_TOKEN'),          // giữ nếu dùng cho cả API call & webhook
+        // hoặc thêm riêng
+        'webhook_api_key' => env('SEPAY_WEBHOOK_API_KEY', env('SEPAY_API_TOKEN')),
+        'webhook_secret' => env('SEPAY_WEBHOOK_SECRET', ''),
+        'bank_account' => env('SEPAY_BANK_ACCOUNT'),
+        'bank_provider' => env('SEPAY_BANK_PROVIDER'),
+    ],
+
 
 ];

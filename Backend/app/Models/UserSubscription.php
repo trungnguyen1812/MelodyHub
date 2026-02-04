@@ -33,10 +33,10 @@ class UserSubscription extends Model
 	public $timestamps = false;
 
 	protected $casts = [
-		'user_id' => 'int',
-		'plan_id' => 'int',
-		'start_date' => 'datetime',
-		'end_date' => 'datetime',
+		'user_id'   => 'int',
+		'plan_id'   => 'int',
+		'starts_at' => 'datetime',
+		'ends_at'   => 'datetime',
 		'canceled_at' => 'datetime'
 	];
 
@@ -44,10 +44,11 @@ class UserSubscription extends Model
 		'user_id',
 		'plan_id',
 		'status',
-		'start_date',
-		'end_date',
+		'starts_at',
+		'ends_at',
 		'canceled_at'
 	];
+
 
 	public function subscription_plan()
 	{

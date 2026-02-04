@@ -49,7 +49,21 @@
           </div>
           <ul class="submenu">
             <li><img src="@/assets/images/icon/songs.svg" alt=""> Songs</li>
-            <li><img src="@/assets/images/icon/artist.svg" alt=""> Artists</li>
+            <router-link
+              :to="{ name: 'admin.artistsmanager' }"
+              custom
+              v-slot="{ navigate, isActive }"
+            >
+              <li
+                :class="{ active: isActive }"
+                @click="navigate"
+                @keyup.enter="navigate"
+                role="link"
+                tabindex="0"
+              >
+                <li><img src="@/assets/images/icon/artist.svg" alt=""> Artists</li>
+              </li>
+            </router-link>
             <li><img src="@/assets/images/icon/album.svg" alt=""> Albums</li>
             <li><img src="@/assets/images/icon/Genres.png" alt=""> Genres</li>
           </ul>

@@ -5,7 +5,19 @@ use App\Http\Controllers\Api\Admin\AdminController;
 use App\Http\Controllers\Api\Admin\UserManagerController;
 use App\Http\Controllers\Api\Auth\AuthController;
 use App\Http\Controllers\Api\Auth\OTPController;
-use App\Http\Controllers\Api\Auth\AdminAuthController;
+use App\Http\Controllers\Api\Admin\AdminAuthController;
+use App\Http\Controllers\Api\client\SubscriptionController; 
+use App\Http\Controllers\Api\Payment\PaymentController;
+use App\Http\Controllers\Api\Payment\UserSubscriptionController;
+
+
+
+// routes/api.php
+Route::match(['GET', 'POST'], 'payment/sepay/webhook', [
+    PaymentController::class,
+    'webhook'
+]);
+
 
 
 /**-------------------
@@ -36,6 +48,21 @@ Route::prefix('client')->group(function () {
             'roles_flags' => $rolesFlags,
         ]);
     });
+    // 
+    Route::get('/showsubcription', [SubscriptionController::class,'getAllSubscription']);
+    // payment
+    Route::post('/payment/create-qr', [PaymentController::class, 'create_QR'])
+        ->middleware('auth:sanctum');
+
+    
+
+    Route::middleware('auth:sanctum')->get(
+        '/me/subscription',
+        [UserSubscriptionController::class, 'me']
+    );
+
+
+
 });
 
 
@@ -68,6 +95,11 @@ Route::prefix('admin')->middleware(['admin.token'])->group(function () {
     Route::get('/test', [AdminAuthController::class, 'testToken']);
     // Router user management
     Route::get('/list-user',[UserManagerController::class,'getAllUser']);
+    Route::post('/add-user',[UserManagerController::class,'add']);
+    Route::post('/search-user',[UserManagerController::class,'search']);
+    Route::get('/users/{user}', [UserManagerController::class, 'show']);    
+    Route::post('/user/delete/{user}',[UserManagerController::class,'delete']);
+    Route::post('/users/update/{user}', [UserManagerController::class, 'update']);
     // Route::get('/users', [AdminController::class, 'getUsers']);
     // Route::get('/reports', [AdminController::class, 'getReports']);
 });

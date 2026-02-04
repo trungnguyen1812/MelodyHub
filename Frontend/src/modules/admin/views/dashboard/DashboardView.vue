@@ -59,7 +59,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import type { ApexOptions } from 'apexcharts';
-
+import VueApexCharts from "vue3-apexcharts";
 
 const series = ref([
   {

@@ -8,7 +8,6 @@ namespace App\Models;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
 use Laravel\Sanctum\HasApiTokens;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -22,7 +21,6 @@ use Illuminate\Notifications\Notifiable;
  * @property string $email
  * @property string|null $phone
  * @property string|null $username
- * @property Carbon|null $email_verified_at
  * @property Carbon|null $phone_verified_at
  * @property string $password
  * @property string|null $avatar_url
@@ -91,11 +89,9 @@ use Illuminate\Notifications\Notifiable;
  */
 class User extends Authenticatable
 {
-	use HasApiTokens, Notifiable, SoftDeletes;
-	use SoftDeletes;
+	use HasApiTokens, Notifiable;
 	protected $table = 'users';
 	protected $casts = [
-		'email_verified_at' => 'datetime',
 		'phone_verified_at' => 'datetime',
 		'date_of_birth' => 'datetime',
 		'published_at' => 'datetime',
@@ -118,15 +114,11 @@ class User extends Authenticatable
 		'email',
 		'phone',
 		'username',
-		'email_verified_at',
-		'phone_verified_at',
 		'password',
 		'avatar_url',
-		'banner_url',
 		'date_of_birth',
 		'gender',
 		'country',
-		'language',
 		'timezone',
 		'bio',
 		'status',
@@ -325,8 +317,9 @@ class User extends Authenticatable
 
 	public function roles()
 	{
-		return $this->belongsToMany(Role::class, 'user_roles')
-					->withPivot('id', 'assigned_by', 'assigned_at', 'expires_at', 'is_primary');
+		 return $this->belongsToMany(Role::class, 'user_roles', 'user_id', 'role_id')
+            ->withPivot('is_primary', 'expires_at', 'assigned_by', 'assigned_at')
+			->orderByDesc('user_roles.is_primary');
 	}
 
 	public function user_subscriptions()
@@ -359,6 +352,29 @@ class User extends Authenticatable
 		if ($role) {
 			$this->roles()->syncWithoutDetaching([$role->id]);
 		}
+	}
+
+	public function scopeSearch($query , $q) {
+		if (!$q) return $query;
+		return $query->where(function ($sub) use ($q) {
+			$sub->where	('name' , 'like', "%$q%")
+            	->orWhere('email', 'like', "%$q%")
+            	->orWhere('username', 'like', "%$q%"
+			);
+		});
+	}
+
+	public function subscriptions()
+	{
+		return $this->hasMany(UserSubscription::class);
+	}
+
+	public function activeSubscription()
+	{
+		return $this->hasOne(UserSubscription::class)
+			->where('status', 'active')
+			->where('ends_at', '>', now())
+			->orderByDesc('ends_at');
 	}
 
 

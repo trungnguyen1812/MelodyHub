@@ -1,3 +1,4 @@
+
 <?php
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -19,11 +20,11 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->prepend(HandleCors::class);
         $middleware->alias([
                 'checkrole' => CheckRole::class,
-                'authapi'   => Authenticate::class,
+                'authapi'   => Authenticate::class, 
                 'admin.token' => AdminTokenMiddleware::class,
             ]);
     })
-    
+
     ->withExceptions(function (Exceptions $exceptions) {
         //
     })

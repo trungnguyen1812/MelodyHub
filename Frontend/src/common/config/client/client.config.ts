@@ -8,6 +8,11 @@ import ArtistSongsView from '@/modules/client/views/artists/ArtistSongsView.vue'
 // Music
 import AllNewMusicView from '@/modules/client/views/music/AllNewMusicView.vue';
 import AllPopularMusicView from '@/modules/client/views/music/AllPopularMusicView.vue';
+// partner
+import PartnerIndexView from '@/modules/client/views/partner/Partner.index.view.vue';
+// user
+import UserUpgradeView from '@/modules/client/views/user/UserUpgrade.view.vue';
+
 
 export const CLIENT_ROUTES = [
   {
@@ -42,7 +47,18 @@ export const CLIENT_ROUTES = [
         path: 'music/popular',
         name: 'client.music.popular',
         component: AllPopularMusicView
-      }
+      },
+      {
+        path: 'partner/index',
+        name: 'client.partner.index',
+        component: PartnerIndexView
+      },
+      // user
+      {
+        path: 'user/upgrade',
+        name: 'client.user.upgrade',
+        component: UserUpgradeView
+      },
     ]
   }
 ];

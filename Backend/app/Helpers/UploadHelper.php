@@ -14,24 +14,24 @@ class FileUploadHelper
      * @param string|null $oldFilePath
      * @return string|null
      */
-    public static function upload($file, $folder = 'uploads', $oldFilePath = null)
+    public static function upload($file, $folder = 'uploads', $oldFilePath = null, $disk = 'public')
     {
-        if (!$file) {
+        if (!$file || !$file instanceof \Illuminate\Http\UploadedFile) {
             return $oldFilePath;
         }
 
         // Xoá file cũ nếu có
-        if ($oldFilePath && Storage::exists($oldFilePath)) {
-            Storage::delete($oldFilePath);
+        if ($oldFilePath && Storage::disk($disk)->exists($oldFilePath)) {
+            Storage::disk($disk)->delete($oldFilePath);
         }
 
         // Tạo tên file ngẫu nhiên
         $fileName = time() . '_' . Str::random(10) . '.' . $file->getClientOriginalExtension();
 
-        // Lưu file vào thư mục storage/app/public/$folder
-        $filePath = $file->storeAs('public/' . $folder, $fileName);
+        // Lưu file
+        $filePath = $file->storeAs($folder, $fileName, $disk);
 
-        // Trả về đường dẫn tương đối (dùng trong DB)
+        // Trả về đường dẫn tương đối
         return $filePath;
     }
 

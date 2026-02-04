@@ -86,6 +86,8 @@ import router from "@/modules/router";
 import { ref } from "vue";
 import { useAuthStore } from "@/store/authStore";
 import { useNotificationStore } from "@/store/notificationStore";
+import { useUserStore } from '@/modules/client/stores/users/UserStore';
+
 import "vue-toastification/dist/index.css";
 import { nextTick } from 'vue';
 
@@ -98,6 +100,7 @@ const RegisterView = () => {
 const email = ref("");
 const password = ref("");
 const notificationStore = useNotificationStore();
+const userStore = useUserStore();
 
 const auth = useAuthStore();
 const handleLogin = async () => {
@@ -112,6 +115,7 @@ const handleLogin = async () => {
 
     setTimeout(() => notificationStore.clear(), 3000);
     await auth.checkPermission();
+    await userStore.fetchSubscriptionStatus();
   } catch (err: any) {
     console.error(err);
     notificationStore.notify(err.response?.data?.message || "Login failed", "error");
