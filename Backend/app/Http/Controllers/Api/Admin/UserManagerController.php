@@ -21,9 +21,7 @@ class UserManagerController extends Controller
     {
         $users = User::with('roles')->get();
 
-        return response()->json([
-            'users' => $users
-        ]);
+        return response()->json($users);
     }
 
     public function add(Request $request)

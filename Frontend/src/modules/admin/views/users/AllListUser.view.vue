@@ -8,18 +8,22 @@
             <div class="header-actions">
                 <button @click="CreateUser" class="btn-add-user">
                     <span class="btn-icon">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v6m3-3H9m12 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                            stroke="currentColor" class="size-6">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                d="M12 9v6m3-3H9m12 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
                         </svg>
                     </span>
                     Add New User
                 </button>
-               
-                 <div class="search-box">
+
+                <div class="search-box">
                     <input type="text" placeholder="Search users..." v-model="keyword" @input="onSearch">
                     <span class="search-icon">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                            stroke="currentColor" class="size-6">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
                         </svg>
                     </span>
                 </div>
@@ -31,11 +35,15 @@
                 <h2>Recent Users</h2>
                 <button class="btn-view-all" @click="router.back()">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="size-5">
-                        <path fill-rule="evenodd" d="M7.793 2.232a.75.75 0 0 1-.025 1.06L3.622 7.25h10.003a5.375 5.375 0 0 1 0 10.75H10.75a.75.75 0 0 1 0-1.5h2.875a3.875 3.875 0 0 0 0-7.75H3.622l4.146 3.957a.75.75 0 0 1-1.036 1.085l-5.5-5.25a.75.75 0 0 1 0-1.085l5.5-5.25a.75.75 0 0 1 1.06.025Z" clip-rule="evenodd" />
+                        <path fill-rule="evenodd"
+                            d="M7.793 2.232a.75.75 0 0 1-.025 1.06L3.622 7.25h10.003a5.375 5.375 0 0 1 0 10.75H10.75a.75.75 0 0 1 0-1.5h2.875a3.875 3.875 0 0 0 0-7.75H3.622l4.146 3.957a.75.75 0 0 1-1.036 1.085l-5.5-5.25a.75.75 0 0 1 0-1.085l5.5-5.25a.75.75 0 0 1 1.06.025Z"
+                            clip-rule="evenodd" />
                     </svg>
                     Back
                 </button>
+
             </div>
+
             <div class="table-container">
                 <table class="users-table">
                     <thead>
@@ -53,7 +61,7 @@
                     </thead>
                     <tbody>
                         <tr v-for="user in users" :key="user.id">
-                              <td>
+                            <td>
                                 <input type="checkbox" class="table-checkbox">
                             </td>
                             <td class="user-cell">
@@ -66,10 +74,9 @@
                                 </div>
                             </td>
                             <td>{{ user.email }}</td>
-                             <td>
+                            <td>
                                 <span
-                                    :class="`role-badge role-${(user.roles?.[0]?.name ?? 'user_free').toLowerCase()}`"
-                                >
+                                    :class="`role-badge role-${(user.roles?.[0]?.name ?? 'user_free').toLowerCase()}`">
                                     {{ user.role_display_name ?? "Free User" }}
                                 </span>
                             </td>
@@ -82,20 +89,29 @@
                             <td>
                                 <div class="action-buttons">
                                     <button class="btn-action btn-edit" @click="viewUpdateUser(user.id)">
-                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="size-5">
-                                            <path d="m5.433 13.917 1.262-3.155A4 4 0 0 1 7.58 9.42l6.92-6.918a2.121 2.121 0 0 1 3 3l-6.92 6.918c-.383.383-.84.685-1.343.886l-3.154 1.262a.5.5 0 0 1-.65-.65Z" />
-                                            <path d="M3.5 5.75c0-.69.56-1.25 1.25-1.25H10A.75.75 0 0 0 10 3H4.75A2.75 2.75 0 0 0 2 5.75v9.5A2.75 2.75 0 0 0 4.75 18h9.5A2.75 2.75 0 0 0 17 15.25V10a.75.75 0 0 0-1.5 0v5.25c0 .69-.56 1.25-1.25 1.25h-9.5c-.69 0-1.25-.56-1.25-1.25v-9.5Z" />
+                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"
+                                            class="size-5">
+                                            <path
+                                                d="m5.433 13.917 1.262-3.155A4 4 0 0 1 7.58 9.42l6.92-6.918a2.121 2.121 0 0 1 3 3l-6.92 6.918c-.383.383-.84.685-1.343.886l-3.154 1.262a.5.5 0 0 1-.65-.65Z" />
+                                            <path
+                                                d="M3.5 5.75c0-.69.56-1.25 1.25-1.25H10A.75.75 0 0 0 10 3H4.75A2.75 2.75 0 0 0 2 5.75v9.5A2.75 2.75 0 0 0 4.75 18h9.5A2.75 2.75 0 0 0 17 15.25V10a.75.75 0 0 0-1.5 0v5.25c0 .69-.56 1.25-1.25 1.25h-9.5c-.69 0-1.25-.56-1.25-1.25v-9.5Z" />
                                         </svg>
                                     </button>
                                     <button class="btn-action btn-delete" @click="deleteUser(user.id)">
-                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="size-5">
-                                            <path fill-rule="evenodd" d="M8.75 1A2.75 2.75 0 0 0 6 3.75v.443c-.795.077-1.584.176-2.365.298a.75.75 0 1 0 .23 1.482l.149-.022.841 10.518A2.75 2.75 0 0 0 7.596 19h4.807a2.75 2.75 0 0 0 2.742-2.53l.841-10.52.149.023a.75.75 0 0 0 .23-1.482A41.03 41.03 0 0 0 14 4.193V3.75A2.75 2.75 0 0 0 11.25 1h-2.5ZM10 4c.84 0 1.673.025 2.5.075V3.75c0-.69-.56-1.25-1.25-1.25h-2.5c-.69 0-1.25.56-1.25 1.25v.325C8.327 4.025 9.16 4 10 4ZM8.58 7.72a.75.75 0 0 0-1.5.06l.3 7.5a.75.75 0 1 0 1.5-.06l-.3-7.5Zm4.34.06a.75.75 0 1 0-1.5-.06l-.3 7.5a.75.75 0 1 0 1.5.06l.3-7.5Z" clip-rule="evenodd" />
+                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"
+                                            class="size-5">
+                                            <path fill-rule="evenodd"
+                                                d="M8.75 1A2.75 2.75 0 0 0 6 3.75v.443c-.795.077-1.584.176-2.365.298a.75.75 0 1 0 .23 1.482l.149-.022.841 10.518A2.75 2.75 0 0 0 7.596 19h4.807a2.75 2.75 0 0 0 2.742-2.53l.841-10.52.149.023a.75.75 0 0 0 .23-1.482A41.03 41.03 0 0 0 14 4.193V3.75A2.75 2.75 0 0 0 11.25 1h-2.5ZM10 4c.84 0 1.673.025 2.5.075V3.75c0-.69-.56-1.25-1.25-1.25h-2.5c-.69 0-1.25.56-1.25 1.25v.325C8.327 4.025 9.16 4 10 4ZM8.58 7.72a.75.75 0 0 0-1.5.06l.3 7.5a.75.75 0 1 0 1.5-.06l-.3-7.5Zm4.34.06a.75.75 0 1 0-1.5-.06l-.3 7.5a.75.75 0 1 0 1.5.06l.3-7.5Z"
+                                                clip-rule="evenodd" />
                                         </svg>
                                     </button>
                                     <button class="btn-action btn-view" @click="viewDetailUser(user.id)">
-                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="size-5">
+                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"
+                                            class="size-5">
                                             <path d="M10 12.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Z" />
-                                            <path fill-rule="evenodd" d="M.664 10.59a1.651 1.651 0 0 1 0-1.186A10.004 10.004 0 0 1 10 3c4.257 0 7.893 2.66 9.336 6.41.147.381.146.804 0 1.186A10.004 10.004 0 0 1 10 17c-4.257 0-7.893-2.66-9.336-6.41ZM14 10a4 4 0 1 1-8 0 4 4 0 0 1 8 0Z" clip-rule="evenodd" />
+                                            <path fill-rule="evenodd"
+                                                d="M.664 10.59a1.651 1.651 0 0 1 0-1.186A10.004 10.004 0 0 1 10 3c4.257 0 7.893 2.66 9.336 6.41.147.381.146.804 0 1.186A10.004 10.004 0 0 1 10 17c-4.257 0-7.893-2.66-9.336-6.41ZM14 10a4 4 0 1 1-8 0 4 4 0 0 1 8 0Z"
+                                                clip-rule="evenodd" />
                                         </svg>
                                     </button>
                                 </div>
@@ -103,6 +119,14 @@
                         </tr>
                     </tbody>
                 </table>
+                <div v-if="loading" class="loading-overlay">
+                    <div class="spinner">
+                        <div class="dot"></div>
+                        <div class="dot"></div>
+                        <div class="dot"></div>
+                    </div>
+                    <span>Loading data...</span>
+                </div>
             </div>
         </div>
     </div>
@@ -117,7 +141,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
-import { useUserStore ,getFullImageUrl } from '@/modules/admin/stores/users/userStore';
+import { useUserStore, getFullImageUrl } from '@/modules/admin/stores/users/userStore';
 import { storeToRefs } from "pinia";
 import router from '@/modules/router';
 import Swal from 'sweetalert2';
@@ -125,22 +149,22 @@ import { useNotificationStore } from "@/store/notificationStore";
 
 const keyword = ref("");
 const notificationStore = useNotificationStore();
-let searchTimeout: number | null = null;    
+let searchTimeout: number | null = null;
 const userStore = useUserStore();
 const { users, loading } = storeToRefs(userStore);
 
-const CreateUser =()=>{
-    router.push({name:"admin.usermanager.add"});
+const CreateUser = () => {
+    router.push({ name: "admin.usermanager.add" });
 }
 
-const onSearch = ()=>{
-    if (searchTimeout)clearTimeout(searchTimeout);
-    searchTimeout = window.setTimeout(async() => {
+const onSearch = () => {
+    if (searchTimeout) clearTimeout(searchTimeout);
+    searchTimeout = window.setTimeout(async () => {
         if (!keyword.value.trim()) {
             await userStore.fetchUsers();
             return;
         }
-         await userStore.fetchSearchUser(
+        await userStore.fetchSearchUser(
             keyword.value
         );
     }, 300);
@@ -148,14 +172,14 @@ const onSearch = ()=>{
 
 function viewDetailUser(id: number) {
     router.push({
-        name:"admin.usermanager.detail",
+        name: "admin.usermanager.detail",
         params: { id }
     });
 }
 
 function viewUpdateUser(id: number) {
     router.push({
-        name:"admin.usermanager.update",
+        name: "admin.usermanager.update",
         params: { id }
     });
 }
@@ -182,27 +206,27 @@ async function deleteUser(id: number) {
                 cancelButton: 'btn btn-secondary'
             }
         });
-    
+
         if (!result.isConfirmed) return;
-        
+
         loading.value = true;
         await userStore.fetchDelete(id);
         await userStore.fetchUsers();
         notificationStore.notify("Delete user successful", "success");
-        
-        router.push({name:"admin.usermanager.all"});
-    
+
+        router.push({ name: "admin.usermanager.all" });
+
     } catch (error: any) {
         const err = error as { response?: { status?: number } }
-        
+
         if (err.response?.status === 404) {
             router.push('/404')
         } else if (err.response?.status === 401) {
             router.push('/login')
         } else {
-            
+
         }
-        
+
     } finally {
         loading.value = false;
     }
@@ -228,7 +252,7 @@ onMounted(() => {
     flex-direction: column;
     padding: 25px;
     position: relative;
-   
+
     font-family: 'Afacad', sans-serif;
     color: white;
 }
@@ -871,6 +895,55 @@ onMounted(() => {
         width: 28px;
         height: 28px;
         font-size: 12px;
+    }
+}
+
+
+.loading-overlay {
+    margin: 0 auto;
+    background-color: #161d1f;
+    backdrop-filter: blur(3px);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 10;
+    border-radius: inherit;
+}
+
+.spinner {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+}
+
+.dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background-color: #1d455e;
+    animation: bounce 1.4s infinite ease-in-out both;
+}
+
+.dot:nth-child(1) {
+    animation-delay: -0.32s;
+}
+
+.dot:nth-child(2) {
+    animation-delay: -0.16s;
+}
+
+@keyframes bounce {
+
+    0%,
+    80%,
+    100% {
+        transform: scale(0);
+    }
+
+    40% {
+        transform: scale(1.0);
     }
 }
 </style>

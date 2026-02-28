@@ -46,7 +46,17 @@ export const useUserStore = defineStore("user", {
 
                 const data = await userService.getAllUser();
 
-                this.users = data.users
+                if (!data) {
+                    this.users = [];
+                    return;
+                }
+
+                 const rawArtists = Array.isArray(data)
+                ? data
+                : Array.isArray(data?.data)
+                ? data.data
+                : Object.values(data ?? {});
+                this.users = rawArtists
                     .filter((u: any) => !u.deleted_at)
                     .map((u: any) => ({
                         ...u,
@@ -58,6 +68,7 @@ export const useUserStore = defineStore("user", {
                             new Date(b.created_at).getTime() -
                             new Date(a.created_at).getTime()
                     );
+
 
             } catch (err: any) {
                 this.error = err?.message || "Failed to fetch users";

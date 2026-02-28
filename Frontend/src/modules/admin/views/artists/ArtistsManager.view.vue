@@ -6,7 +6,7 @@
                 <p class="subtitle">Manage All Artists Accounts</p>
             </div>
             <div class="header-actions">
-                <button @click="CreateUser" class="btn-add-user">
+                <button class="btn-add-user">
                     <span class="btn-icon">
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v6m3-3H9m12 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
@@ -14,133 +14,396 @@
                     </span>
                     Add New Artist
                 </button>
-               
-                <div class="search-box">
-                    <input type="text" placeholder="Search Artists..." v-model="keyword" @input="onSearch">
-                    <span class="search-icon">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
-                        </svg>
-                    </span>
-                </div>
             </div>
         </div>
 
-       
-    </div>
-    <div v-if="loading" class="loading-state">
-        Loading users...
-    </div>
-    <div v-else-if="users.length === 0" class="empty-state">
-        <div class="empty-icon">👥</div>
-        <p>No users found</p>
+        <!-- Main Content -->
+        <div class="main-content">
+            <div class="statistics-section">
+                <!-- Stats Cards -->
+                <div class="stats-cards">
+                    <div class="stats-header">
+                        <h2>Quick Stats</h2>
+                        <span class="stats-update">Updated just now</span>
+                    </div>
+                    
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-icon total-artists">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
+                                </svg>
+                            </div>
+                            <div class="stat-info">
+                                <h3>Total Artists</h3>
+                                <p class="stat-value">156</p>
+                                <p class="stat-change positive">+12% from last month</p>
+                            </div>
+                        </div>
+
+                        <div class="stat-card">
+                            <div class="stat-icon featured-artists">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.563.563 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.563.563 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z" />
+                                </svg>
+                            </div>
+                            <div class="stat-info">
+                                <h3>Featured Artists</h3>
+                                <p class="stat-value">24</p>
+                                <p class="stat-change">15% of total</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Chart Container -->
+                <div class="chart-container">
+                    <div class="section-header">
+                        <h2>Artists Distribution</h2>
+                        <div class="chart-filter">
+                            <select class="period-select">
+                                <option value="month">This Month</option>
+                                <option value="quarter">This Quarter</option>
+                                <option value="year">This Year</option>
+                            </select>
+                        </div>
+                    </div>
+                    <ApexChart
+                        type="bar"
+                        height="350"
+                        :options="chartOptions"
+                        :series="series"
+                    />
+                </div>
+            </div>
+
+            <!-- Top Artists Ranking-->
+            <div class="ranking-section">
+                <div class="ranking-header">
+                    <h2>Top Artists Ranking</h2>
+                    <div class="ranking-actions">
+                        <button class="btn-view-all" @click="ViewAllArtists">View All →</button>
+                    </div>
+                </div>
+
+                <div class="ranking-table">
+                    <div class="table-header">
+                        <div class="rank-col">Rank</div>
+                        <div class="artist-col">Artist</div>
+                        <div class="plays-col">Plays</div>
+                        <div class="followers-col">Followers</div>
+                        <div class="trend-col">Trend</div>
+                    </div>
+
+                    <div class="table-body">
+                        <!-- Top 1 -->
+                        <div class="table-row">
+                            <div class="rank-col">
+                                <span class="rank-number rank-1">1</span>
+                            </div>
+                            <div class="artist-col">
+                                <div class="artist-info">
+                                    <div class="artist-avatar">
+                                        <div class="avatar-placeholder">S</div>
+                                    </div>
+                                    <div class="artist-details">
+                                        <h4>Sơn Tùng M-TP</h4>
+                                        <p class="artist-category">Superstar</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="plays-col">
+                                <span class="stat-value">985M</span>
+                            </div>
+                            <div class="followers-col">
+                                <span class="stat-value">12.5M</span>
+                            </div>
+                            <div class="trend-col">
+                                <span class="trend-indicator trend-up">↗</span>
+                            </div>
+                        </div>
+
+                        <!-- Top 2 -->
+                        <div class="table-row">
+                            <div class="rank-col">
+                                <span class="rank-number rank-2">2</span>
+                            </div>
+                            <div class="artist-col">
+                                <div class="artist-info">
+                                    <div class="artist-avatar">
+                                        <div class="avatar-placeholder">Đ</div>
+                                    </div>
+                                    <div class="artist-details">
+                                        <h4>Đen Vâu</h4>
+                                        <p class="artist-category">Superstar</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="plays-col">
+                                <span class="stat-value">750M</span>
+                            </div>
+                            <div class="followers-col">
+                                <span class="stat-value">8.5M</span>
+                            </div>
+                            <div class="trend-col">
+                                <span class="trend-indicator trend-up">↗</span>
+                            </div>
+                        </div>
+
+                        <!-- Top 3 -->
+                        <div class="table-row">
+                            <div class="rank-col">
+                                <span class="rank-number rank-3">3</span>
+                            </div>
+                            <div class="artist-col">
+                                <div class="artist-info">
+                                    <div class="artist-avatar">
+                                        <div class="avatar-placeholder">M</div>
+                                    </div>
+                                    <div class="artist-details">
+                                        <h4>Mỹ Tâm</h4>
+                                        <p class="artist-category">Superstar</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="plays-col">
+                                <span class="stat-value">890M</span>
+                            </div>
+                            <div class="followers-col">
+                                <span class="stat-value">9.5M</span>
+                            </div>
+                            <div class="trend-col">
+                                <span class="trend-indicator trend-neutral">→</span>
+                            </div>
+                        </div>
+
+                        <!-- Top 4 -->
+                        <div class="table-row">
+                            <div class="rank-col">
+                                <span class="rank-number">4</span>
+                            </div>
+                            <div class="artist-col">
+                                <div class="artist-info">
+                                    <div class="artist-avatar">
+                                        <div class="avatar-placeholder">H</div>
+                                    </div>
+                                    <div class="artist-details">
+                                        <h4>Hòa Minzy</h4>
+                                        <p class="artist-category">Popular</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="plays-col">
+                                <span class="stat-value">680M</span>
+                            </div>
+                            <div class="followers-col">
+                                <span class="stat-value">7.2M</span>
+                            </div>
+                            <div class="trend-col">
+                                <span class="trend-indicator trend-up">↗</span>
+                            </div>
+                        </div>
+
+                        <!-- Top 5 -->
+                        <div class="table-row">
+                            <div class="rank-col">
+                                <span class="rank-number">5</span>
+                            </div>
+                            <div class="artist-col">
+                                <div class="artist-info">
+                                    <div class="artist-avatar">
+                                        <div class="avatar-placeholder">B</div>
+                                    </div>
+                                    <div class="artist-details">
+                                        <h4>Bích Phương</h4>
+                                        <p class="artist-category">Popular</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="plays-col">
+                                <span class="stat-value">520M</span>
+                            </div>
+                            <div class="followers-col">
+                                <span class="stat-value">5.8M</span>
+                            </div>
+                            <div class="trend-col">
+                                <span class="trend-indicator trend-up">↗</span>
+                            </div>
+                        </div>
+
+                        <!-- Top 6 -->
+                        <div class="table-row">
+                            <div class="rank-col">
+                                <span class="rank-number">6</span>
+                            </div>
+                            <div class="artist-col">
+                                <div class="artist-info">
+                                    <div class="artist-avatar">
+                                        <div class="avatar-placeholder">Đ</div>
+                                    </div>
+                                    <div class="artist-details">
+                                        <h4>Đức Phúc</h4>
+                                        <p class="artist-category">Rising</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="plays-col">
+                                <span class="stat-value">275M</span>
+                            </div>
+                            <div class="followers-col">
+                                <span class="stat-value">3.1M</span>
+                            </div>
+                            <div class="trend-col">
+                                <span class="trend-indicator trend-up">↗</span>
+                            </div>
+                        </div>
+
+                        <!-- Top 7 -->
+                        <div class="table-row">
+                            <div class="rank-col">
+                                <span class="rank-number">7</span>
+                            </div>
+                            <div class="artist-col">
+                                <div class="artist-info">
+                                    <div class="artist-avatar">
+                                        <div class="avatar-placeholder">A</div>
+                                    </div>
+                                    <div class="artist-details">
+                                        <h4>AMEE</h4>
+                                        <p class="artist-category">Rising</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="plays-col">
+                                <span class="stat-value">420M</span>
+                            </div>
+                            <div class="followers-col">
+                                <span class="stat-value">4.8M</span>
+                            </div>
+                            <div class="trend-col">
+                                <span class="trend-indicator trend-up">↗</span>
+                            </div>
+                        </div>
+
+                        <!-- Top 8 -->
+                        <div class="table-row">
+                            <div class="rank-col">
+                                <span class="rank-number">8</span>
+                            </div>
+                            <div class="artist-col">
+                                <div class="artist-info">
+                                    <div class="artist-avatar">
+                                        <div class="avatar-placeholder">T</div>
+                                    </div>
+                                    <div class="artist-details">
+                                        <h4>Trúc Nhân</h4>
+                                        <p class="artist-category">Rising</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="plays-col">
+                                <span class="stat-value">285M</span>
+                            </div>
+                            <div class="followers-col">
+                                <span class="stat-value">3.2M</span>
+                            </div>
+                            <div class="trend-col">
+                                <span class="trend-indicator trend-neutral">→</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="ranking-footer">
+                    <div class="pagination-info">
+                        Showing 8 of 156 artists
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted ,computed } from 'vue';
-import { getFullImageUrl, useUserStore } from '@/modules/admin/stores/users/userStore';
-import { storeToRefs } from "pinia";
+import VueApexCharts from "vue3-apexcharts"
+import type { ApexOptions } from "apexcharts"
+import { ref } from "vue"
 import router from '@/modules/router';
-import Swal from 'sweetalert2';
-import { useNotificationStore } from "@/store/notificationStore";
 
-const userStore = useUserStore();
-const notificationStore = useNotificationStore();
-const keyword = ref("");
-let searchTimeout: number | null = null;
-const { users, loading } = storeToRefs(userStore);
 
-const CreateUser =()=>{
-    router.push({name:"admin.usermanager.add"});
-}
+const ApexChart = VueApexCharts
 
-const ViewAllUser =()=>{
-    router.push({name:"admin.usermanager.all"});
-}
+const series = ref([
+  {
+    name: "Servings",
+    data: [44, 55, 41, 67, 22, 43, 21, 33, 45, 31, 87, 65, 35],
+  },
+])
 
-function viewDetailUser(id: number) {
-    router.push({
-        name:"admin.usermanager.detail",
-        params: { id }
-    });
-}
-
-function viewUpdateUser(id: number) {
-    router.push({
-        name:"admin.usermanager.update",
-        params: { id }
-    });
-}
-
-const onSearch = ()=>{
-    if (searchTimeout)clearTimeout(searchTimeout);
-    searchTimeout = window.setTimeout(async() => {
-        if (!keyword.value.trim()) {
-            await userStore.fetchUsers();
-            return;
+const chartOptions: ApexOptions = {
+  chart: {
+    type: "bar",
+    height: 350,
+  },
+  annotations: {
+    points: [
+      {
+        x: "Bananas",
+        seriesIndex: 0,
+        label: {
+          borderColor: "#775DD0",
+          offsetY: 0,
+          style: {
+            color: "#000",
+            background: "#775DD0",
+          },
+          text: "Bananas are good",
+        },
+      },
+    ],
+  },
+  plotOptions: {
+    bar: {
+      borderRadius: 10,
+      columnWidth: "50%",
+    },
+  },
+  dataLabels: {
+    enabled: false,
+  },
+  stroke: {
+    width: 0,
+  },
+  grid: {
+    row: {
+    //   colors: ["#fff", "#f2f2f2"],
+    },
+  },
+  xaxis: {
+    categories: [
+      "Apples","Oranges","Strawberries","Pineapples","Mangoes","Bananas",
+      "Blackberries","Pears","Watermelons","Cherries","Pomegranates","Tangerines","Papayas"
+    ],
+    labels: {
+        rotate: -45,
+        style: {
+            colors: "#fff", 
+            fontSize: "12px",
+            fontWeight: 500
         }
-         await userStore.fetchSearchUser(
-            keyword.value
-        );
-    }, 300);
+    },
+    tickPlacement: "on",
+  },
+  yaxis: {
+    title: {
+      text: "Servings",
+       
+    },
+  },
 }
 
-function formatDate(date: string) {
-    if (!date) return "";
-    return new Date(date).toLocaleDateString("vi-VN");
+const ViewAllArtists =()=>{
+    router.push({name:"admin.artistsmanager.all"});
 }
-
-async function deleteUser(id: number) {
-    try {
-        const result = await Swal.fire({
-            title: 'Delete User',
-            text: 'Are you sure you want to delete this user? This action cannot be undone.',
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonText: 'Yes, delete it!',
-            cancelButtonText: 'Cancel',
-            confirmButtonColor: '#d33',
-            cancelButtonColor: '#3085d6',
-            reverseButtons: true,
-            customClass: {
-                confirmButton: 'btn btn-danger',
-                cancelButton: 'btn btn-secondary'
-            }
-        });
-    
-        if (!result.isConfirmed) return;
-        
-        loading.value = true;
-        
-        await userStore.fetchDelete(id);
-        await userStore.fetchUsers();
-        notificationStore.notify("Delete user successful", "success");
-        
-        router.push({name:"admin.usermanager"});
-    
-    } catch (error: any) {
-        const err = error as { response?: { status?: number } }
-        
-        if (err.response?.status === 404) {
-            router.push('/404')
-        } else if (err.response?.status === 401) {
-            router.push('/login')
-        } else {
-             notificationStore.notify("Error delete user", "error");
-        }
-        
-    } finally {
-        loading.value = false;
-    }
-}
-
-
-const usersToShow = computed(() => userStore.users.slice(0, 10));
-
-onMounted(() => {
-    userStore.fetchUsers();
-});
 </script>
 
 <style scoped>
@@ -158,9 +421,9 @@ onMounted(() => {
     flex-direction: column;
     padding: 25px;
     position: relative;
-   
     font-family: 'Afacad', sans-serif;
     color: white;
+    overflow-y: auto;
 }
 
 /* Header Section */
@@ -190,26 +453,6 @@ onMounted(() => {
     margin-bottom: 0;
 }
 
-.user-avatar {
-    width: 45px;
-    height: 45px;
-    overflow: hidden;
-    border-radius: 50%;
-    background: #f0f0f0;
-}
-
-.avatar-img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover; 
-}
-
-.header-actions {
-    display: flex;
-    gap: 20px;
-    align-items: center;
-}
-
 .btn-add-user {
     background: linear-gradient(135deg, #00aaff, #0088cc);
     border: none;
@@ -232,338 +475,267 @@ onMounted(() => {
 }
 
 .btn-icon {
-    font-size: 18px;
-    font-weight: bold;
-}
-
-.search-box {
-    position: relative;
-}
-
-.search-box input {
-    background: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(0, 170, 255, 0.3);
-    border-radius: 8px;
-    padding: 10px 40px 10px 15px;
-    color: white;
-    width: 250px;
-    font-family: 'Afacad', sans-serif;
-    transition: all 0.3s ease;
-}
-
-.search-box input:focus {
-    outline: none;
-    border-color: #00aaff;
-    box-shadow: 0 0 10px rgba(0, 170, 255, 0.3);
-}
-
-.search-icon {
-    position: absolute;
-    right: 15px;
-    top: 50%;
-    transform: translateY(-50%);
-    color: rgba(255, 255, 255, 0.6);
-}
-
-/* Stats Grid */
-.stats-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 20px;
-    margin-bottom: 30px;
-}
-
-.stat-card {
-    background: rgba(255, 255, 255, 0.05);
-    border-radius: 12px;
-    padding: 20px;
-    display: flex;
-    align-items: center;
-    gap: 15px;
-    border: 1px solid rgba(0, 170, 255, 0.2);
-    transition: all 0.3s ease;
-    position: relative;
-    overflow: hidden;
-}
-
-.stat-card::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 3px;
-    opacity: 0.8;
-}
-
-.card-neon-blue::before {
-    background: linear-gradient(90deg, #00aaff, #00ccff);
-}
-
-.card-neon-green::before {
-    background: linear-gradient(90deg, #00ffaa, #00cc88);
-}
-
-.card-neon-purple::before {
-    background: linear-gradient(90deg, #aa00ff, #cc00ff);
-}
-
-.card-neon-orange::before {
-    background: linear-gradient(90deg, #ffaa00, #ff8800);
-}
-
-.stat-card:hover {
-    transform: translateY(-5px);
-    background: rgba(255, 255, 255, 0.08);
-    border-color: rgba(0, 170, 255, 0.4);
-    box-shadow: 0 10px 20px rgba(0, 170, 255, 0.1);
-}
-
-.stat-icon {
-    font-size: 32px;
-    width: 60px;
-    height: 60px;
     display: flex;
     align-items: center;
     justify-content: center;
-    background: rgba(255, 255, 255, 0.1);
-    border-radius: 10px;
 }
 
-.stat-content h3 {
+.btn-icon svg {
+    width: 18px;
+    height: 18px;
+}
+
+/* Main Content Layout */
+.main-content {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 25px;
+    flex: 1;
+}
+
+/* Statistics Section */
+.statistics-section {
+    display: flex;
+    flex-direction: column;
+    gap: 25px;
+}
+
+/* Chart Container */
+.chart-container {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    padding: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.section-header h2 {
+    font-size: 18px;
+    font-weight: 600;
+    color: #fff;
+    margin: 0;
+}
+
+.chart-filter {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.period-select {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: white;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-family: 'Afacad', sans-serif;
+    font-size: 14px;
+    cursor: pointer;
+}
+
+.period-select option {
+    background: #1a1a2e;
+    color: white;
+}
+
+/* Chart Placeholder */
+
+
+.chart-center {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    color: white;
+    font-size: 12px;
+}
+
+.center-value {
+    font-size: 20px;
+    font-weight: bold;
+    color: #00aaff;
+    margin-top: 5px;
+}
+
+.chart-legend {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 12px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 6px;
+    transition: all 0.3s ease;
+}
+
+.legend-item:hover {
+    background: rgba(255, 255, 255, 0.1);
+    transform: translateX(5px);
+}
+
+.legend-color {
+    width: 16px;
+    height: 16px;
+    border-radius: 4px;
+    flex-shrink: 0;
+}
+
+.legend-label {
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.9);
+}
+
+/* Stats Cards */
+.stats-cards {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    padding: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.stats-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.stats-header h2 {
+    font-size: 18px;
+    font-weight: 600;
+    color: #fff;
+    margin: 0;
+}
+
+.stats-update {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 15px;
+}
+
+.stat-card {
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 10px;
+    padding: 15px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    transition: all 0.3s ease;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.stat-card:hover {
+    background: rgba(255, 255, 255, 0.07);
+    border-color: rgba(0, 170, 255, 0.3);
+    transform: translateY(-2px);
+}
+
+.stat-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.stat-icon svg {
+    width: 24px;
+    height: 24px;
+    stroke-width: 2;
+}
+
+.total-artists {
+    background: linear-gradient(135deg, #00aaff22, #00aaff55);
+    color: #00aaff;
+}
+
+.featured-artists {
+    background: linear-gradient(135deg, #00ffaa22, #00ffaa55);
+    color: #00ffaa;
+}
+
+.total-plays {
+    background: linear-gradient(135deg, #ff6b6b22, #ff6b6b55);
+    color: #ff6b6b;
+}
+
+.total-followers {
+    background: linear-gradient(135deg, #aa00ff22, #aa00ff55);
+    color: #aa00ff;
+}
+
+.stat-info h3 {
     font-size: 14px;
     color: rgba(255, 255, 255, 0.7);
     margin: 0 0 5px 0;
     font-weight: 500;
 }
 
-.stat-number {
-    font-size: 28px;
-    font-weight: 600;
-    margin: 0 0 5px 0;
+.stat-value {
+    font-size: 22px;
+    font-weight: 700;
+    color: #fff;
+    margin: 0 0 3px 0;
 }
 
 .stat-change {
     font-size: 12px;
     margin: 0;
-    color: rgba(255, 255, 255, 0.6);
 }
 
 .stat-change.positive {
     color: #00ffaa;
 }
 
-.stat-change.neutral {
-    color: #aaaaff;
-}
-
-/* Table Section */
-.table-section {
-    flex: 1;
-    background: rgba(0, 0, 0, 0.2);
+/* Ranking Section */
+.ranking-section {
+    background: rgba(255, 255, 255, 0.05);
     border-radius: 12px;
     padding: 20px;
-    border: 1px solid rgba(0, 170, 255, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.1);
     display: flex;
-    height: 20vh;
     flex-direction: column;
-    overflow-y: auto;
-    overflow-x: hidden;
 }
 
-.table-section .section-header {
+.ranking-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
     margin-bottom: 20px;
-    padding-bottom: 15px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-.table-section .section-header h2 {
-    font-size: 20px;
-    margin: 0;
-    color: rgba(255, 255, 255, 0.9);
-}
-
-.table-container {
-    flex: 1;
-    overflow-y: auto;
-}
-
-.users-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 10px;
-}
-
-.users-table thead {
-    background: rgb(29, 69, 94);
-    position: sticky;
-    top: 0;
-    z-index: 10;
-}
-
-.users-table th {
-    padding: 15px;
-    text-align: left;
-    font-weight: 500;
-    color: rgba(255, 255, 255, 0.7);
-    border-bottom: 1px solid rgba(0, 170, 255, 0.3);
-    white-space: nowrap;
-}
-
-.users-table td {
-    padding: 15px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    vertical-align: middle;
-}
-
-.table-checkbox {
-    width: 18px;
-    height: 18px;
-    cursor: pointer;
-    accent-color: #00aaff;
-}
-
-.user-cell {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-}
-
-.user-avatar {
-    width: 40px;
-    height: 40px;
-    background: linear-gradient(135deg, #00aaff, #00ffaa);
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+.ranking-header h2 {
+    font-size: 18px;
     font-weight: 600;
-    font-size: 14px;
-    color: white;
-}
-
-.user-info {
-    display: flex;
-    flex-direction: column;
-}
-
-.user-name {
+    color: #fff;
     margin: 0;
-    font-weight: 500;
-    color: white;
-}
-
-.user-id {
-    margin: 0;
-    font-size: 12px;
-    color: rgba(255, 255, 255, 0.6);
-}
-
-/* Badges */
-.role-badge,
-.status-badge {
-    padding: 5px 12px;
-    border-radius: 20px;
-    font-size: 12px;
-    font-weight: 500;
-    display: inline-block;
-    white-space: nowrap;
-}
-
-/* Role badges - fixed for your data structure */
-.role-badge.role-admin,
-.role-badge.role-administrator {
-    background: rgba(255, 0, 0, 0.2);
-    color: #ff6666;
-    border: 1px solid rgba(255, 0, 0, 0.3);
-}
-
-.role-badge.role-artist {
-    background: rgba(0, 170, 255, 0.2);
-    color: #66ccff;
-    border: 1px solid rgba(0, 170, 255, 0.3);
-}
-
-.role-badge.role-listener {
-    background: rgba(0, 255, 170, 0.2);
-    color: #66ffcc;
-    border: 1px solid rgba(0, 255, 170, 0.3);
-}
-
-.role-badge.role-guest {
-    background: rgba(153, 153, 153, 0.2);
-    color: #cccccc;
-    border: 1px solid rgba(153, 153, 153, 0.3);
-}
-
-/* Status badges - fixed for your data structure */
-.status-badge.status-active {
-    background: rgba(0, 255, 0, 0.2);
-    color: #66ff66;
-    border: 1px solid rgba(0, 255, 0, 0.3);
-}
-
-.status-badge.status-inactive {
-    background: rgba(255, 255, 0, 0.2);
-    color: #ffff66;
-    border: 1px solid rgba(255, 255, 0, 0.3);
-}
-
-.status-badge.status-pending {
-    background: rgba(255, 165, 0, 0.2);
-    color: #ffcc66;
-    border: 1px solid rgba(255, 165, 0, 0.3);
-}
-
-/* Default status badge if status is unknown */
-.status-badge {
-    background: rgba(153, 153, 153, 0.2);
-    color: #cccccc;
-    border: 1px solid rgba(153, 153, 153, 0.3);
-}
-
-/* Action Buttons */
-.action-buttons {
-    display: flex;
-    gap: 8px;
-}
-
-.btn-action {
-    background: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    color: white;
-    width: 32px;
-    height: 32px;
-    border-radius: 6px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.2s ease;
-    font-size: 14px;
-}
-
-.btn-action:hover {
-    background: rgba(255, 255, 255, 0.2);
-    transform: scale(1.1);
-}
-
-.btn-edit:hover {
-    background: rgba(0, 170, 255, 0.3);
-    border-color: #00aaff;
-}
-
-.btn-delete:hover {
-    background: rgba(255, 0, 0, 0.3);
-    border-color: #ff0000;
-}
-
-.btn-view:hover {
-    background: rgba(0, 255, 0, 0.3);
-    border-color: #00ff00;
 }
 
 .btn-view-all {
@@ -579,108 +751,206 @@ onMounted(() => {
 }
 
 .btn-view-all:hover {
-    background: rgba(0, 170, 255, 0.1);
-    transform: translateX(5px);
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(0, 170, 255, 0.5);
 }
 
-/* Loading State */
-.loading-state {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    min-height: 200px;
-    color: rgba(255, 255, 255, 0.7);
+.btn-view-all svg {
+    width: 16px;
+    height: 16px;
 }
 
-/* Empty State */
-.empty-state {
+/* Ranking Table */
+.ranking-table {
+    flex: 1;
+    overflow-y: auto;
+}
+
+.table-header {
+    display: grid;
+    grid-template-columns: 60px 2fr 1fr 1fr 60px;
+    padding: 12px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.6);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.table-body {
     display: flex;
     flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    min-height: 200px;
-    color: rgba(255, 255, 255, 0.7);
-    text-align: center;
-    padding: 40px;
 }
 
-.empty-state .empty-icon {
-    font-size: 48px;
-    margin-bottom: 20px;
-    opacity: 0.5;
+.table-row {
+    display: grid;
+    grid-template-columns: 60px 2fr 1fr 1fr 60px;
+    padding: 15px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    align-items: center;
+}
+
+.table-row:hover {
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 8px;
+    padding-left: 10px;
+    padding-right: 10px;
+}
+
+.rank-col {
+    text-align: center;
+}
+
+.rank-number {
+    display: inline-block;
+    width: 30px;
+    height: 30px;
+    line-height: 30px;
+    border-radius: 50%;
+    font-weight: 700;
+    font-size: 14px;
+    background: rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.rank-1 {
+    background: linear-gradient(135deg, #ffd700, #ffaa00);
+    color: #000;
+}
+
+.rank-2 {
+    background: linear-gradient(135deg, #c0c0c0, #a0a0a0);
+    color: #000;
+}
+
+.rank-3 {
+    background: linear-gradient(135deg, #cd7f32, #a0522d);
+    color: #000;
+}
+
+.artist-col {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.artist-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+
+.avatar-placeholder {
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, #00aaff, #0088cc);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 700;
+    font-size: 16px;
+}
+
+.artist-details h4 {
+    font-size: 15px;
+    font-weight: 600;
+    color: #fff;
+    margin: 0 0 4px 0;
+}
+
+.artist-category {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.6);
+    margin: 0;
+}
+
+.plays-col, .followers-col {
+    font-size: 14px;
+    font-weight: 600;
+    color: #fff;
+}
+
+.trend-col {
+    text-align: center;
+}
+
+.trend-indicator {
+    font-size: 18px;
+    font-weight: bold;
+}
+
+.trend-up {
+    color: #00ffaa;
+}
+
+.trend-down {
+    color: #ff6b6b;
+}
+
+.trend-neutral {
+    color: #aaa;
+}
+
+/* Ranking Footer */
+.ranking-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 20px;
+    padding-top: 15px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.pagination-info {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.view-more {
+    font-size: 14px;
+    color: #00aaff;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.view-more:hover {
+    color: #00ffaa;
+    gap: 8px;
 }
 
 /* Scrollbar Styling */
 .dashboard-container::-webkit-scrollbar,
-.table-container::-webkit-scrollbar {
+.ranking-table::-webkit-scrollbar {
     width: 6px;
 }
 
 .dashboard-container::-webkit-scrollbar-thumb,
-.table-container::-webkit-scrollbar-thumb {
+.ranking-table::-webkit-scrollbar-thumb {
     background: rgba(0, 170, 255, 0.6);
     border-radius: 3px;
 }
 
 .dashboard-container::-webkit-scrollbar-track,
-.table-container::-webkit-scrollbar-track {
+.ranking-table::-webkit-scrollbar-track {
     background: transparent;
 }
 
-/* Neon Pulse Animation */
-@keyframes neonPulse {
-
-    0%,
-    100% {
-        box-shadow:
-            0 0 8px rgba(0, 170, 255, 0.7),
-            0 0 16px rgba(0, 170, 255, 0.55),
-            0 0 24px rgba(0, 170, 255, 0.35),
-            0 8px 25px rgba(0, 0, 0, 0.45);
-    }
-
-    50% {
-        box-shadow:
-            0 0 12px rgba(0, 170, 255, 0.8),
-            0 0 20px rgba(0, 170, 255, 0.65),
-            0 0 30px rgba(0, 170, 255, 0.45),
-            0 8px 30px rgba(0, 0, 0, 0.5);
-    }
-}
-
 /* Responsive Design */
-@media (max-width: 1400px) {
-    .stats-grid {
-        grid-template-columns: repeat(2, 1fr);
-    }
-}
-
 @media (max-width: 1200px) {
-    .dashboard-container {
-        padding: 20px;
+    .main-content {
+        grid-template-columns: 1fr;
     }
-
-    .users-table th,
-    .users-table td {
-        padding: 12px;
-        font-size: 14px;
-    }
-}
-
-@media (max-width: 1024px) {
-    .header-section {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 20px;
-    }
-
-    .header-actions {
-        width: 100%;
-        justify-content: space-between;
-    }
-
-    .search-box input {
-        width: 200px;
+    
+    .ranking-section {
+        min-height: 500px;
     }
 }
 
@@ -690,39 +960,30 @@ onMounted(() => {
         height: auto;
         min-height: 82vh;
     }
-
+    
+    .header-section {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 15px;
+    }
+    
     .stats-grid {
         grid-template-columns: 1fr;
     }
-
-    .header-actions {
+    
+    .chart-placeholder {
         flex-direction: column;
-        gap: 15px;
-        align-items: flex-start;
     }
-
-    .search-box input {
-        width: 100%;
+    
+    .table-header,
+    .table-row {
+        grid-template-columns: 50px 2fr 1fr 1fr 40px;
     }
-
-    .users-table {
-        display: block;
-        overflow-x: auto;
-    }
-
-    .action-buttons {
-        flex-wrap: wrap;
-        justify-content: center;
-    }
-
-    .table-section .section-header {
+    
+    .ranking-footer {
         flex-direction: column;
-        align-items: flex-start;
-        gap: 15px;
-    }
-
-    .btn-view-all {
-        align-self: flex-end;
+        gap: 10px;
+        text-align: center;
     }
 }
 
@@ -730,70 +991,39 @@ onMounted(() => {
     .dashboard-container {
         padding: 12px;
     }
-
+    
     .title-container h1 {
         font-size: 24px;
     }
-
-    .stat-card {
-        flex-direction: column;
-        text-align: center;
+    
+    .btn-add-user {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .chart-container,
+    .stats-cards,
+    .ranking-section {
         padding: 15px;
     }
-
-    .stat-icon {
-        width: 50px;
-        height: 50px;
-        font-size: 24px;
-        margin-bottom: 10px;
+    
+    .table-header,
+    .table-row {
+        grid-template-columns: 40px 2fr 1fr 40px;
     }
-
-    .users-table th,
-    .users-table td {
-        padding: 8px;
-        font-size: 13px;
+    
+    .followers-col {
+        display: none;
     }
-
-    .user-avatar {
-        width: 35px;
-        height: 35px;
-        font-size: 13px;
+    
+    .pie-chart {
+        width: 180px;
+        height: 180px;
     }
-
-    .role-badge,
-    .status-badge {
-        padding: 4px 8px;
-        font-size: 11px;
+    
+    .chart-center {
+        width: 100px;
+        height: 100px;
     }
-
-    .btn-action {
-        width: 28px;
-        height: 28px;
-        font-size: 12px;
-    }
-
-    .loading-overlay {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(255, 255, 255, 0.8);
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    z-index: 10;
-}
-
-.spinner {
-    width: 40px;
-    height: 40px;
-    border: 4px solid #f3f3f3;
-    border-top: 4px solid #4a90e2;
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
-    margin-bottom: 16px;
-}
 }
 </style>

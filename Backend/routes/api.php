@@ -9,6 +9,8 @@ use App\Http\Controllers\Api\Admin\AdminAuthController;
 use App\Http\Controllers\Api\client\SubscriptionController; 
 use App\Http\Controllers\Api\Payment\PaymentController;
 use App\Http\Controllers\Api\Payment\UserSubscriptionController;
+use App\Http\Controllers\Api\Admin\ArtistsManagerController;
+
 
 
 
@@ -93,6 +95,7 @@ Route::prefix('admin')->middleware(['admin.token'])->group(function () {
     // Admin dashboard & management
     Route::get('/dashboard', [AdminController::class, 'dashboard']);
     Route::get('/test', [AdminAuthController::class, 'testToken']);
+
     // Router user management
     Route::get('/list-user',[UserManagerController::class,'getAllUser']);
     Route::post('/add-user',[UserManagerController::class,'add']);
@@ -102,6 +105,14 @@ Route::prefix('admin')->middleware(['admin.token'])->group(function () {
     Route::post('/users/update/{user}', [UserManagerController::class, 'update']);
     // Route::get('/users', [AdminController::class, 'getUsers']);
     // Route::get('/reports', [AdminController::class, 'getReports']);
+
+    // Router artists manager
+    Route::get('/list-artists',[ArtistsManagerController::class,'getAllArtist']);
+    // Route::post('/add-user',[UserManagerController::class,'add']);
+    // Route::post('/search-user',[UserManagerController::class,'search']);
+    // Route::get('/users/{user}', [UserManagerController::class, 'show']);    
+    // Route::post('/user/delete/{user}',[UserManagerController::class,'delete']);
+    // Route::post('/users/update/{user}', [UserManagerController::class, 'update']);
 });
 
 // Route 404 fallback
