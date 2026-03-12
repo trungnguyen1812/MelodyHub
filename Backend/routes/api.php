@@ -107,12 +107,14 @@ Route::prefix('admin')->middleware(['admin.token'])->group(function () {
     // Route::get('/reports', [AdminController::class, 'getReports']);
 
     // Router artists manager
-    Route::get('/list-artists',[ArtistsManagerController::class,'getAllArtist']);
-    // Route::post('/add-user',[UserManagerController::class,'add']);
-    // Route::post('/search-user',[UserManagerController::class,'search']);
-    // Route::get('/users/{user}', [UserManagerController::class, 'show']);    
-    // Route::post('/user/delete/{user}',[UserManagerController::class,'delete']);
-    // Route::post('/users/update/{user}', [UserManagerController::class, 'update']);
+    Route::prefix('artists')->group(function () {
+        Route::get('/', [ArtistsManagerController::class,'getAllArtist']);
+        Route::post('/', [ArtistsManagerController::class,'add']);
+        Route::post('/search', [ArtistsManagerController::class,'search']);
+        Route::get('/{artist}', [ArtistsManagerController::class,'show']);
+        Route::post('/{artist}', [ArtistsManagerController::class,'update']);
+        Route::delete('/artist/{id}', [ArtistsManagerController::class,'delete']);
+    });
 });
 
 // Route 404 fallback

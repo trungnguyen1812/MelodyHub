@@ -1,10 +1,15 @@
 <?php
 
 namespace App\Http\Controllers\Api\Admin;
-
+use App\Helpers\FileUploadHelper;
 use App\Http\Controllers\Controller;
 use App\Models\Artist;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
+use App\Services\ArtistSlugService;
+
+
 
 class ArtistsManagerController extends Controller
 {
@@ -15,192 +20,182 @@ class ArtistsManagerController extends Controller
         return response()->json($artists);
     }
 
-    // public function add(Request $request)
-    // {
-    //     try {
-    //         $data = $request->validate([
-    //             'name' => 'required|string|max:255',
-    //             'slug' => 'nullable|string|max:255|unique:users,slug',
-    //             'email' => 'required|email|max:255|unique:users,email',
-    //             'phone' => 'nullable|string|max:20|unique:users,phone',
-    //             'username' => 'required|string|max:50|unique:users,username',
-    //             'phone_verified_at' => 'nullable|date',
-    //             'password' => 'required|string|min:6',
-    //             'avatar' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:5120',
-    //             'date_of_birth' => 'nullable|date',
-    //             'gender' => 'nullable|in:male,female,other',
-    //             'country' => 'nullable|string|max:100',
-    //             'timezone' => 'nullable|string|max:50',
-    //             'bio' => 'nullable|string|max:500',
-    //             'status' => 'nullable|in:active,inactive,banned',
-    //             'published_at' => 'nullable|date',
-    //             'play_count_last_24h' => 'nullable|integer|min:0',
-    //             'play_count_last_7d' => 'nullable|integer|min:0',
-    //             'play_count_last_30d' => 'nullable|integer|min:0',
-    //             'trending_score' => 'nullable|numeric|min:0',
-    //             'seo_title' => 'nullable|string|max:255',
-    //             'seo_description' => 'nullable|string|max:500',
-    //             'has_used_trial' => 'nullable|boolean',
-    //             'is_vip' => 'nullable|boolean',
-    //             'vip_expires_at' => 'nullable|date',
-    //         ]);
-
-    //         $avatarPath = null;
-    //         if ($request->hasFile('avatar') && $request->file('avatar')->isValid()) {
-    //             $avatarPath = FileUploadHelper::upload($request->file('avatar'), 'avatars/users');
-    //             Log::info('Avatar uploaded during add: ' . $avatarPath);
-    //         }
-
-    //         $user = User::create([
-    //             ...$data,
-    //             'slug' => UserSlugService::generate($data['name']), 
-    //             'password' => Hash::make($data['password']),
-    //             'avatar_url' => $avatarPath,
-    //         ]);
-
-    //         $role = Role::where('name', 'user_free')->first();
-    //         if ($role) {
-    //             $user->assignRole('user_free');
-    //         }
-
-    //         return response()->json([
-    //             'status' => 'success',
-    //             'data' => [
-    //                 'name' => $user->name,
-    //                 'email' => $user->email,
-    //                 'avatar_url' => $avatarPath ? Storage::url($avatarPath) : null,
-    //                 'roles_flags' => $user->getRoleFlags(),
-    //             ]
-    //         ], 201);
-    //     } catch (\Throwable $e) {
-    //         return response()->json([
-    //             'status' => 'error',
-    //             'message' => $e->getMessage()
-    //         ], 400);
-    //     }
-    // }
-
-    // public function search(Request $request)
-    // {
-    //     $users = User::query()
-    //         ->search($request->q)
-    //         ->with('roles')
-    //         ->latest()
-    //         ->paginate(10);
-    //     return response()->json([
-    //         'status' => 'success',
-    //         'data' => $users
-    //     ]);
-    // }
-
-    // public function show(User $user)
-    // {
-    //     return response()->json($user);
-    // }
-
-    // public function update(Request $request, User $user)
-    // {
-    //     try {
-    //         Log::info('=== UPDATE USER START ===');
-    //         // Log::info('Request has file avatar: ' . ($request->hasFile('avatar') ? 'YES' : 'NO'));
-    //         // Log::info('Request files: ' . json_encode(array_keys($request->allFiles())));
-    //         Log::info($request);
-    //         $data = $request->validate([
-    //             'name' => 'required|string|max:255',
-    //             'slug' => 'nullable|string|max:255|unique:users,slug,' . $user->id,
-    //             'email' => 'required|email|max:255|unique:users,email,' . $user->id,
-    //             'phone' => 'nullable|string|max:20|unique:users,phone,' . $user->id,
-    //             'username' => 'required|string|max:50|unique:users,username,' . $user->id,
-    //             'phone_verified_at' => 'nullable|date',
-    //             'password' => 'nullable|string|min:6',
-    //             'avatar' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:5120',
-    //             'date_of_birth' => 'nullable|date',
-    //             'gender' => 'nullable|in:male,female,other',
-    //             'country' => 'nullable|string|max:100',
-    //             'timezone' => 'nullable|string|max:50',
-    //             'bio' => 'nullable|string|max:500',
-    //             'status' => 'nullable|in:active,inactive,banned,pending',
-    //             'published_at' => 'nullable|date',
-    //             'seo_title' => 'nullable|string|max:255',
-    //             'seo_description' => 'nullable|string|max:500',
-    //         ]);
-
-    //         if (!empty($data['password'])) {
-    //             $data['password'] = bcrypt($data['password']);
-    //         } else {
-    //             unset($data['password']);
-    //         }
-
-    //         if ($request->hasFile('avatar') && $request->file('avatar')->isValid()) {
-    //             Log::info('Uploading avatar via helper...');
-                
-    //             $avatarPath = FileUploadHelper::upload(
-    //                 $request->file('avatar'), 
-    //                 'avatars/users', 
-    //                 $user->avatar_url, 
-    //                 'public'
-    //             );
-                
-    //             Log::info('Avatar uploaded: ' . $avatarPath);
-    //             $data['avatar_url'] = $avatarPath;
-    //         } else {
-    //             Log::info('No new avatar uploaded, keeping existing: ' . $user->avatar_url);
-    //         }
-
-    //         unset($data['avatar']);
-
-    //         $user->update($data);
+    public function add(Request $request)
+    {
+        try {
+            $request->merge([
+                'verified' => filter_var($request->verified, FILTER_VALIDATE_BOOLEAN),
+                'is_featured' => filter_var($request->is_featured, FILTER_VALIDATE_BOOLEAN),
+            ]);
             
-    //         Log::info('User updated successfully', [
-    //             'user_id' => $user->id,
-    //             'name' => $user->name,
-    //             'email' => $user->email
-    //         ]);
-
-    //         return response()->json([
-    //             'status' => 'success',
-    //             'message' => 'Update user successfully',
-    //             'data' => [
-    //                 'id' => $user->id,
-    //                 'name' => $user->name,
-    //                 'email' => $user->email,
-    //                 'avatar_url' => $user->avatar_url,
-    //                 'roles_flags' => $user->getRoleFlags(),
-    //             ]
-    //         ]);
+            $data = $request->validate([
+                'name' => 'required|string|max:255',
+                'slug' => 'nullable|string|max:255|unique:artists,slug',
+                'monthly_listeners' => 'nullable|integer|min:0',
+                'bio' => 'nullable|string',
+                'avatar' => 'nullable|image|max:5120', 
+                'banner' => 'nullable|image|max:5120', 
+                'country' => 'nullable|string|max:100',
+                'website' => 'nullable|url|max:255',
+                'facebook_url' => 'nullable|url|max:255',
+                'instagram_url' => 'nullable|url|max:255',
+                'twitter_url' => 'nullable|url|max:255',
+                'youtube_url' => 'nullable|url|max:255',
+                'verified' => 'nullable|boolean',
+                'is_featured' => 'nullable|boolean',
+                'partner_id' => 'nullable|exists:partners,id',
+                'status' => 'nullable|in:active,inactive',
+                'seo_title' => 'nullable|string|max:255',
+                'seo_description' => 'nullable|string|max:500',
+                'seo_keywords' => 'nullable|string|max:255',
+            ]);
             
-    //     } catch (\Throwable $e) {
-    //         Log::error('Update user error: ' . $e->getMessage());
-    //         Log::error('Stack trace: ' . $e->getTraceAsString());
+            $avatarPath = null;
+            if ($request->hasFile('avatar') && $request->file('avatar')->isValid()) {
+                $avatarPath = FileUploadHelper::upload($request->file('avatar'), 'avatars/artists');
+                Log::info('Avatar uploaded during add: ' . $avatarPath);
+            }
+
+            $bannerPath = null;
+            if ($request->hasFile('banner') && $request->file('banner')->isValid()) {
+                $bannerPath = FileUploadHelper::upload($request->file('banner'), 'banners/artists');
+                Log::info('Banner uploaded during add: ' . $bannerPath);
+            }
+
+            $artist = Artist::create([
+                ...$data,
+                'slug' => $data['slug'] ?? ArtistSlugService::generate($data['name']), 
+                'avatar_url' => $avatarPath,
+                'banner_url' => $bannerPath,
+            ]);
+
+            return response()->json([
+                'status' => 'success',
+                'data' => [
+                    'name' => $artist->name,
+                    'avatar_url' => $avatarPath ? Storage::url($avatarPath) : null,
+                    'banner_url' => $bannerPath ? Storage::url($bannerPath) : null,
+                ]
+            ], 201);
             
-    //         return response()->json([
-    //             'status' => 'error',
-    //             'message' => 'Update failed: ' . $e->getMessage()
-    //         ], 400);
-    //     }
-    // }
+        } catch (\Throwable $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => $e->getMessage()
+            ], 400);
+        }
+    }
 
-    // public function delete(User $user)
-    // {
-    //     try {
-    //         Log::info('Hard deleting user ID:', ['id' => $user->id]);
+    public function search(Request $request)
+    {
+        $artists = Artist::query()
+            ->search($request->q)
+            ->latest()
+            ->paginate(10);
+        return response()->json([
+            'status' => 'success',
+            'data' => $artists
+        ]);
+    }
 
-    //         $user->forceDelete();
+    public function show(Artist $artist)
+    {
+        return response()->json($artist);
+    }
 
-    //         Log::info('User hard deleted successfully');
+    public function update(Request $request, $id)
+    {
+        try {
+            Log::info('=== UPDATE USER START ===');
+            // Log::info('Request has file avatar: ' . ($request->hasFile('avatar') ? 'YES' : 'NO'));
+            // Log::info('Request files: ' . json_encode(array_keys($request->allFiles())));
+            Log::info($request);
+            $artist = Artist::findOrFail($id);
 
-    //         return response()->json([
-    //             'success' => true,
-    //             'message' => 'User permanently deleted successfully',
-    //             'deleted_id' => $user->id
-    //         ]);
-    //     } catch (\Exception $e) {
-    //         Log::error('Delete user error:', ['error' => $e->getMessage()]);
+            $request->merge([
+                'verified' => filter_var($request->verified, FILTER_VALIDATE_BOOLEAN),
+                'is_featured' => filter_var($request->is_featured, FILTER_VALIDATE_BOOLEAN),
+            ]);
 
-    //         return response()->json([
-    //             'success' => false,
-    //             'message' => 'Delete failed: ' . $e->getMessage()
-    //         ], 500);
-    //     }
-    // }
+            $data = $request->validate([
+                'name' => 'required|string|max:255',
+                'slug' => 'nullable|string|max:255|unique:artists,slug,' . $artist->id,
+                'monthly_listeners' => 'nullable|integer|min:0',
+                'bio' => 'nullable|string',
+                'avatar' => 'nullable|image|max:5120',
+                'banner' => 'nullable|image|max:5120',
+                'country' => 'nullable|string|max:100',
+                'website' => 'nullable|url|max:255',
+                'facebook_url' => 'nullable|url|max:255',
+                'instagram_url' => 'nullable|url|max:255',
+                'twitter_url' => 'nullable|url|max:255',
+                'youtube_url' => 'nullable|url|max:255',
+                'verified' => 'nullable|boolean',
+                'is_featured' => 'nullable|boolean',
+                'partner_id' => 'nullable|exists:partners,id',
+                'status' => 'nullable|in:active,inactive',
+                'seo_title' => 'nullable|string|max:255',
+                'seo_description' => 'nullable|string|max:500',
+                'seo_keywords' => 'nullable|string|max:255',
+            ]);
+
+            $avatarPath = $artist->avatar_url;
+            if ($request->hasFile('avatar') && $request->file('avatar')->isValid()) {
+                $avatarPath = FileUploadHelper::upload($request->file('avatar'), 'avatars/artists');
+                Log::info('Avatar uploaded during update: ' . $avatarPath);
+            }
+
+            $bannerPath = $artist->banner_url;
+            if ($request->hasFile('banner') && $request->file('banner')->isValid()) {
+                $bannerPath = FileUploadHelper::upload($request->file('banner'), 'banners/artists');
+                Log::info('Banner uploaded during update: ' . $bannerPath);
+            }
+
+            $artist->update([
+                ...$data,
+                'slug' => $data['slug'] ?? ArtistSlugService::generate($data['name']),
+                'avatar_url' => $avatarPath,
+                'banner_url' => $bannerPath,
+            ]);
+
+            return response()->json([
+                'status' => 'success',
+                'data' => [
+                    'name' => $artist->name,
+                    'avatar_url' => $avatarPath ? Storage::url($avatarPath) : null,
+                    'banner_url' => $bannerPath ? Storage::url($bannerPath) : null,
+                ]
+            ], 200);
+
+        } catch (\Throwable $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => $e->getMessage()
+            ], 400);
+        }
+    }
+
+    public function delete(Artist $artist)
+    {
+        try {
+            Log::info('Hard deleting Artist ID:', ['id' => $artist->id]);
+
+            $artist->forceDelete();
+
+            Log::info('Artist hard deleted successfully');
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Artist permanently deleted successfully',
+                'deleted_id' => $artist->id
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Delete Artist error:', ['error' => $e->getMessage()]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Delete failed: ' . $e->getMessage()
+            ], 500);
+        }
+    }
 }

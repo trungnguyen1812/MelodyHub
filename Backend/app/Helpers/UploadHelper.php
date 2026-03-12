@@ -75,7 +75,7 @@ class FileUploadHelper
      * @param int $maxSizeMB
      * @return bool
      */
-    public static function validateSize($file, $maxSizeMB = 5)
+    public static function validateSize($file, $maxSizeMB = 10)
     {
         return ($file->getSize() / 1024 / 1024) <= $maxSizeMB;
     }

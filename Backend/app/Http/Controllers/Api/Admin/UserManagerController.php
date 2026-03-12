@@ -53,13 +53,12 @@ class UserManagerController extends Controller
                 'is_vip' => 'nullable|boolean',
                 'vip_expires_at' => 'nullable|date',
             ]);
-
             $avatarPath = null;
             if ($request->hasFile('avatar') && $request->file('avatar')->isValid()) {
                 $avatarPath = FileUploadHelper::upload($request->file('avatar'), 'avatars/users');
                 Log::info('Avatar uploaded during add: ' . $avatarPath);
             }
-
+            
             $user = User::create([
                 ...$data,
                 'slug' => UserSlugService::generate($data['name']), 
@@ -110,10 +109,6 @@ class UserManagerController extends Controller
     public function update(Request $request, User $user)
     {
         try {
-            Log::info('=== UPDATE USER START ===');
-            // Log::info('Request has file avatar: ' . ($request->hasFile('avatar') ? 'YES' : 'NO'));
-            // Log::info('Request files: ' . json_encode(array_keys($request->allFiles())));
-            Log::info($request);
             $data = $request->validate([
                 'name' => 'required|string|max:255',
                 'slug' => 'nullable|string|max:255|unique:users,slug,' . $user->id,

@@ -104,9 +104,6 @@
                 <table class="users-table">
                     <thead>
                         <tr>
-                            <th>
-                                <input type="checkbox" class="table-checkbox">
-                            </th>
                             <th>User</th>
                             <th>Email</th>
                             <th>Role</th>
@@ -117,9 +114,6 @@
                     </thead>
                     <tbody>
                         <tr v-for="user in usersToShow" :key="user.id">
-                            <td>
-                                <input type="checkbox" class="table-checkbox">
-                            </td>
                             <td class="user-cell">
                                 <div class="user-avatar">
                                     <img :src="getFullImageUrl(user.avatar_url)" :alt="user.name" class="avatar-img" />
@@ -209,6 +203,7 @@ const keyword = ref("");
 let searchTimeout: number | null = null;
 const { users, loading } = storeToRefs(userStore);
 
+
 const CreateUser = () => {
     router.push({ name: "admin.usermanager.add" });
 }
@@ -292,6 +287,7 @@ async function deleteUser(id: number) {
         loading.value = false;
     }
 }
+
 
 
 const usersToShow = computed(() => userStore.users.slice(0, 10));
@@ -980,5 +976,55 @@ onMounted(() => {
     40% {
         transform: scale(1.0);
     }
+}
+
+
+/* Pagination - Thêm vào cuối table nếu chưa có */
+.pagination {
+    padding: 12px 16px; 
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.pagination-info {
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 14px;
+}
+
+.pagination-controls {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+.pagination-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.05);
+    color: white;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+
+.pagination-btn:hover:not(:disabled) {
+    background: #00aaff;
+    border-color: #00aaff;
+}
+
+.pagination-btn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+
+.pagination-current {
+    font-weight: 600;
+    color: #00aaff;
 }
 </style>

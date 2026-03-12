@@ -1,932 +1,951 @@
 <template>
-    <div class="dashboard-container">
-        <div class="header-section">
-            <div class="title-container">
-                <h1>Users Management</h1>
-                <p class="subtitle">Manage All User Accounts</p>
+    <div class="artist-detail-view">
+        <!-- Header -->
+        <div class="page-header">
+            <div class="header-left">
+                <h1 class="page-header-title">Artist Management</h1>
+                <span class="header-badge">Detail</span>
             </div>
             <div class="header-actions">
-                <button @click="CreateUser" class="btn-add-user">
-                    <span class="btn-icon">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v6m3-3H9m12 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
-                        </svg>
-                    </span>
-                    Add New User
+                <button class="btn btn-secondary" @click="$router.back()">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" width="18" height="18">
+                        <path fill-rule="evenodd" d="M7.793 2.232a.75.75 0 0 1-.025 1.06L3.622 7.25h10.003a5.375 5.375 0 0 1 0 10.75H10.75a.75.75 0 0 1 0-1.5h2.875a3.875 3.875 0 0 0 0-7.75H3.622l4.146 3.957a.75.75 0 0 1-1.036 1.085l-5.5-5.25a.75.75 0 0 1 0-1.085l5.5-5.25a.75.75 0 0 1 1.06.025Z" clip-rule="evenodd" />
+                    </svg>
+                    Back to Artists
                 </button>
-               
-                <div class="search-box">
-                    <input type="text" placeholder="Search users..." v-model="keyword" @input="onSearch">
-                    <span class="search-icon">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
-                        </svg>
+            </div>
+        </div>
+
+        <!-- Loading State -->
+        <div v-if="loading" class="loading-state">
+            <div class="spinner-large"></div>
+            <p>Loading artist details...</p>
+        </div>
+
+        <!-- Error State -->
+        <div v-else-if="error" class="error-state">
+            <div class="error-icon">⚠️</div>
+            <h3>Failed to load artist</h3>
+            <p>{{ error }}</p>
+            <button class="btn btn-primary" @click="">Retry</button>
+        </div>
+
+        <!-- Main Content -->
+        <div v-else class="content-card">
+            <div class="card-header">
+                <div class="header-icon">🎤</div>
+                <div class="header-text">
+                    <h2>Artist Profile</h2>
+                    <p class="subtitle">View artist details and information</p>
+                </div>
+                <div class="header-status" v-if="form">
+                    <span :class="['status-badge', form.status]">
+                        {{ getStatusText(form.status) }}
                     </span>
-                </div>
-            </div>
-        </div>
-
-        <!-- Stats Cards -->
-        <div class="stats-grid">
-            <div class="stat-card card-neon-blue">
-                <div class="stat-icon">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 0 0 2.625.372 9.337 9.337 0 0 0 4.121-.952 4.125 4.125 0 0 0-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 0 1 8.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0 1 11.964-3.07M12 6.375a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0Zm8.25 2.25a2.625 2.625 0 1 1-5.25 0 2.625 2.625 0 0 1 5.25 0Z" />
-                    </svg>
-                </div>
-                <div class="stat-content">
-                    <h3>Total Users</h3>
-                    <p class="stat-number">1,248</p>
-                    <p class="stat-change positive">↑ 12% from last month</p>
+                    <span v-if="form.verified" class="verified-badge" title="Verified Artist">✓ Verified</span>
+                    <span v-if="form.is_featured" class="featured-badge" title="Featured Artist">⭐ Featured</span>
                 </div>
             </div>
 
-            <div class="stat-card card-neon-green">
-                <div class="stat-icon">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="m9 9 10.5-3m0 6.553v3.75a2.25 2.25 0 0 1-1.632 2.163l-1.32.377a1.803 1.803 0 1 1-.99-3.467l2.31-.66a2.25 2.25 0 0 0 1.632-2.163Zm0 0V2.25L9 5.25v10.303m0 0v3.75a2.25 2.25 0 0 1-1.632 2.163l-1.32.377a1.803 1.803 0 0 1-.99-3.467l2.31-.66A2.25 2.25 0 0 0 9 15.553Z" />
-                    </svg>
-                </div>
-                <div class="stat-content">
-                    <h3>Free user</h3>
-                    <p class="stat-number">892</p>
-                    <p class="stat-change positive">↑ 8% from last week</p>
-                </div>
-            </div>
+            <!-- Artist Info Display -->
+            <div v-if="form" class="artist-display">
+                <!-- Media Section -->
+                <div class="media-section">
+                    <div class="media-grid">
+                        <!-- Avatar -->
+                        <div class="media-display avatar-display">
+                            <div class="display-preview avatar-preview">
+                                <img 
+                                    :src="displayAvatar || defaultAvatar" 
+                                    :alt="form.name"
+                                    class="preview-img"
+                                />
+                            </div>
+                        </div>
 
-            <div class="stat-card card-neon-purple">
-                <div class="stat-icon">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 18.75a6 6 0 0 0 6-6v-1.5m-6 7.5a6 6 0 0 1-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 0 1-3-3V4.5a3 3 0 1 1 6 0v8.25a3 3 0 0 1-3 3Z" />
-                    </svg>
+                        <!-- Banner -->
+                        <div class="media-display banner-display">
+                            <div class="display-preview banner-preview">
+                                <img 
+                                    :src="displayBanner || defaultBanner"
+                                    :alt="form.name + ' banner'"
+                                    class="preview-img"
+                                />
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div class="stat-content">
-                    <h3>Partner</h3>
-                    <p class="stat-number">156</p>
-                    <p class="stat-change neutral">→ Same as last month</p>
-                </div>
-            </div>
 
-            <div class="stat-card card-neon-orange">
-                <div class="stat-icon">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75m-3-7.036A11.959 11.959 0 0 1 3.598 6 11.99 11.99 0 0 0 3 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285Z" />
-                    </svg>
-                </div>
-                <div class="stat-content">
-                    <h3>Admins</h3>
-                    <p class="stat-number">24</p>
-                    <p class="stat-change">No change</p>
-                </div>
-            </div>
-        </div>
+                <!-- Basic Information -->
+                <div class="info-section">
+                    <h3 class="section-title">
+                        <span class="section-icon">📋</span>
+                        Basic Information
+                    </h3>
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <label>Artist Name</label>
+                            <div class="info-value">{{ form.name }}</div>
+                        </div>
 
-        <!-- Recent Users Table -->
-        <div class="table-section">
-            <div class="section-header">
-                <h2>Recent Users</h2>
-                <button class="btn-view-all" @click="ViewAllUser">View All →</button>
-            </div>
-            <div v-if="loading" class="loading-overlay">
-                <div class="spinner"></div>
-                <span>Loading user data...</span>
-            </div>
-            <div class="table-container">
-                <table class="users-table">
-                    <thead>
-                        <tr>
-                            <th>
-                                <input type="checkbox" class="table-checkbox">
-                            </th>
-                            <th>User</th>
-                            <th>Email</th>
-                            <th>Role</th>
-                            <th>Status</th>
-                            <th>Join Date</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr v-for="user in usersToShow" :key="user.id">
-                            <td>
-                                <input type="checkbox" class="table-checkbox">
-                            </td>
-                            <td class="user-cell">
-                                <div class="user-avatar">
-                                    <img :src="getFullImageUrl(user.avatar_url)" :alt="user.name" class="avatar-img" />
-                                </div>
-                                <div class="user-info">
-                                    <p class="user-name">{{ user.name }}</p>
-                                    <p class="user-id">ID: {{ user.id }}</p>
-                                </div>
-                            </td>
-                            <td>{{ user.email }}</td>
-                            <td>
-                                <span
-                                    :class="`role-badge role-${(user.roles?.[0]?.name ?? 'user_free').toLowerCase()}`"
-                                >
-                                    {{ user.role_display_name ?? "Free User" }}
+                        <div class="info-item">
+                            <label>Slug</label>
+                            <div class="info-value slug-value">{{ form.slug }}</div>
+                        </div>
+
+                        <div class="info-item">
+                            <label>Country</label>
+                            <div class="info-value">
+                                {{ form.country ? getCountryFlag(form.country) + ' ' + form.country : '—' }}
+                            </div>
+                        </div>
+
+                        <div class="info-item">
+                            <label>Website</label>
+                            <div class="info-value">
+                                <a v-if="form.website" :href="form.website" target="_blank" class="link-value">
+                                    {{ form.website }}
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" width="14" height="14">
+                                        <path fill-rule="evenodd" d="M4.25 5.5a.75.75 0 00-.75.75v8.5c0 .414.336.75.75.75h8.5a.75.75 0 00.75-.75v-4a.75.75 0 011.5 0v4A2.25 2.25 0 0112.75 17h-8.5A2.25 2.25 0 012 14.75v-8.5A2.25 2.25 0 014.25 4h5a.75.75 0 010 1.5h-5z" />
+                                        <path fill-rule="evenodd" d="M6.194 12.753a.75.75 0 001.06.053L16.5 4.44v2.81a.75.75 0 001.5 0v-4.5a.75.75 0 00-.75-.75h-4.5a.75.75 0 000 1.5h2.553l-9.056 8.194a.75.75 0 00-.053 1.06z" />
+                                    </svg>
+                                </a>
+                                <span v-else>—</span>
+                            </div>
+                        </div>
+
+                        <div class="info-item full-width">
+                            <label>Biography</label>
+                            <div class="info-value bio-value">{{ form.bio || 'No biography provided' }}</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Social Links -->
+                <div class="info-section">
+                    <h3 class="section-title">
+                        <span class="section-icon">🌐</span>
+                        Social Links
+                    </h3>
+                    <div class="social-grid">
+                        <div v-if="form.facebook_url" class="social-item facebook">
+                            <svg viewBox="0 0 24 24" fill="#1877f2" width="20" height="20">
+                                <path d="M24 12c0-6.627-5.373-12-12-12S0 5.373 0 12c0 5.99 4.388 10.954 10.125 11.854V15.47H7.078v-3.47h3.047V9.356c0-3.007 1.792-4.688 4.533-4.688 1.312 0 2.686.234 2.686.234v2.953H15.83c-1.49 0-1.955.925-1.955 1.874V12h3.328l-.532 3.469h-2.796v8.385C19.612 22.954 24 17.99 24 12z"/>
+                            </svg>
+                            <a :href="form.facebook_url" target="_blank" class="social-link">Facebook</a>
+                        </div>
+                        <div v-else class="social-item empty">
+                            <span>No Facebook link</span>
+                        </div>
+
+                        <div v-if="form.instagram_url" class="social-item instagram">
+                            <svg viewBox="0 0 24 24" fill="#e4405f" width="20" height="20">
+                                <path d="M12 2.163c3.204 0 3.584.012 4.85.07 1.188.054 1.98.257 2.675.545.73.284 1.334.676 1.928 1.27.594.594.986 1.198 1.27 1.928.288.695.49 1.487.545 2.675.058 1.266.07 1.646.07 4.85s-.012 3.584-.07 4.85c-.054 1.188-.257 1.98-.545 2.675-.284.73-.676 1.334-1.27 1.928-.594.594-1.198.986-1.928 1.27-.695.288-1.487.49-2.675.545-1.266.058-1.646.07-4.85.07s-3.584-.012-4.85-.07c-1.188-.054-1.98-.257-2.675-.545-.73-.284-1.334-.676-1.928-1.27-.594-.594-.986-1.198-1.27-1.928-.288-.695-.49-1.487-.545-2.675-.058-1.266-.07-1.646-.07-4.85s.012-3.584.07-4.85c.054-1.188.257-1.98.545-2.675.284-.73.676-1.334 1.27-1.928.594-.594 1.198-.986 1.928-1.27.695-.288 1.487-.49 2.675-.545 1.266-.058 1.646-.07 4.85-.07zM12 0C8.741 0 8.332.014 7.052.072c-1.267.058-2.147.283-2.912.603-.79.33-1.466.78-2.124 1.437-.657.658-1.107 1.334-1.437 2.124-.32.765-.545 1.645-.603 2.912C.014 8.332 0 8.741 0 12s.014 3.668.072 4.948c.058 1.267.283 2.147.603 2.912.33.79.78 1.466 1.437 2.124.658.657 1.334 1.107 2.124 1.437.765.32 1.645.545 2.912.603C8.332 23.986 8.741 24 12 24s3.668-.014 4.948-.072c1.267-.058 2.147-.283 2.912-.603.79-.33 1.466-.78 2.124-1.437.657-.658 1.107-1.334 1.437-2.124.32-.765.545-1.645.603-2.912.058-1.28.072-1.689.072-4.948s-.014-3.668-.072-4.948c-.058-1.267-.283-2.147-.603-2.912-.33-.79-.78-1.466-1.437-2.124-.658-.657-1.334-1.107-2.124-1.437-.765-.32-1.645-.545-2.912-.603C15.668.014 15.259 0 12 0z"/>
+                            </svg>
+                            <a :href="form.instagram_url" target="_blank" class="social-link">Instagram</a>
+                        </div>
+                        <div v-else class="social-item empty">
+                            <span>No Instagram link</span>
+                        </div>
+
+                        <div v-if="form.twitter_url" class="social-item twitter">
+                            <svg viewBox="0 0 24 24" fill="#1da1f2" width="20" height="20">
+                                <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+                            </svg>
+                            <a :href="form.twitter_url" target="_blank" class="social-link">X (Twitter)</a>
+                        </div>
+                        <div v-else class="social-item empty">
+                            <span>No Twitter link</span>
+                        </div>
+
+                        <div v-if="form.youtube_url" class="social-item youtube">
+                            <svg viewBox="0 0 24 24" fill="#ff0000" width="20" height="20">
+                                <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+                            </svg>
+                            <a :href="form.youtube_url" target="_blank" class="social-link">YouTube</a>
+                        </div>
+                        <div v-else class="social-item empty">
+                            <span>No YouTube link</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Status & Settings -->
+                <div class="info-section">
+                    <h3 class="section-title">
+                        <span class="section-icon">⚙️</span>
+                        Status & Settings
+                    </h3>
+                    <div class="settings-grid">
+                        <div class="info-item">
+                            <label>Account Status</label>
+                            <div class="info-value">
+                                <span :class="['status-badge', form.status]">
+                                    {{ getStatusText(form.status) }}
                                 </span>
-                            </td>
-                            <td>
-                                <span :class="`status-badge status-${user.status}`">
-                                    {{ user.status }}
+                            </div>
+                        </div>
+
+                        <div class="info-item">
+                            <label>Partner ID</label>
+                            <div class="info-value">{{ form.partner_id || '—' }}</div>
+                        </div>
+
+                        <div class="info-item">
+                            <label>Verified Artist</label>
+                            <div class="info-value">
+                                <span :class="['badge', form.verified ? 'badge-success' : 'badge-secondary']">
+                                    {{ form.verified ? '✓ Verified' : '✗ Not Verified' }}
                                 </span>
-                            </td>
-                            <td>{{ formatDate(user.created_at ?? "") }}</td>        
-                            <td>
-                                <div class="action-buttons">
-                                    <button class="btn-action btn-edit" @click="viewUpdateUser(user.id)">
-                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="size-5">
-                                            <path d="m5.433 13.917 1.262-3.155A4 4 0 0 1 7.58 9.42l6.92-6.918a2.121 2.121 0 0 1 3 3l-6.92 6.918c-.383.383-.84.685-1.343.886l-3.154 1.262a.5.5 0 0 1-.65-.65Z" />
-                                            <path d="M3.5 5.75c0-.69.56-1.25 1.25-1.25H10A.75.75 0 0 0 10 3H4.75A2.75 2.75 0 0 0 2 5.75v9.5A2.75 2.75 0 0 0 4.75 18h9.5A2.75 2.75 0 0 0 17 15.25V10a.75.75 0 0 0-1.5 0v5.25c0 .69-.56 1.25-1.25 1.25h-9.5c-.69 0-1.25-.56-1.25-1.25v-9.5Z" />
-                                        </svg>
-                                    </button>
-                                    <button class="btn-action btn-delete" @click="deleteUser(user.id)">
-                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="size-5">
-                                            <path fill-rule="evenodd" d="M8.75 1A2.75 2.75 0 0 0 6 3.75v.443c-.795.077-1.584.176-2.365.298a.75.75 0 1 0 .23 1.482l.149-.022.841 10.518A2.75 2.75 0 0 0 7.596 19h4.807a2.75 2.75 0 0 0 2.742-2.53l.841-10.52.149.023a.75.75 0 0 0 .23-1.482A41.03 41.03 0 0 0 14 4.193V3.75A2.75 2.75 0 0 0 11.25 1h-2.5ZM10 4c.84 0 1.673.025 2.5.075V3.75c0-.69-.56-1.25-1.25-1.25h-2.5c-.69 0-1.25.56-1.25 1.25v.325C8.327 4.025 9.16 4 10 4ZM8.58 7.72a.75.75 0 0 0-1.5.06l.3 7.5a.75.75 0 1 0 1.5-.06l-.3-7.5Zm4.34.06a.75.75 0 1 0-1.5-.06l-.3 7.5a.75.75 0 1 0 1.5.06l.3-7.5Z" clip-rule="evenodd" />
-                                        </svg>
-                                    </button>
-                                    <button class="btn-action btn-view" @click="viewDetailUser(user.id)">
-                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="size-5">
-                                            <path d="M10 12.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Z" />
-                                            <path fill-rule="evenodd" d="M.664 10.59a1.651 1.651 0 0 1 0-1.186A10.004 10.004 0 0 1 10 3c4.257 0 7.893 2.66 9.336 6.41.147.381.146.804 0 1.186A10.004 10.004 0 0 1 10 17c-4.257 0-7.893-2.66-9.336-6.41ZM14 10a4 4 0 1 1-8 0 4 4 0 0 1 8 0Z" clip-rule="evenodd" />
-                                        </svg>
-                                    </button>
-                                </div>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
+                            </div>
+                        </div>
+
+                        <div class="info-item">
+                            <label>Featured Artist</label>
+                            <div class="info-value">
+                                <span :class="['badge', form.is_featured ? 'badge-featured' : 'badge-secondary']">
+                                    {{ form.is_featured ? '⭐ Featured' : '○ Not Featured' }}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SEO Information -->
+                <div class="info-section">
+                    <h3 class="section-title">
+                        <span class="section-icon">🔍</span>
+                        SEO Information
+                    </h3>
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <label>SEO Title</label>
+                            <div class="info-value">{{ form.seo_title || '—' }}</div>
+                        </div>
+
+                        <div class="info-item">
+                            <label>SEO Keywords</label>
+                            <div class="info-value">{{ form.seo_keywords || '—' }}</div>
+                        </div>
+
+                        <div class="info-item full-width">
+                            <label>SEO Description</label>
+                            <div class="info-value">{{ form.seo_description || '—' }}</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Stats Preview (if available) -->
+                <div v-if="form.stats" class="stats-preview">
+                    <div class="stat-item">
+                        <span class="stat-label">Songs</span>
+                        <span class="stat-value">{{ form.stats.songs_count || 0 }}</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Albums</span>
+                        <span class="stat-value">{{ form.stats.albums_count || 0 }}</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Followers</span>
+                        <span class="stat-value">{{ formatNumber(form.stats.followers_count) || 0 }}</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Monthly Listeners</span>
+                        <span class="stat-value">{{ formatNumber(form.stats.monthly_listeners) || 0 }}</span>
+                    </div>
+                </div>
+
+                <!-- Metadata -->
+                <div class="metadata-section">
+                    <div class="metadata-item">
+                        <span class="metadata-label">Created at:</span>
+                        <span class="metadata-value">{{ formatDate(form.created_at) }}</span>
+                    </div>
+                    <div class="metadata-item">
+                        <span class="metadata-label">Last updated:</span>
+                        <span class="metadata-value">{{ formatDate(form.updated_at) }}</span>
+                    </div>
+                </div>
             </div>
         </div>
-    </div>
-    <div v-if="loading" class="loading-state">
-        Loading users...
-    </div>
-    <div v-else-if="users.length === 0" class="empty-state">
-        <div class="empty-icon">👥</div>
-        <p>No users found</p>
     </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted ,computed } from 'vue';
-import { getFullImageUrl, useUserStore } from '@/modules/admin/stores/users/userStore';
-import { storeToRefs } from "pinia";
-import router from '@/modules/router';
-import Swal from 'sweetalert2';
-import { useNotificationStore } from "@/store/notificationStore";
+import { ref, onMounted ,computed , reactive } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { useArtistStore , getFullImageUrl} from '@/modules/admin/stores/artists/artistsStore'
+import { useNotificationStore } from "@/store/notificationStore"
 
-const userStore = useUserStore();
-const notificationStore = useNotificationStore();
-const keyword = ref("");
-let searchTimeout: number | null = null;
-const { users, loading } = storeToRefs(userStore);
+const form = reactive<any>({
+    name: "",
+    slug: "",
+    bio: "",
+    avatar: null,
+    banner: null,
+    country: "",
+    website: "",
+    facebook_url: "",
+    instagram_url: "",
+    twitter_url: "",
+    youtube_url: "",
+    verified: false,
+    is_featured: false,
+    partner_id: null,
+    status: "active",
+    seo_title: "",
+    seo_description: "",
+    seo_keywords: "",
+});
+const route = useRoute()
+const router = useRouter()
+const notificationStore = useNotificationStore()
+const artistStore = useArtistStore()
 
-const CreateUser =()=>{
-    router.push({name:"admin.usermanager.add"});
+const loading = ref(true)
+const error = ref<string | null>(null)
+
+const defaultAvatar = 'https://via.placeholder.com/500?text=Artist'
+const defaultBanner = 'https://via.placeholder.com/1920x500?text=Banner'
+
+
+// Methods
+const getStatusText = (status: string): string => {
+    const statusMap: Record<string, string> = {
+        active: '🟢 Active',
+        inactive: '⚪ Inactive',
+        pending: '🟡 Pending',
+        rejected: '🔴 Rejected'
+    }
+    return statusMap[status] || status
 }
 
-const ViewAllUser =()=>{
-    router.push({name:"admin.usermanager.all"});
+const getCountryFlag = (country: string): string => {
+    const flagMap: Record<string, string> = {
+        'USA': '🇺🇸',
+        'UK': '🇬🇧',
+        'Vietnam': '🇻🇳',
+        'Japan': '🇯🇵',
+        'Korea': '🇰🇷',
+        'France': '🇫🇷',
+        'Germany': '🇩🇪',
+        'Canada': '🇨🇦',
+        'Australia': '🇦🇺',
+        'Other': '🌍'
+    }
+    return flagMap[country] || '🌍'
 }
 
-function viewDetailUser(id: number) {
-    router.push({
-        name:"admin.usermanager.detail",
-        params: { id }
-    });
+const formatNumber = (num?: number): string => {
+    if (!num) return '0'
+    if (num >= 1000000) {
+        return (num / 1000000).toFixed(1) + 'M'
+    }
+    if (num >= 1000) {
+        return (num / 1000).toFixed(1) + 'K'
+    }
+    return num.toString()
 }
 
-function viewUpdateUser(id: number) {
-    router.push({
-        name:"admin.usermanager.update",
-        params: { id }
-    });
+const formatDate = (dateString?: string): string => {
+    if (!dateString) return '—'
+    return new Date(dateString).toLocaleString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+    })
 }
 
-const onSearch = ()=>{
-    if (searchTimeout)clearTimeout(searchTimeout);
-    searchTimeout = window.setTimeout(async() => {
-        if (!keyword.value.trim()) {
-            await userStore.fetchUsers();
-            return;
-        }
-         await userStore.fetchSearchUser(
-            keyword.value
-        );
-    }, 300);
-}
 
-function formatDate(date: string) {
-    if (!date) return "";
-    return new Date(date).toLocaleDateString("vi-VN");
-}
+const displayAvatar = computed(() => {
+    if (form.avatar_url) {
+        return getFullImageUrl(form.avatar_url);
+    }
+    return defaultAvatar;
+});
 
-async function deleteUser(id: number) {
+const displayBanner = computed(()=>{
+    if (form.banner_url) {
+        return getFullImageUrl(form.banner_url);
+    }
+    return defaultBanner;
+});
+
+// Lifecycle
+onMounted(async () => {
     try {
-        const result = await Swal.fire({
-            title: 'Delete User',
-            text: 'Are you sure you want to delete this user? This action cannot be undone.',
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonText: 'Yes, delete it!',
-            cancelButtonText: 'Cancel',
-            confirmButtonColor: '#d33',
-            cancelButtonColor: '#3085d6',
-            reverseButtons: true,
-            customClass: {
-                confirmButton: 'btn btn-danger',
-                cancelButton: 'btn btn-secondary'
-            }
-        });
-    
-        if (!result.isConfirmed) return;
-        
         loading.value = true;
-        
-        await userStore.fetchDelete(id);
-        await userStore.fetchUsers();
-        notificationStore.notify("Delete user successful", "success");
-        
-        router.push({name:"admin.usermanager"});
-    
-    } catch (error: any) {
-        const err = error as { response?: { status?: number } }
-        
-        if (err.response?.status === 404) {
-            router.push('/404')
-        } else if (err.response?.status === 401) {
-            router.push('/login')
-        } else {
-             notificationStore.notify("Error delete user", "error");
+        const slug = String(route.params.slug);
+
+        const res = await artistStore.fetchShow(slug);
+
+        if (res) {
+            Object.assign(form, res);
         }
-        
+
+    } catch (error: any) {
+        const err = error as { response?: { status?: number } };
+
+        if (err.response?.status === 404) {
+            router.push('/404');
+        } else if (err.response?.status === 401) {
+            router.push('/login');
+        } else {
+            console.error('Error loading artist:', error);
+        }
+
     } finally {
         loading.value = false;
     }
-}
-
-
-const usersToShow = computed(() => userStore.users.slice(0, 10));
-
-onMounted(() => {
-    userStore.fetchUsers();
 });
+
+
 </script>
 
 <style scoped>
-/* Base Styles */
-.dashboard-container {
-    height: 82vh;
-    width: 100%;
-    border-radius: 14px;
-    margin-top: 7px;
-    display: block;
-    background: rgba(255, 255, 255, 0.08);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    display: flex;
-    flex-direction: column;
-    padding: 25px;
-    position: relative;
-   
-    font-family: 'Afacad', sans-serif;
-    color: white;
+.artist-detail-view {
+    padding: 24px;
+    min-height: 100vh;
+    background: linear-gradient(135deg, #0a1219 0%, #1a2a35 100%);
+    font-family: 'Inter', sans-serif;
 }
 
-/* Header Section */
-.header-section {
+/* Header */
+.page-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 30px;
-    padding-bottom: 20px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    margin-bottom: 24px;
 }
 
-.title-container h1 {
-    font-size: 28px;
-    font-weight: 600;
-    margin: 0;
-    background: linear-gradient(90deg, #00aaff, #00ffaa);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-}
-
-.subtitle {
-    font-size: 14px;
-    color: rgba(255, 255, 255, 0.7);
-    margin-top: 5px;
-    margin-bottom: 0;
-}
-
-.user-avatar {
-    width: 45px;
-    height: 45px;
-    overflow: hidden;
-    border-radius: 50%;
-    background: #f0f0f0;
-}
-
-.avatar-img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover; 
-}
-
-.header-actions {
-    display: flex;
-    gap: 20px;
-    align-items: center;
-}
-
-.btn-add-user {
-    background: linear-gradient(135deg, #00aaff, #0088cc);
-    border: none;
-    color: white;
-    padding: 10px 20px;
-    border-radius: 8px;
-    font-weight: 500;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    transition: all 0.3s ease;
-    font-family: 'Afacad', sans-serif;
-}
-
-.btn-add-user:hover {
-    background: linear-gradient(135deg, #0088cc, #006699);
-    transform: translateY(-2px);
-    box-shadow: 0 5px 15px rgba(0, 170, 255, 0.4);
-}
-
-.btn-icon {
-    font-size: 18px;
-    font-weight: bold;
-}
-
-.search-box {
-    position: relative;
-}
-
-.search-box input {
-    background: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(0, 170, 255, 0.3);
-    border-radius: 8px;
-    padding: 10px 40px 10px 15px;
-    color: white;
-    width: 250px;
-    font-family: 'Afacad', sans-serif;
-    transition: all 0.3s ease;
-}
-
-.search-box input:focus {
-    outline: none;
-    border-color: #00aaff;
-    box-shadow: 0 0 10px rgba(0, 170, 255, 0.3);
-}
-
-.search-icon {
-    position: absolute;
-    right: 15px;
-    top: 50%;
-    transform: translateY(-50%);
-    color: rgba(255, 255, 255, 0.6);
-}
-
-/* Stats Grid */
-.stats-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 20px;
-    margin-bottom: 30px;
-}
-
-.stat-card {
-    background: rgba(255, 255, 255, 0.05);
-    border-radius: 12px;
-    padding: 20px;
-    display: flex;
-    align-items: center;
-    gap: 15px;
-    border: 1px solid rgba(0, 170, 255, 0.2);
-    transition: all 0.3s ease;
-    position: relative;
-    overflow: hidden;
-}
-
-.stat-card::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 3px;
-    opacity: 0.8;
-}
-
-.card-neon-blue::before {
-    background: linear-gradient(90deg, #00aaff, #00ccff);
-}
-
-.card-neon-green::before {
-    background: linear-gradient(90deg, #00ffaa, #00cc88);
-}
-
-.card-neon-purple::before {
-    background: linear-gradient(90deg, #aa00ff, #cc00ff);
-}
-
-.card-neon-orange::before {
-    background: linear-gradient(90deg, #ffaa00, #ff8800);
-}
-
-.stat-card:hover {
-    transform: translateY(-5px);
-    background: rgba(255, 255, 255, 0.08);
-    border-color: rgba(0, 170, 255, 0.4);
-    box-shadow: 0 10px 20px rgba(0, 170, 255, 0.1);
-}
-
-.stat-icon {
-    font-size: 32px;
-    width: 60px;
-    height: 60px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: rgba(255, 255, 255, 0.1);
-    border-radius: 10px;
-}
-
-.stat-content h3 {
-    font-size: 14px;
-    color: rgba(255, 255, 255, 0.7);
-    margin: 0 0 5px 0;
-    font-weight: 500;
-}
-
-.stat-number {
-    font-size: 28px;
-    font-weight: 600;
-    margin: 0 0 5px 0;
-}
-
-.stat-change {
-    font-size: 12px;
-    margin: 0;
-    color: rgba(255, 255, 255, 0.6);
-}
-
-.stat-change.positive {
-    color: #00ffaa;
-}
-
-.stat-change.neutral {
-    color: #aaaaff;
-}
-
-/* Table Section */
-.table-section {
-    flex: 1;
-    background: rgba(0, 0, 0, 0.2);
-    border-radius: 12px;
-    padding: 20px;
-    border: 1px solid rgba(0, 170, 255, 0.2);
-    display: flex;
-    height: 20vh;
-    flex-direction: column;
-    overflow-y: auto;
-    overflow-x: hidden;
-}
-
-.table-section .section-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 20px;
-    padding-bottom: 15px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.table-section .section-header h2 {
-    font-size: 20px;
-    margin: 0;
-    color: rgba(255, 255, 255, 0.9);
-}
-
-.table-container {
-    flex: 1;
-    overflow-y: auto;
-}
-
-.users-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 10px;
-}
-
-.users-table thead {
-    background: rgb(29, 69, 94);
-    position: sticky;
-    top: 0;
-    z-index: 10;
-}
-
-.users-table th {
-    padding: 15px;
-    text-align: left;
-    font-weight: 500;
-    color: rgba(255, 255, 255, 0.7);
-    border-bottom: 1px solid rgba(0, 170, 255, 0.3);
-    white-space: nowrap;
-}
-
-.users-table td {
-    padding: 15px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    vertical-align: middle;
-}
-
-.table-checkbox {
-    width: 18px;
-    height: 18px;
-    cursor: pointer;
-    accent-color: #00aaff;
-}
-
-.user-cell {
+.header-left {
     display: flex;
     align-items: center;
     gap: 12px;
 }
 
-.user-avatar {
-    width: 40px;
-    height: 40px;
-    background: linear-gradient(135deg, #00aaff, #00ffaa);
+.page-header-title {
+    font-size: 28px;
+    font-weight: 700;
+    color: white;
+    margin: 0;
+    background: linear-gradient(135deg, #fff 0%, #00aaff 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.header-badge {
+    background: #1d455e;
+    color: #00aaff;
+    padding: 4px 12px;
+    border-radius: 100px;
+    font-size: 12px;
+    font-weight: 600;
+    border: 1px solid #00aaff;
+}
+
+.header-actions {
+    display: flex;
+    gap: 12px;
+}
+
+/* Loading & Error States */
+.loading-state,
+.error-state {
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(0, 170, 255, 0.2);
+    border-radius: 24px;
+    padding: 60px 32px;
+    text-align: center;
+    color: white;
+}
+
+.spinner-large {
+    width: 48px;
+    height: 48px;
+    border: 4px solid rgba(255, 255, 255, 0.1);
+    border-top-color: #00aaff;
     border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 16px;
+}
+
+.error-icon {
+    font-size: 48px;
+    margin-bottom: 16px;
+}
+
+.error-state h3 {
+    font-size: 20px;
+    margin-bottom: 8px;
+}
+
+.error-state p {
+    color: rgba(255, 255, 255, 0.7);
+    margin-bottom: 24px;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Content Card */
+.content-card {
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(0, 170, 255, 0.2);
+    border-radius: 24px;
+    padding: 32px;
+    color: white;
+}
+
+.card-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 32px;
+    padding-bottom: 24px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.header-icon {
+    font-size: 48px;
+    background: rgba(0, 170, 255, 0.1);
+    width: 80px;
+    height: 80px;
+    border-radius: 20px;
     display: flex;
     align-items: center;
     justify-content: center;
+    border: 1px solid #00aaff;
+}
+
+.header-text {
+    flex: 1;
+}
+
+.header-text h2 {
+    font-size: 24px;
     font-weight: 600;
+    margin: 0 0 8px 0;
+    color: white;
+}
+
+.subtitle {
+    color: rgba(255, 255, 255, 0.7);
+    margin: 0;
     font-size: 14px;
-    color: white;
 }
 
-.user-info {
+.header-status {
     display: flex;
-    flex-direction: column;
-}
-
-.user-name {
-    margin: 0;
-    font-weight: 500;
-    color: white;
-}
-
-.user-id {
-    margin: 0;
-    font-size: 12px;
-    color: rgba(255, 255, 255, 0.6);
+    gap: 8px;
+    align-items: center;
 }
 
 /* Badges */
-.role-badge,
 .status-badge {
-    padding: 5px 12px;
-    border-radius: 20px;
+    padding: 6px 12px;
+    border-radius: 100px;
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.status-badge.active {
+    background: rgba(0, 255, 0, 0.1);
+    color: #00ff00;
+    border: 1px solid #00ff00;
+}
+
+.status-badge.inactive {
+    background: rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.7);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.status-badge.pending {
+    background: rgba(255, 255, 0, 0.1);
+    color: #ffff00;
+    border: 1px solid #ffff00;
+}
+
+.status-badge.rejected {
+    background: rgba(255, 0, 0, 0.1);
+    color: #ff4444;
+    border: 1px solid #ff4444;
+}
+
+.verified-badge {
+    background: #00aaff;
+    color: white;
+    padding: 4px 10px;
+    border-radius: 100px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.featured-badge {
+    background: #ffaa00;
+    color: #0a1219;
+    padding: 4px 10px;
+    border-radius: 100px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.badge {
+    padding: 4px 10px;
+    border-radius: 100px;
     font-size: 12px;
     font-weight: 500;
-    display: inline-block;
-    white-space: nowrap;
 }
 
-/* Role badges - fixed for your data structure */
-.role-badge.role-admin,
-.role-badge.role-administrator {
-    background: rgba(255, 0, 0, 0.2);
-    color: #ff6666;
-    border: 1px solid rgba(255, 0, 0, 0.3);
+.badge-success {
+    background: rgba(0, 255, 0, 0.1);
+    color: #00ff00;
+    border: 1px solid #00ff00;
 }
 
-.role-badge.role-artist {
-    background: rgba(0, 170, 255, 0.2);
-    color: #66ccff;
-    border: 1px solid rgba(0, 170, 255, 0.3);
+.badge-featured {
+    background: #ffaa00;
+    color: #0a1219;
 }
 
-.role-badge.role-listener {
-    background: rgba(0, 255, 170, 0.2);
-    color: #66ffcc;
-    border: 1px solid rgba(0, 255, 170, 0.3);
+.badge-secondary {
+    background: rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.7);
+    border: 1px solid rgba(255, 255, 255, 0.3);
 }
 
-.role-badge.role-guest {
-    background: rgba(153, 153, 153, 0.2);
-    color: #cccccc;
-    border: 1px solid rgba(153, 153, 153, 0.3);
+/* Info Sections */
+.info-section {
+    margin-bottom: 32px;
+    padding: 24px;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
-/* Status badges - fixed for your data structure */
-.status-badge.status-active {
-    background: rgba(0, 255, 0, 0.2);
-    color: #66ff66;
-    border: 1px solid rgba(0, 255, 0, 0.3);
-}
-
-.status-badge.status-inactive {
-    background: rgba(255, 255, 0, 0.2);
-    color: #ffff66;
-    border: 1px solid rgba(255, 255, 0, 0.3);
-}
-
-.status-badge.status-pending {
-    background: rgba(255, 165, 0, 0.2);
-    color: #ffcc66;
-    border: 1px solid rgba(255, 165, 0, 0.3);
-}
-
-/* Default status badge if status is unknown */
-.status-badge {
-    background: rgba(153, 153, 153, 0.2);
-    color: #cccccc;
-    border: 1px solid rgba(153, 153, 153, 0.3);
-}
-
-/* Action Buttons */
-.action-buttons {
+.section-title {
     display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 18px;
+    font-weight: 600;
+    color: white;
+    margin-bottom: 24px;
+}
+
+.section-icon {
+    font-size: 20px;
+}
+
+/* Media Section */
+.media-section {
+    margin-bottom: 32px;
+}
+
+.media-grid {
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    gap: 24px;
+}
+
+.media-display {
+    display: flex;
+    flex-direction: column;
+}
+
+.media-display label {
+    font-size: 14px;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.9);
+    margin-bottom: 8px;
+}
+
+.display-preview {
+    border-radius: 12px;
+    overflow: hidden;
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    background: rgba(0, 0, 0, 0.3);
+}
+
+.avatar-preview {
+    width: 200px;
+    height: 200px;
+    border-radius: 50%;
+}
+
+.banner-preview {
+    width: 100%;
+    height: 200px;
+    border-radius: 12px;
+}
+
+.preview-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* Info Grids */
+.info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+}
+
+.info-item {
+    display: flex;
+    flex-direction: column;
+}
+
+.info-item.full-width {
+    grid-column: 1 / -1;
+}
+
+.info-item label {
+    font-size: 13px;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.6);
+    margin-bottom: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.info-value {
+    font-size: 15px;
+    color: white;
+    line-height: 1.5;
+    padding: 8px 12px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.slug-value {
+    font-family: monospace;
+    background: rgba(0, 170, 255, 0.1);
+    color: #00aaff;
+}
+
+.bio-value {
+    white-space: pre-wrap;
+    line-height: 1.6;
+}
+
+.link-value {
+    color: #00aaff;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s;
+}
+
+.link-value:hover {
+    color: #0088cc;
+    text-decoration: underline;
+}
+
+/* Social Grid */
+.social-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+}
+
+.social-item {
+    padding: 12px 16px;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.social-item.facebook {
+    border-left: 4px solid #1877f2;
+}
+
+.social-item.instagram {
+    border-left: 4px solid #e4405f;
+}
+
+.social-item.twitter {
+    border-left: 4px solid #1da1f2;
+}
+
+.social-item.youtube {
+    border-left: 4px solid #ff0000;
+}
+
+.social-item.empty {
+    border-left: 4px solid rgba(255, 255, 255, 0.3);
+    color: rgba(255, 255, 255, 0.5);
+}
+
+.social-link {
+    color: white;
+    text-decoration: none;
+    flex: 1;
+}
+
+.social-link:hover {
+    color: #00aaff;
+}
+
+/* Settings Grid */
+.settings-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+}
+
+/* Stats Preview */
+.stats-preview {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-top: 32px;
+    padding: 20px;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 16px;
+    border: 1px solid rgba(0, 170, 255, 0.2);
+}
+
+.stat-item {
+    text-align: center;
+    padding: 16px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+}
+
+.stat-label {
+    display: block;
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.6);
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.stat-value {
+    font-size: 24px;
+    font-weight: 700;
+    color: #00aaff;
+}
+
+/* Metadata */
+.metadata-section {
+    margin-top: 24px;
+    padding-top: 20px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    gap: 24px;
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.5);
+}
+
+.metadata-label {
+    margin-right: 4px;
+}
+
+.metadata-value {
+    color: rgba(255, 255, 255, 0.8);
+}
+
+/* Buttons */
+.btn {
+    padding: 12px 24px;
+    border-radius: 100px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
     gap: 8px;
 }
 
-.btn-action {
-    background: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.2);
+.btn-primary {
+    background: linear-gradient(135deg, #00aaff, #0088cc);
     color: white;
-    width: 32px;
-    height: 32px;
-    border-radius: 6px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.2s ease;
-    font-size: 14px;
 }
 
-.btn-action:hover {
-    background: rgba(255, 255, 255, 0.2);
-    transform: scale(1.1);
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(0, 170, 255, 0.4);
 }
 
-.btn-edit:hover {
-    background: rgba(0, 170, 255, 0.3);
-    border-color: #00aaff;
+.btn-secondary {
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
-.btn-delete:hover {
-    background: rgba(255, 0, 0, 0.3);
-    border-color: #ff0000;
+.btn-secondary:hover {
+    background: rgba(255, 255, 255, 0.15);
 }
 
-.btn-view:hover {
-    background: rgba(0, 255, 0, 0.3);
-    border-color: #00ff00;
-}
-
-.btn-view-all {
-    background: transparent;
-    border: 1px solid rgba(0, 170, 255, 0.5);
-    color: #00aaff;
-    padding: 8px 16px;
-    border-radius: 6px;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    font-family: 'Afacad', sans-serif;
-    font-size: 14px;
-}
-
-.btn-view-all:hover {
-    background: rgba(0, 170, 255, 0.1);
-    transform: translateX(5px);
-}
-
-/* Loading State */
-.loading-state {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    min-height: 200px;
-    color: rgba(255, 255, 255, 0.7);
-}
-
-/* Empty State */
-.empty-state {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    min-height: 200px;
-    color: rgba(255, 255, 255, 0.7);
-    text-align: center;
-    padding: 40px;
-}
-
-.empty-state .empty-icon {
-    font-size: 48px;
-    margin-bottom: 20px;
-    opacity: 0.5;
-}
-
-/* Scrollbar Styling */
-.dashboard-container::-webkit-scrollbar,
-.table-container::-webkit-scrollbar {
-    width: 6px;
-}
-
-.dashboard-container::-webkit-scrollbar-thumb,
-.table-container::-webkit-scrollbar-thumb {
-    background: rgba(0, 170, 255, 0.6);
-    border-radius: 3px;
-}
-
-.dashboard-container::-webkit-scrollbar-track,
-.table-container::-webkit-scrollbar-track {
-    background: transparent;
-}
-
-/* Neon Pulse Animation */
-@keyframes neonPulse {
-
-    0%,
-    100% {
-        box-shadow:
-            0 0 8px rgba(0, 170, 255, 0.7),
-            0 0 16px rgba(0, 170, 255, 0.55),
-            0 0 24px rgba(0, 170, 255, 0.35),
-            0 8px 25px rgba(0, 0, 0, 0.45);
-    }
-
-    50% {
-        box-shadow:
-            0 0 12px rgba(0, 170, 255, 0.8),
-            0 0 20px rgba(0, 170, 255, 0.65),
-            0 0 30px rgba(0, 170, 255, 0.45),
-            0 8px 30px rgba(0, 0, 0, 0.5);
-    }
-}
-
-/* Responsive Design */
-@media (max-width: 1400px) {
-    .stats-grid {
-        grid-template-columns: repeat(2, 1fr);
-    }
-}
-
-@media (max-width: 1200px) {
-    .dashboard-container {
-        padding: 20px;
-    }
-
-    .users-table th,
-    .users-table td {
-        padding: 12px;
-        font-size: 14px;
-    }
-}
-
-@media (max-width: 1024px) {
-    .header-section {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 20px;
-    }
-
-    .header-actions {
-        width: 100%;
-        justify-content: space-between;
-    }
-
-    .search-box input {
-        width: 200px;
-    }
-}
-
+/* Responsive */
 @media (max-width: 768px) {
-    .dashboard-container {
-        padding: 15px;
-        height: auto;
-        min-height: 82vh;
+    .artist-detail-view {
+        padding: 16px;
     }
-
-    .stats-grid {
-        grid-template-columns: 1fr;
-    }
-
-    .header-actions {
+    
+    .page-header {
         flex-direction: column;
-        gap: 15px;
         align-items: flex-start;
+        gap: 16px;
     }
-
-    .search-box input {
+    
+    .header-actions {
         width: 100%;
     }
-
-    .users-table {
-        display: block;
-        overflow-x: auto;
+    
+    .btn {
+        flex: 1;
+        justify-content: center;
     }
-
-    .action-buttons {
+    
+    .card-header {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .header-status {
         flex-wrap: wrap;
         justify-content: center;
     }
-
-    .table-section .section-header {
+    
+    .media-grid {
+        grid-template-columns: 1fr;
+        justify-items: center;
+    }
+    
+    .avatar-preview {
+        width: 150px;
+        height: 150px;
+    }
+    
+    .social-grid,
+    .settings-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .stats-preview {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .metadata-section {
         flex-direction: column;
-        align-items: flex-start;
-        gap: 15px;
+        gap: 8px;
     }
-
-    .btn-view-all {
-        align-self: flex-end;
-    }
-}
-
-@media (max-width: 480px) {
-    .dashboard-container {
-        padding: 12px;
-    }
-
-    .title-container h1 {
-        font-size: 24px;
-    }
-
-    .stat-card {
-        flex-direction: column;
-        text-align: center;
-        padding: 15px;
-    }
-
-    .stat-icon {
-        width: 50px;
-        height: 50px;
-        font-size: 24px;
-        margin-bottom: 10px;
-    }
-
-    .users-table th,
-    .users-table td {
-        padding: 8px;
-        font-size: 13px;
-    }
-
-    .user-avatar {
-        width: 35px;
-        height: 35px;
-        font-size: 13px;
-    }
-
-    .role-badge,
-    .status-badge {
-        padding: 4px 8px;
-        font-size: 11px;
-    }
-
-    .btn-action {
-        width: 28px;
-        height: 28px;
-        font-size: 12px;
-    }
-
-    .loading-overlay {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(255, 255, 255, 0.8);
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    z-index: 10;
-}
-
-.spinner {
-    width: 40px;
-    height: 40px;
-    border: 4px solid #f3f3f3;
-    border-top: 4px solid #4a90e2;
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
-    margin-bottom: 16px;
-}
 }
 </style>

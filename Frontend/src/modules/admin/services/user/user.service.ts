@@ -12,7 +12,11 @@ class UserService {
         return res.data;
     }
     async addUser(payload: CreateUserPayload){
-        return adminApi.post("/add-user", payload);
+        return adminApi.post('/add-user', payload, {
+            headers: {
+            'Content-Type': 'multipart/form-data'
+            }
+        });
     }
     async searchUser(keyword: string){
         const res = await adminApi.post("/search-user" ,{

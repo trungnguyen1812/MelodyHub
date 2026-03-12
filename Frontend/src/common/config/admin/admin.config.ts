@@ -63,7 +63,7 @@ export const ROUTER_ADMIN = [
         }
       },
       {
-        path: 'users/:id',
+        path: 'users/:slug',
         name: "admin.usermanager.detail",
         component: UserManagerDetailView,
         props: true,
@@ -73,7 +73,7 @@ export const ROUTER_ADMIN = [
         }
       },
       {
-        path: 'users/update/:id',
+        path: 'users/update/:slug',
         name: "admin.usermanager.update",
         component: UserManagerUpdateView,
         props: true,
@@ -111,7 +111,7 @@ export const ROUTER_ADMIN = [
         }
       },
       {
-        path: 'artists/:id',
+        path: 'artists/:slug',
         name: "admin.artistsmanager.detail",
         component: ArtistsDetailView,
         props: true,
@@ -121,7 +121,7 @@ export const ROUTER_ADMIN = [
         }
       },
       {
-        path: 'artists/update/:id',
+        path: 'artists/update/:id/:slug?',
         name: "admin.artistsmanager.update",
         component: ArtistsUpdateView,
         props: true,

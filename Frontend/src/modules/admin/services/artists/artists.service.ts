@@ -1,47 +1,47 @@
-import api from "@/plugins/axios";
 import adminApi from '@/plugins/axios_admin';
-import adminAuthApi from '@/plugins/axios_admin_auth';
-
+import type { CreateArtistPayload } from "@/modules/admin/interfaces/artists/create-artist.payload";
 
 class ArtistService {
+
     async getAllArtist() {
-        const res = await adminApi.get("/list-artists");
-        return res.data;
+        return (await adminApi.get("/artists")).data;
     }
-    // async addUser(payload: CreateUserPayload){
-    //     return adminApi.post("/add-user", payload);
-    // }
-    // async searchUser(keyword: string){
-    //     const res = await adminApi.post("/search-user" ,{
-    //         q:keyword
-    //     }); 
-    //     return res.data;
-    // }
-    // async detailUser(id: number) {
-    //     return adminApi.get(`/users/${id}`);
-    // }
-    // async deleteUser(id: number){
-    //     return await adminApi.post(`/user/delete/${id}`); 
-    // }
-    // async updateUser(id: number, payload: CreateUserPayload) {
-    //     const formData = new FormData();
-       
-    //     Object.keys(payload).forEach(key => {
-    //         if (key !== 'avatar' && payload[key as keyof CreateUserPayload]) {
-    //             formData.append(key, String(payload[key as keyof CreateUserPayload]));
-    //         }
-    //     });
-        
-    //     if (payload.avatar instanceof File) {   
-    //         formData.append('avatar', payload.avatar);
-    //     }
-        
-    //     return await adminApi.post(`/users/update/${id}`, formData ,{
-    //         headers: {
-    //         'Content-Type': undefined,
-    //         },
-    //     }); 
-    // } 
+
+    async searchArtist(keyword: string) {
+        return (await adminApi.get("/artists/search", {
+            params: { q: keyword }
+        })).data;
+    }
+
+    async detailArtist(slug: string) {
+        return (await adminApi.get(`/artists/${slug}`)).data;
+    }
+
+    async deleteArtist(id: number) {
+        return (await adminApi.delete(`/artists/artist/${id}`)).data;
+    }
+
+    async addArtist(payload: CreateArtistPayload) {
+        const formData = new FormData();
+
+        Object.entries(payload).forEach(([key, value]) => {
+            if (value) formData.append(key, value as any);
+        });
+
+        return adminApi.post("/artists", formData);
+    }
+
+    async updateArtist(id: number, payload: CreateArtistPayload) {
+
+        const formData = new FormData();
+
+        Object.entries(payload).forEach(([key, value]) => {
+            if (value) formData.append(key, value as any);
+        });
+
+        return adminApi.post(`/artists/${id}`, formData);
+    }
+
 }
 
 export default new ArtistService();

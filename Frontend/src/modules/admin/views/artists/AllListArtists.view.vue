@@ -6,7 +6,7 @@
                 <p class="subtitle">Manage All Artists Accounts</p>
             </div>
             <div class="header-actions">
-                <button @click="" class="btn-add-user">
+                <button @click="CreateArtist" class="btn-add-user">
                     <span class="btn-icon">
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
                             stroke="currentColor" class="size-6">
@@ -18,7 +18,7 @@
                 </button>
 
                 <div class="search-box">
-                    <input type="text" placeholder="Search artists..." v-model="keyword" @input="">
+                    <input type="text" placeholder="Search artists..." v-model="keyword" @input="onSearch">
                     <span class="search-icon">
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
                             stroke="currentColor" class="size-6">
@@ -57,18 +57,18 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <tr v-for="artist in artists" :key="artist.id">
+                        <tr v-for="artist in paginatedArtists" :key="artist.id">
                             <td class="user-cell">
                                 <div class="user-avatar">
                                     <img :src="getFullImageUrl(artist.avatar_url)" :alt="artist.name"
                                         class="avatar-img" />
                                 </div>
                                 <div class="user-info">
-                                    <p class="user-name">{{ artist.name }}</p>
+                                    <p class="user-name" :title="artist.name">{{ artist.name }}</p>
                                 </div>
                             </td>
-                            <td>{{ artist.total_followers }}</td>
-                            <td>{{ artist.total_songs }}</td>
+                            <td>{{ formatCompactNumber(artist.total_followers) }}</td>
+                            <td>{{ formatCompactNumber(artist.total_songs) }}</td>
                             <td>
                                 <span>
                                     {{ artist.country }}
@@ -81,50 +81,32 @@
                             </td>
                             <td>{{ formatDate(artist.created_at ?? "") }}</td>
                             <td>
-                                <!-- From Uiverse.io by devkatyall -->
-                                <label class="popup">
-                                    <input type="checkbox" />
-                                    <div tabindex="0" class="burger">
-                                        <svg viewBox="0 0 24 24" fill="white" height="18" width="18"
-                                            xmlns="http://www.w3.org/2000/svg">
-                                            <path
-                                                d="M12 7a2 2 0 1 0-.001-4.001A2 2 0 0 0 12 7zm0 2a2 2 0 1 0 .001 4.001A2 2 0 0 0 12 9zm0 6a2 2 0 1 0 .001 4.001A2 2 0 0 0 12 15z" />
+                                <div class="social-icons">
+                                    <a v-if="artist.facebook_url" :href="artist.facebook_url" target="_blank" class="social-icon facebook">
+                                        <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18">
+                                            <path d="M24 12c0-6.627-5.373-12-12-12S0 5.373 0 12c0 5.99 4.388 10.954 10.125 11.854V15.47H7.078v-3.47h3.047V9.356c0-3.007 1.792-4.688 4.533-4.688 1.312 0 2.686.234 2.686.234v2.953H15.83c-1.49 0-1.955.925-1.955 1.874V12h3.328l-.532 3.469h-2.796v8.385C19.612 22.954 24 17.99 24 12z"/>
                                         </svg>
-                                    </div>
-                                    <nav class="popup-window">
-                                        <legend>Quick Start</legend>
-                                        <ul>
-                                            <li>
-                                                <button>
-                                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
-                                                        stroke="currentColor" stroke-width="1.2" stroke-linecap="round"
-                                                        xmlns="http://www.w3.org/2000/svg">
-                                                        <path
-                                                            d="M19 4v6.406l-3.753 3.741-6.463-6.462 3.7-3.685h6.516zm2-2h-12.388l1.497 1.5-4.171 4.167 9.291 9.291 4.161-4.193 1.61 1.623v-12.388zm-5 4c.552 0 1 .449 1 1s-.448 1-1 1-1-.449-1-1 .448-1 1-1zm0-1c-1.104 0-2 .896-2 2s.896 2 2 2 2-.896 2-2-.896-2-2-2zm6.708.292l-.708.708v3.097l2-2.065-1.292-1.74zm-12.675 9.294l-1.414 1.414h-2.619v2h-2v2h-2v-2.17l5.636-5.626-1.417-1.407-6.219 6.203v5h6v-2h2v-2h2l1.729-1.729-1.696-1.685z">
-                                                        </path>
-                                                    </svg>
-                                                    <span>Log In</span>
-                                                </button>
-                                            </li>
-                                            <li>
-                                                <button>
-                                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
-                                                        stroke="currentColor" stroke-width="1" stroke-linecap="round"
-                                                        xmlns="http://www.w3.org/2000/svg">
-                                                        <path
-                                                            d="M2.598 9h-1.055c1.482-4.638 5.83-8 10.957-8 6.347 0 11.5 5.153 11.5 11.5s-5.153 11.5-11.5 11.5c-5.127 0-9.475-3.362-10.957-8h1.055c1.443 4.076 5.334 7 9.902 7 5.795 0 10.5-4.705 10.5-10.5s-4.705-10.5-10.5-10.5c-4.568 0-8.459 2.923-9.902 7zm12.228 3l-4.604-3.747.666-.753 6.112 5-6.101 5-.679-.737 4.608-3.763h-14.828v-1h14.826z">
-                                                        </path>
-                                                    </svg>
-                                                    <span>Sign Up</span>
-                                                </button>
-                                            </li>
-                                        </ul>
-                                    </nav>
-                                </label>
+                                    </a>
+                                    <a v-if="artist.instagram_url" :href="artist.instagram_url" target="_blank" class="social-icon instagram">
+                                        <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18">
+                                            <path d="M12 2.163c3.204 0 3.584.012 4.85.07 1.188.054 1.98.257 2.675.545.73.284 1.334.676 1.928 1.27.594.594.986 1.198 1.27 1.928.288.695.49 1.487.545 2.675.058 1.266.07 1.646.07 4.85s-.012 3.584-.07 4.85c-.054 1.188-.257 1.98-.545 2.675-.284.73-.676 1.334-1.27 1.928-.594.594-1.198.986-1.928 1.27-.695.288-1.487.49-2.675.545-1.266.058-1.646.07-4.85.07s-3.584-.012-4.85-.07c-1.188-.054-1.98-.257-2.675-.545-.73-.284-1.334-.676-1.928-1.27-.594-.594-.986-1.198-1.27-1.928-.288-.695-.49-1.487-.545-2.675-.058-1.266-.07-1.646-.07-4.85s.012-3.584.07-4.85c.054-1.188.257-1.98.545-2.675.284-.73.676-1.334 1.27-1.928.594-.594 1.198-.986 1.928-1.27.695-.288 1.487-.49 2.675-.545 1.266-.058 1.646-.07 4.85-.07zM12 0C8.741 0 8.332.014 7.052.072c-1.267.058-2.147.283-2.912.603-.79.33-1.466.78-2.124 1.437-.657.658-1.107 1.334-1.437 2.124-.32.765-.545 1.645-.603 2.912C.014 8.332 0 8.741 0 12s.014 3.668.072 4.948c.058 1.267.283 2.147.603 2.912.33.79.78 1.466 1.437 2.124.658.657 1.334 1.107 2.124 1.437.765.32 1.645.545 2.912.603C8.332 23.986 8.741 24 12 24s3.668-.014 4.948-.072c1.267-.058 2.147-.283 2.912-.603.79-.33 1.466-.78 2.124-1.437.657-.658 1.107-1.334 1.437-2.124.32-.765.545-1.645.603-2.912.058-1.28.072-1.689.072-4.948s-.014-3.668-.072-4.948c-.058-1.267-.283-2.147-.603-2.912-.33-.79-.78-1.466-1.437-2.124-.658-.657-1.334-1.107-2.124-1.437-.765-.32-1.645-.545-2.912-.603C15.668.014 15.259 0 12 0z"/>
+                                        </svg>
+                                    </a>
+                                    <a v-if="artist.twitter_url" :href="artist.twitter_url" target="_blank" class="social-icon x">
+                                        <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18">
+                                            <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+                                        </svg>
+                                    </a>
+                                    <a v-if="artist.youtube_url" :href="artist.youtube_url" target="_blank" class="social-icon youtube">
+                                        <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18">
+                                            <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+                                        </svg>
+                                    </a>
+                                </div>
                             </td>
                             <td>
                                 <div class="action-buttons">
-                                    <!-- <button class="btn-action btn-edit" @click="viewUpdateUser(artist.id)">
+                                    <button class="btn-action btn-edit"  @click="viewUpdateArtist({ id: artist.id, slug: artist.slug })">
                                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="size-5">
                                             <path d="m5.433 13.917 1.262-3.155A4 4 0 0 1 7.58 9.42l6.92-6.918a2.121 2.121 0 0 1 3 3l-6.92 6.918c-.383.383-.84.685-1.343.886l-3.154 1.262a.5.5 0 0 1-.65-.65Z" />
                                             <path d="M3.5 5.75c0-.69.56-1.25 1.25-1.25H10A.75.75 0 0 0 10 3H4.75A2.75 2.75 0 0 0 2 5.75v9.5A2.75 2.75 0 0 0 4.75 18h9.5A2.75 2.75 0 0 0 17 15.25V10a.75.75 0 0 0-1.5 0v5.25c0 .69-.56 1.25-1.25 1.25h-9.5c-.69 0-1.25-.56-1.25-1.25v-9.5Z" />
@@ -135,12 +117,12 @@
                                             <path fill-rule="evenodd" d="M8.75 1A2.75 2.75 0 0 0 6 3.75v.443c-.795.077-1.584.176-2.365.298a.75.75 0 1 0 .23 1.482l.149-.022.841 10.518A2.75 2.75 0 0 0 7.596 19h4.807a2.75 2.75 0 0 0 2.742-2.53l.841-10.52.149.023a.75.75 0 0 0 .23-1.482A41.03 41.03 0 0 0 14 4.193V3.75A2.75 2.75 0 0 0 11.25 1h-2.5ZM10 4c.84 0 1.673.025 2.5.075V3.75c0-.69-.56-1.25-1.25-1.25h-2.5c-.69 0-1.25.56-1.25 1.25v.325C8.327 4.025 9.16 4 10 4ZM8.58 7.72a.75.75 0 0 0-1.5.06l.3 7.5a.75.75 0 1 0 1.5-.06l-.3-7.5Zm4.34.06a.75.75 0 1 0-1.5-.06l-.3 7.5a.75.75 0 1 0 1.5.06l.3-7.5Z" clip-rule="evenodd" />
                                         </svg>
                                     </button>
-                                    <button class="btn-action btn-view" @click="viewDetailUser(artist.id)">
+                                    <button class="btn-action btn-view" @click="viewDetailArtist(artist.slug)">
                                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="size-5">
                                             <path d="M10 12.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Z" />
                                             <path fill-rule="evenodd" d="M.664 10.59a1.651 1.651 0 0 1 0-1.186A10.004 10.004 0 0 1 10 3c4.257 0 7.893 2.66 9.336 6.41.147.381.146.804 0 1.186A10.004 10.004 0 0 1 10 17c-4.257 0-7.893-2.66-9.336-6.41ZM14 10a4 4 0 1 1-8 0 4 4 0 0 1 8 0Z" clip-rule="evenodd" />
                                         </svg>
-                                    </button> -->
+                                    </button>
                                 </div>
                             </td>
                         </tr>
@@ -155,6 +137,25 @@
                     <span>Loading data...</span>
                 </div>
             </div>
+            <!-- Pagination -->
+            <div v-if="artists.length > 0" class="pagination">
+                <div class="pagination-info">
+                    Showing {{ paginationStart }} to {{ paginationEnd }} of {{ artists.length }} entries
+                </div>
+                <div class="pagination-controls">
+                    <button class="pagination-btn" :disabled="currentPage === 1" @click="currentPage--">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="size-4">
+                            <path fill-rule="evenodd" d="M11.78 5.22a.75.75 0 0 1 0 1.06L8.06 10l3.72 3.72a.75.75 0 1 1-1.06 1.06l-4.25-4.25a.75.75 0 0 1 0-1.06l4.25-4.25a.75.75 0 0 1 1.06 0Z" clip-rule="evenodd" />
+                        </svg>
+                    </button>
+                    <span class="pagination-current">{{ currentPage }} / {{ totalPages }}</span>
+                    <button class="pagination-btn" :disabled="currentPage === totalPages" @click="currentPage++">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="size-4">
+                            <path fill-rule="evenodd" d="M8.22 5.22a.75.75 0 0 1 1.06 0l4.25 4.25a.75.75 0 0 1 0 1.06l-4.25 4.25a.75.75 0 0 1-1.06-1.06L11.94 10 8.22 6.28a.75.75 0 0 1 0-1.06Z" clip-rule="evenodd" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
     <div v-if="loading" class="loading-state">
@@ -167,7 +168,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref, onMounted ,computed} from 'vue';
 
 import { useArtistStore, getFullImageUrl } from '@/modules/admin/stores/artists/artistsStore';
 
@@ -179,7 +180,8 @@ import { useNotificationStore } from "@/store/notificationStore";
 const keyword = ref("");
 const notificationStore = useNotificationStore();
 let searchTimeout: number | null = null;
-
+const currentPage = ref(1);
+const itemsPerPage = 10;
 const artistStore = useArtistStore();
 
 
@@ -187,84 +189,116 @@ const { artists, loading } = storeToRefs(artistStore);
 
 
 
-// const CreateUser =()=>{
-//     router.push({name:"admin.usermanager.add"});
-// }
-
-// const onSearch = ()=>{
-//     if (searchTimeout)clearTimeout(searchTimeout);
-//     searchTimeout = window.setTimeout(async() => {
-//         if (!keyword.value.trim()) {
-//             await userStore.fetchUsers();
-//             return;
-//         }
-//          await userStore.fetchSearchUser(
-//             keyword.value
-//         );
-//     }, 300);
-// }
-
-// function viewDetailUser(id: number) {
-//     router.push({
-//         name:"admin.usermanager.detail",
-//         params: { id }
-//     });
-// }
-
-// function viewUpdateUser(id: number) {
-//     router.push({
-//         name:"admin.usermanager.update",
-//         params: { id }
-//     });
-// }
-
-function formatDate(date: string) {
-    if (!date) return "";
-    return new Date(date).toLocaleDateString("vi-VN");
+const CreateArtist =()=>{
+    router.push({name:"admin.artistsmanager.add"});
 }
 
-// async function deleteUser(id: number) {
-//     try {
-//         const result = await Swal.fire({
-//             title: 'Delete User',
-//             text: 'Are you sure you want to delete this user? This action cannot be undone.',
-//             icon: 'warning',
-//             showCancelButton: true,
-//             confirmButtonText: 'Yes, delete it!',
-//             cancelButtonText: 'Cancel',
-//             confirmButtonColor: '#d33',
-//             cancelButtonColor: '#3085d6',
-//             reverseButtons: true,
-//             customClass: {
-//                 confirmButton: 'btn btn-danger',
-//                 cancelButton: 'btn btn-secondary'
-//             }
-//         });
+const onSearch = ()=>{
+    if (searchTimeout)clearTimeout(searchTimeout);
+    searchTimeout = window.setTimeout(async() => {
+        if (!keyword.value.trim()) {
+            await artistStore.fetchArtists();
+            return;
+        }
+         await artistStore.fetchSearchArtitst(
+            keyword.value
+        );
+    }, 300);
+}
 
-//         if (!result.isConfirmed) return;
 
-//         loading.value = true;
-//         await userStore.fetchDelete(id);
-//         await userStore.fetchUsers();
-//         notificationStore.notify("Delete user successful", "success");
+// FOR ARTISTS
+function viewDetailArtist(slug: string) {
+    router.push({
+        name: "admin.artistsmanager.detail",
+        params: { slug }  // Artist detail chỉ dùng slug
+    });
+}
 
-//         router.push({name:"admin.usermanager.all"});
+function viewUpdateArtist(artist: { id: number, slug: string }) {
+    // Artist update cần cả id và slug
+    router.push({
+        name: "admin.artistsmanager.update",
+        params: { 
+            id: artist.id.toString(),  // ID bắt buộc
+            slug: artist.slug          // Slug optional
+        }
+    });
+}
 
-//     } catch (error: any) {
-//         const err = error as { response?: { status?: number } }
 
-//         if (err.response?.status === 404) {
-//             router.push('/404')
-//         } else if (err.response?.status === 401) {
-//             router.push('/login')
-//         } else {
+async function deleteUser(id: number) {
+    try {console.log(id);
+    
+        const result = await Swal.fire({
+            title: 'Delete User',
+            text: 'Are you sure you want to delete this user? This action cannot be undone.',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'Yes, delete it!',
+            cancelButtonText: 'Cancel',
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            reverseButtons: true,
+            customClass: {
+                confirmButton: 'btn btn-danger',
+                cancelButton: 'btn btn-secondary'
+            }
+        });
 
-//         }
+        if (!result.isConfirmed) return;
 
-//     } finally {
-//         loading.value = false;
-//     }
-// }
+        loading.value = true;
+        await artistStore.fetchDelete(id);
+        await artistStore.fetchArtists();
+        notificationStore.notify("Delete user successful", "success");
+
+        router.push({name:"admin.artistsmanager.all"});
+
+    } catch (error: any) {
+        const err = error as { response?: { status?: number } }
+
+        if (err.response?.status === 404) {
+            router.push('/404')
+        } else if (err.response?.status === 401) {
+            router.push('/login')
+        } else {
+
+        }
+
+    } finally {
+        loading.value = false;
+    }
+}
+
+
+const formatCompactNumber = (num: number | null): string => {
+  if (num === null || num === undefined) return "0";
+
+  return new Intl.NumberFormat("en", {
+    notation: "compact",
+    maximumFractionDigits: 1,
+  }).format(num);
+};
+
+const formatDate = (dateString?: string): string => {
+    if (!dateString) return '—'
+    return new Date(dateString).toLocaleString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+    })
+}
+
+const totalPages = computed(() => Math.ceil(artists.value.length / itemsPerPage));
+const paginationStart = computed(() => ((currentPage.value - 1) * itemsPerPage) + 1);
+const paginationEnd = computed(() => Math.min(currentPage.value * itemsPerPage, artists.value.length));
+
+const paginatedArtists = computed(() => {
+    const start = (currentPage.value - 1) * itemsPerPage;
+    const end = start + itemsPerPage;
+    return artists.value.slice(start, end);
+});
 
 onMounted(() => {
     artistStore.fetchArtists();
@@ -503,8 +537,8 @@ onMounted(() => {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 20px;
-    padding-bottom: 15px;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
@@ -539,6 +573,7 @@ onMounted(() => {
     color: rgba(255, 255, 255, 0.7);
     border-bottom: 1px solid rgba(0, 170, 255, 0.3);
     white-space: nowrap;
+    z-index: 99999;
 }
 
 .users-table td {
@@ -582,8 +617,11 @@ onMounted(() => {
     margin: 0;
     font-weight: 500;
     color: white;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 100px;
 }
-
 .user-id {
     margin: 0;
     font-size: 12px;
@@ -959,7 +997,7 @@ onMounted(() => {
     --nav-border-width: 0.0625em;
     --nav-shadow-color: rgba(0, 0, 0, 0.2);
     --nav-shadow-width: 0 1px 5px;
-    --nav-bg: #eee;
+    --nav-bg: rgba(71, 65, 65, 0.984);
     --nav-font-family: "Poppins", sans-serif;
     --nav-default-scale: 0.8;
     --nav-active-scale: 1;
@@ -977,7 +1015,7 @@ onMounted(() => {
     --nav-button-padding-y: 0.375em;
     --nav-button-border-radius: 0.375em;
     --nav-button-font-size: 17px;
-    --nav-button-hover-bg: #00bf63;
+    --nav-button-hover-bg: #1d455e;
     --nav-button-hover-text-color: #fff;
     --nav-button-distance: 0.875em;
     /* underline */
@@ -1032,7 +1070,7 @@ onMounted(() => {
     right: var(--nav-position-right);
     transition: var(--burger-transition);
     margin-top: 10px;
-    z-index: 99999;
+    z-index: 999;
 }
 
 .popup-window legend {
@@ -1067,7 +1105,7 @@ onMounted(() => {
 
 .popup-window ul li:nth-child(1) svg,
 .popup-window ul li:nth-child(2) svg {
-    color: #00bf63;
+    color: #1d455e;
 }
 
 .popup-window ul li:nth-child(4) svg,
@@ -1178,4 +1216,160 @@ onMounted(() => {
         transform: scale(1.0);
     }
 }
+
+.social-icons {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.social-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+    transition: all 0.2s ease;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.social-icon:hover {
+    transform: translateY(-2px);
+    border-color: currentColor;
+}
+
+.social-icon.facebook:hover {
+    background: #1877f2;
+    color: white;
+    box-shadow: 0 4px 12px rgba(24, 119, 242, 0.3);
+}
+
+.social-icon.instagram:hover {
+    background: #e4405f;
+    color: white;
+    box-shadow: 0 4px 12px rgba(228, 64, 95, 0.3);
+}
+
+.social-icon.x:hover {
+    background: #000;
+    color: white;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.social-icon.youtube:hover {
+    background: #ff0000;
+    color: white;
+    box-shadow: 0 4px 12px rgba(255, 0, 0, 0.3);
+}
+
+/* Action Buttons - Đẹp và đồng bộ */
+.action-buttons {
+    display: flex;
+    gap: 6px;
+}
+
+.btn-action {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.05);
+    color: rgba(255, 255, 255, 0.7);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+
+.btn-action:hover {
+    transform: translateY(-2px);
+}
+
+.btn-edit:hover {
+    background: #00aaff;
+    color: white;
+    border-color: #00aaff;
+    box-shadow: 0 4px 12px rgba(0, 170, 255, 0.3);
+}
+
+.btn-view:hover {
+    background: #00ffaa;
+    color: #1d455e;
+    border-color: #00ffaa;
+    box-shadow: 0 4px 12px rgba(0, 255, 170, 0.3);
+}
+
+.btn-delete:hover {
+    background: #ff4444;
+    color: white;
+    border-color: #ff4444;
+    box-shadow: 0 4px 12px rgba(255, 68, 68, 0.3);
+}
+
+/* Checkbox và Pagination giữ nguyên */
+.checkbox-col {
+    width: 40px;
+}
+
+.table-checkbox {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+    accent-color: #00aaff;
+}
+
+/* Pagination - Thêm vào cuối table nếu chưa có */
+.pagination {
+    padding: 12px 16px; 
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.pagination-info {
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 14px;
+}
+
+.pagination-controls {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+.pagination-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.05);
+    color: white;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+
+.pagination-btn:hover:not(:disabled) {
+    background: #00aaff;
+    border-color: #00aaff;
+}
+
+.pagination-btn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+
+.pagination-current {
+    font-weight: 600;
+    color: #00aaff;
+}
+
+
 </style>

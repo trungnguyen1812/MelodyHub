@@ -48,9 +48,6 @@
                 <table class="users-table">
                     <thead>
                         <tr>
-                            <th>
-                                <input type="checkbox" class="table-checkbox">
-                            </th>
                             <th>User</th>
                             <th>Email</th>
                             <th>Role</th>
@@ -61,9 +58,7 @@
                     </thead>
                     <tbody>
                         <tr v-for="user in users" :key="user.id">
-                            <td>
-                                <input type="checkbox" class="table-checkbox">
-                            </td>
+                            
                             <td class="user-cell">
                                 <div class="user-avatar">
                                     <img :src="getFullImageUrl(user.avatar_url)" :alt="user.name" class="avatar-img" />
@@ -128,6 +123,25 @@
                     <span>Loading data...</span>
                 </div>
             </div>
+            <!-- Pagination -->
+            <div v-if="users.length > 0" class="pagination">
+                <div class="pagination-info">
+                    Showing {{ paginationStart }} to {{ paginationEnd }} of {{ users.length }} entries
+                </div>
+                <div class="pagination-controls">
+                    <button class="pagination-btn" :disabled="currentPage === 1" @click="currentPage--">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="size-4">
+                            <path fill-rule="evenodd" d="M11.78 5.22a.75.75 0 0 1 0 1.06L8.06 10l3.72 3.72a.75.75 0 1 1-1.06 1.06l-4.25-4.25a.75.75 0 0 1 0-1.06l4.25-4.25a.75.75 0 0 1 1.06 0Z" clip-rule="evenodd" />
+                        </svg>
+                    </button>
+                    <span class="pagination-current">{{ currentPage }} / {{ totalPages }}</span>
+                    <button class="pagination-btn" :disabled="currentPage === totalPages" @click="currentPage++">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="size-4">
+                            <path fill-rule="evenodd" d="M8.22 5.22a.75.75 0 0 1 1.06 0l4.25 4.25a.75.75 0 0 1 0 1.06l-4.25 4.25a.75.75 0 0 1-1.06-1.06L11.94 10 8.22 6.28a.75.75 0 0 1 0-1.06Z" clip-rule="evenodd" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
     <div v-if="loading" class="loading-state">
@@ -140,7 +154,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref, onMounted ,computed} from 'vue';
 import { useUserStore, getFullImageUrl } from '@/modules/admin/stores/users/userStore';
 import { storeToRefs } from "pinia";
 import router from '@/modules/router';
@@ -152,6 +166,8 @@ const notificationStore = useNotificationStore();
 let searchTimeout: number | null = null;
 const userStore = useUserStore();
 const { users, loading } = storeToRefs(userStore);
+const currentPage = ref(1);
+const itemsPerPage = 10;
 
 const CreateUser = () => {
     router.push({ name: "admin.usermanager.add" });
@@ -231,6 +247,17 @@ async function deleteUser(id: number) {
         loading.value = false;
     }
 }
+
+const totalPages = computed(() => Math.ceil(users.value.length / itemsPerPage));
+const paginationStart = computed(() => ((currentPage.value - 1) * itemsPerPage) + 1);
+const paginationEnd = computed(() => Math.min(currentPage.value * itemsPerPage, users.value.length));
+
+const paginatedArtists = computed(() => {
+    const start = (currentPage.value - 1) * itemsPerPage;
+    const end = start + itemsPerPage;
+    return users.value.slice(start, end);
+});
+
 
 onMounted(() => {
     userStore.fetchUsers();
@@ -945,5 +972,55 @@ onMounted(() => {
     40% {
         transform: scale(1.0);
     }
+}
+
+
+/* Pagination - Thêm vào cuối table nếu chưa có */
+.pagination {
+    padding: 12px 16px; 
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.pagination-info {
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 14px;
+}
+
+.pagination-controls {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+.pagination-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.05);
+    color: white;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+
+.pagination-btn:hover:not(:disabled) {
+    background: #00aaff;
+    border-color: #00aaff;
+}
+
+.pagination-btn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+
+.pagination-current {
+    font-weight: 600;
+    color: #00aaff;
 }
 </style>
