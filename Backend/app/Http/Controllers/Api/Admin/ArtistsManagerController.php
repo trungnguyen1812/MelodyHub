@@ -100,16 +100,13 @@ class ArtistsManagerController extends Controller
 
     public function show(Artist $artist)
     {
+        log::info($artist);
         return response()->json($artist);
     }
 
     public function update(Request $request, $id)
     {
         try {
-            Log::info('=== UPDATE USER START ===');
-            // Log::info('Request has file avatar: ' . ($request->hasFile('avatar') ? 'YES' : 'NO'));
-            // Log::info('Request files: ' . json_encode(array_keys($request->allFiles())));
-            Log::info($request);
             $artist = Artist::findOrFail($id);
 
             $request->merge([
@@ -138,7 +135,7 @@ class ArtistsManagerController extends Controller
                 'seo_description' => 'nullable|string|max:500',
                 'seo_keywords' => 'nullable|string|max:255',
             ]);
-
+            log::info($artist);
             $avatarPath = $artist->avatar_url;
             if ($request->hasFile('avatar') && $request->file('avatar')->isValid()) {
                 $avatarPath = FileUploadHelper::upload($request->file('avatar'), 'avatars/artists');

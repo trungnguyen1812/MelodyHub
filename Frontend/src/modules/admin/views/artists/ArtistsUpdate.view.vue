@@ -70,12 +70,8 @@
                                     v-model="form.slug"
                                     placeholder="artist-name" 
                                     required 
+                                    disabled
                                 />
-                                <button type="button" class="btn-refresh-slug" title="Generate from name">
-                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" width="16" height="16">
-                                        <path fill-rule="evenodd" d="M15.312 11.424a5.5 5.5 0 0 1-9.201 2.466l-.312-.311h2.433a.75.75 0 0 0 0-1.5H3.989a.75.75 0 0 0-.75.75v4.242a.75.75 0 0 0 1.5 0v-2.43l.31.31a7 7 0 0 0 11.712-3.138.75.75 0 0 0-1.449-.39Zm1.23-3.723a.75.75 0 0 0 .219-.53V2.929a.75.75 0 0 0-1.5 0V5.36l-.31-.31A7 7 0 0 0 3.239 8.188a.75.75 0 1 0 1.448.389A5.5 5.5 0 0 1 13.89 6.11l.311.31h-2.432a.75.75 0 0 0 0 1.5h4.243a.75.75 0 0 0 .53-.219Z" clip-rule="evenodd" />
-                                    </svg>
-                                </button>
                             </div>
                             <small class="helper-text">URL-friendly name (auto-generated)</small>
                         </div>
@@ -404,13 +400,15 @@ const loadArtistData = async () => {
     try {
         loading.value = true;
 
-        const slug = String(route.params.slug);
+        const id = Number(route.params.id);
 
-        const artist = await artistStore.fetchShow(slug);
+        const res = await artistStore.fetchShow(id);
 
-        if (artist) {
-            Object.assign(form, artist);
+        if (res) {
+            Object.assign(form, res);
         }
+        // Assign new data
+        Object.assign(form, res.data);
 
     } catch (error: any) {
 
@@ -430,53 +428,79 @@ const loadArtistData = async () => {
 };
 
 const handleAvatarChange = (event: Event) => {
-    const target = event.target as HTMLInputElement
-    const file = target.files?.[0]
-
-    if (!file) return
-
+    const target = event.target as HTMLInputElement;
+    const file = target.files?.[0];
+    
+    if (!file) return;
+    
+    // Validate file type
     if (!file.type.startsWith('image/')) {
-        notificationStore.notify('Please select an image file!', 'error')
-        return
+        notificationStore.notify('Please select an image file!', 'error');
+        target.value = '';
+        return;
     }
-
-    if (file.size > 5 * 1024 * 1024) {
-        notificationStore.notify('File too large! Max 5MB', 'error')
-        return
+    
+    // Validate file size (max 10MB)
+    if (file.size > 10 * 1024 * 1024) {
+        notificationStore.notify('File too large! Maximum 10MB', 'error');
+        target.value = '';
+        return;
     }
-
-    form.avatar = file
-
-    const reader = new FileReader()
-    reader.onload = (e) => {
-        avatarPreview.value = e.target?.result as string
-    }
-    reader.readAsDataURL(file)
+    
+    // Check image resolution
+    const img = new Image();
+    const objectUrl = URL.createObjectURL(file);
+    
+    img.onload = () => {
+        URL.revokeObjectURL(objectUrl);
+        avatarFile.value = file;
+    };
+    
+    img.onerror = () => {
+        URL.revokeObjectURL(objectUrl);
+        notificationStore.notify('Cannot read image file!', 'error');
+        target.value = '';
+    };
+    
+    img.src = objectUrl;
 };
 
 const handleBannerChange = (event: Event) => {
-    const target = event.target as HTMLInputElement
-    const file = target.files?.[0]
+    const target = event.target as HTMLInputElement;
+    const file = target.files?.[0];
     
-    if (!file) return
-
+    if (!file) return;
+    
+    // Validate file type
     if (!file.type.startsWith('image/')) {
-        notificationStore.notify('Please select an image file!', 'error')
-        return
+        notificationStore.notify('Please select an image file!', 'error');
+        target.value = '';
+        return;
     }
-
-    if (file.size > 10 * 1024 * 1024) {
-        notificationStore.notify('File too large! Max 10MB', 'error')
-        return
+    
+    // Validate file size (max 15MB for banner)
+    if (file.size > 15 * 1024 * 1024) {
+        notificationStore.notify('File too large! Maximum 15MB', 'error');
+        target.value = '';
+        return;
     }
-
-    form.banner = file
-
-    const reader = new FileReader()
-    reader.onload = (e) => {
-        bannerPreview.value = e.target?.result as string
-    }
-    reader.readAsDataURL(file)
+    
+    // Check image resolution
+    const img = new Image();
+    const objectUrl = URL.createObjectURL(file);
+    
+    img.onload = () => {
+        URL.revokeObjectURL(objectUrl);
+        bannerFile.value = file;
+    };
+    
+    img.onerror = () => {
+        URL.revokeObjectURL(objectUrl);
+        notificationStore.notify('Cannot read image file!', 'error');
+        target.value = '';
+    };
+    
+    img.src = objectUrl;
 };
 
 const handleSubmit = async () => {
@@ -490,19 +514,19 @@ const handleSubmit = async () => {
         
         if (avatarInput.value) {
             payload.avatar = avatarFile.value;
-        }else if (bannerFile.value) {
+        }
+        if (bannerFile.value) {
             payload.banner = bannerFile.value;
         }
         
         // Remove empty strings
         Object.keys(payload).forEach(key => {
-            if (key !== 'password' && key !== 'avatar' && payload[key as keyof CreateArtistPayload] === '') {
+            if (key !== 'password' && key !== 'avatar' && key !== 'banner' && payload[key as keyof CreateArtistPayload] === '') {
                 delete payload[key as keyof CreateArtistPayload];
             }
         });
         
-        const id = Number(route.params.id);console.log(id);
-        
+        const id = Number(route.params.id);
         
         await artistStore.fetchUpdate(id, payload);
         
@@ -525,22 +549,26 @@ const handleSubmit = async () => {
 };
 
 const displayAvatar = computed(() => {
-    if (avatarPreview.value) {
-        return avatarPreview.value
+    if (avatarFile.value) {
+        return URL.createObjectURL(avatarFile.value);
     }
+    
     if (form.avatar_url) {
         return getFullImageUrl(form.avatar_url);
     }
+    
     return defaultAvatar;
 });
 
 const displayBanner = computed(()=>{
-    if (bannerPreview.value) {
-        return bannerPreview.value
+    if (bannerFile.value) {
+        return URL.createObjectURL(bannerFile.value);
     }
+    
     if (form.banner_url) {
         return getFullImageUrl(form.banner_url);
     }
+    
     return defaultBanner;
 });
 
@@ -806,7 +834,7 @@ onMounted(() => {
 
 .banner-preview {
     width: 100%;
-    height: 150px;
+    height: 200px;
     border-radius: 12px;
 }
 

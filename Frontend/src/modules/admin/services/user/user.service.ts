@@ -25,7 +25,7 @@ class UserService {
         return res.data;
     }
     async detailUser(id: number) {
-        return adminApi.get(`/users/${id}`);
+        return await adminApi.get(`/users/${id}`);
     }
     async deleteUser(id: number){
         return await adminApi.post(`/user/delete/${id}`); 

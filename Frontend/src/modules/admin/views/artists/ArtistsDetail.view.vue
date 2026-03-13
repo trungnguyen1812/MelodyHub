@@ -377,13 +377,14 @@ const displayBanner = computed(()=>{
 onMounted(async () => {
     try {
         loading.value = true;
-        const slug = String(route.params.slug);
-
-        const res = await artistStore.fetchShow(slug);
-
+        const id = Number(route.params.id);
+        const res = await artistStore.fetchShow(id);
         if (res) {
             Object.assign(form, res);
         }
+        
+        // Assign new data
+        Object.assign(form, res.data);
 
     } catch (error: any) {
         const err = error as { response?: { status?: number } };

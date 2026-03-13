@@ -100,11 +100,7 @@ class Artist extends Model
 		return $this->hasMany(RadioStation::class, 'seed_artist_id');
 	}
 
-	public function getRouteKeyName()
-	{
-		return 'slug';
-	}
-
+	
 	public function songs()
 	{
 		return $this->hasMany(Song::class);

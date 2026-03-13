@@ -4,44 +4,60 @@ import type { CreateArtistPayload } from "@/modules/admin/interfaces/artists/cre
 class ArtistService {
 
     async getAllArtist() {
-        return (await adminApi.get("/artists")).data;
+        const res = await adminApi.get("/list-artist");
+        return res.data;
     }
 
     async searchArtist(keyword: string) {
-        return (await adminApi.get("/artists/search", {
-            params: { q: keyword }
-        })).data;
+        const res = await adminApi.post("/search-artist", {
+            q: keyword  // Đổi từ 'keyword' thành 'q' cho đồng bộ với UserService
+        });
+        return res.data;
     }
 
-    async detailArtist(slug: string) {
-        return (await adminApi.get(`/artists/${slug}`)).data;
-    }
+    async detailArtist(id: number) {
+        return await adminApi.get(`/artists/${id}`);
+    } 
 
     async deleteArtist(id: number) {
-        return (await adminApi.delete(`/artists/artist/${id}`)).data;
+        return await adminApi.post(`/artist/delete/${id}`);
     }
 
     async addArtist(payload: CreateArtistPayload) {
-        const formData = new FormData();
-
-        Object.entries(payload).forEach(([key, value]) => {
-            if (value) formData.append(key, value as any);
+        return adminApi.post('/add-artist', payload, {
+            headers: {
+                'Content-Type': 'multipart/form-data'
+            }
         });
-
-        return adminApi.post("/artists", formData);
     }
 
     async updateArtist(id: number, payload: CreateArtistPayload) {
-
         const formData = new FormData();
-
-        Object.entries(payload).forEach(([key, value]) => {
-            if (value) formData.append(key, value as any);
+        
+        // Xử lý tương tự UserService: bỏ qua trường avatar nếu có
+        Object.keys(payload).forEach(key => {
+            if (key !== 'avatar' && key !== 'banner'  && payload[key as keyof CreateArtistPayload]) {
+                formData.append(key, String(payload[key as keyof CreateArtistPayload]));
+            }
         });
-
-        return adminApi.post(`/artists/${id}`, formData);
+        
+        // Xử lý riêng file avatar nếu có
+        if (payload.avatar instanceof File) {
+            formData.append('avatar', payload.avatar);
+        }
+        if (payload.banner instanceof File) {
+            formData.append('banner', payload.banner);
+        }
+        console.log(payload.avatar);
+        console.log(payload.banner);
+        
+        
+        return await adminApi.post(`/artists/update/${id}`, formData, {
+            headers: {
+                'Content-Type': undefined,  // Để browser tự set boundary
+            },
+        });
     }
-
 }
 
 export default new ArtistService();

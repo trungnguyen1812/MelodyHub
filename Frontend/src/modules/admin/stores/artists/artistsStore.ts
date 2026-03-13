@@ -117,8 +117,8 @@ export const useArtistStore = defineStore("artist", {
                 this.loading = false;
             }
         },
-        async fetchShow(slug :string){
-            return await artistsService.detailArtist(slug);
+        async fetchShow(id :number){
+            return await artistsService.detailArtist(id);
         },
         async fetchUpdate(id: number, payload: CreateArtistPayload) {
             try {
@@ -126,6 +126,7 @@ export const useArtistStore = defineStore("artist", {
                 this.error = null;
                 
                 const res = await ArtistService.updateArtist(id, payload);
+                
                 
                 const index = this.artists.findIndex(u => u.id === id);
                 if (index !== -1) {
