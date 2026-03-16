@@ -113,9 +113,11 @@ Route::prefix('admin')->middleware(['admin.token'])->group(function () {
     Route::get('/list-artist', [ArtistsManagerController::class, 'getAllArtist']);
     Route::post('/add-artist', [ArtistsManagerController::class, 'add']);
     Route::post('/search-artist', [ArtistsManagerController::class, 'search']);
+    Route::get('/artists/statistics' ,[ArtistsManagerController::class, 'statistics']);
     Route::get('/artists/{artist}', [ArtistsManagerController::class, 'show']); 
     Route::post('/artist/delete/{artist}', [ArtistsManagerController::class, 'delete']);
     Route::post('/artists/update/{artist}', [ArtistsManagerController::class, 'update']);
+    
    
 });
 

@@ -195,4 +195,17 @@ class ArtistsManagerController extends Controller
             ], 500);
         }
     }
+
+    public function statistics()
+    {
+        $statistics = Artist::getFullStatistics();
+        
+        return response()->json([
+            'success' => true,
+            'message' => 'Artist statistics retrieved successfully',
+            'data' => $statistics
+        ]);
+    }
+
+
 }

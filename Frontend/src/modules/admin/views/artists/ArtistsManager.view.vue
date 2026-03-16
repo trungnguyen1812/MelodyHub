@@ -26,8 +26,8 @@
                         <h2>Quick Stats</h2>
                         <span class="stats-update">Updated just now</span>
                     </div>
-                    
                     <div class="stats-grid">
+                        <!-- Card 1: Total Artists -->
                         <div class="stat-card">
                             <div class="stat-icon total-artists">
                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
@@ -36,23 +36,69 @@
                             </div>
                             <div class="stat-info">
                                 <h3>Total Artists</h3>
-                                <p class="stat-value">156</p>
-                                <p class="stat-change positive">+12% from last month</p>
+                                <CountUp 
+                                    :key="statistics?.total_artists ?? 0"
+                                    :endVal="statistics?.total_artists ?? 0" 
+                                    :duration="1" 
+                                    class="stat-value"
+                                />
+                                <p class="stat-change" :class="getChangeClass(statistics?.growth_percentage)">
+                                    {{ formatGrowthChange(statistics?.growth_percentage) }}
+                                </p>
                             </div>
                         </div>
 
+                        <!-- Card 2: New Singer of the Month -->
                         <div class="stat-card">
-                            <div class="stat-icon featured-artists">
+                            <div class="stat-icon new-artists">
                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.563.563 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.563.563 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z" />
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v6m3-3H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" />
                                 </svg>
                             </div>
                             <div class="stat-info">
-                                <h3>Featured Artists</h3>
-                                <p class="stat-value">24</p>
-                                <p class="stat-change">15% of total</p>
+                                <h3>New Singer of the Month</h3>
+                                <CountUp 
+                                    :key="statistics?.new_artists_this_month ?? 0"
+                                    :endVal="statistics?.new_artists_this_month ?? 0" 
+                                    :duration="1" 
+                                    class="stat-value"
+                                />
+                                <p 
+                                    class="stat-change"
+                                    :class="getChangeClass(
+                                        (statistics?.new_artists_this_month ?? 0) - (statistics?.new_artists_last_month ?? 0)
+                                    )"
+                                    >
+                                    {{ formatNewArtistsChange(statistics?.new_artists_this_month, statistics?.new_artists_last_month) }}
+                                </p>
                             </div>
                         </div>
+
+                        <!-- Card 3: Growth -->
+                        <div class="stat-card">
+                            <div class="stat-icon growth">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18L9 11.25l4.306 4.307a11.95 11.95 0 015.814-5.519l2.74-1.22m0 0l-5.94-2.28m5.94 2.28l-2.28 5.941" />
+                                </svg>
+                            </div>
+                            <div class="stat-info">
+                                <h3>Growth</h3>
+                                <p class="stat-value">{{ formatGrowthValue(statistics?.growth_percentage) }}</p>
+                                <p class="stat-change" :class="getChangeClass(statistics?.growth_percentage)">
+                                    {{ formatGrowthStatus(statistics?.status, statistics?.growth_percentage) }}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Loading State -->
+                    <div v-if="store.loading" class="loading-overlay">
+                        <div class="spinner"></div>
+                    </div>
+
+                    <!-- Error State -->
+                    <div v-if="store.error" class="error-message">
+                        {{ store.error }}
                     </div>
                 </div>
                 <!-- Chart Container -->
@@ -326,11 +372,15 @@
 <script setup lang="ts">
 import VueApexCharts from "vue3-apexcharts"
 import type { ApexOptions } from "apexcharts"
-import { ref } from "vue"
+import { useArtistStore } from '@/modules/admin/stores/artists/artistsStore'
+import { ref , computed, onMounted } from "vue"
 import router from '@/modules/router';
+import CountUp from '@/components/common/VcCountUp/CountUp.vue';
 
 
 const ApexChart = VueApexCharts
+const store = useArtistStore()
+const formattedStats = computed(() => store.getFormattedStatistics)
 
 const series = ref([
   {
@@ -408,6 +458,47 @@ const ViewAllArtists =()=>{
 const CreateArtist =()=>{
     router.push({name:"admin.artistsmanager.add"});
 }
+
+// Lấy statistics từ store
+const statistics = computed(() => store.statistics)
+
+// Format functions
+const formatGrowthChange = (percentage: number | undefined): string => {
+    if (percentage === undefined) return 'No data'
+    const sign = percentage >= 0 ? '+' : ''
+    return `${sign}${percentage}% from last month`
+}
+
+const formatNewArtistsChange = (current: number | undefined, last: number | undefined): string => {
+    if (current === undefined || last === undefined) return 'No data'
+    const diff = current - last
+    const sign = diff >= 0 ? '+' : ''
+    return `${sign}${diff} compared to last month`
+}
+
+const formatGrowthValue = (percentage: number | undefined): string => {
+    if (percentage === undefined) return '0%'
+    const sign = percentage >= 0 ? '+' : ''
+    return `${sign}${percentage}%`
+}
+
+const formatGrowthStatus = (status: string | undefined, percentage: number | undefined): string => {
+    if (!status || percentage === undefined) return 'No data'
+    const action = status === 'increase' ? 'Up' : 'Down'
+    return `${action} ${Math.abs(percentage)}% compared to the previous month`
+}
+
+const getChangeClass = (value: number | undefined): string => {
+    if (value === undefined) return ''
+    return value >= 0 ? 'positive' : 'negative'
+}
+
+
+
+// Fetch data on mount
+onMounted(() => {
+    store.fetchShowStatistic()
+})
 </script>
 
 <style scoped>
@@ -638,7 +729,7 @@ const CreateArtist =()=>{
 
 .stats-grid {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(3, 1fr);
     gap: 15px;
 }
 
@@ -716,6 +807,10 @@ const CreateArtist =()=>{
 
 .stat-change.positive {
     color: #00ffaa;
+}
+
+.negative {
+    color: red; 
 }
 
 /* Ranking Section */

@@ -109,10 +109,59 @@ class Artist extends Model
 	public function scopeSearch($query , $q) {
 		if (!$q) return $query;
 		return $query->where(function ($sub) use ($q) {
-		$sub->where	('name' , 'like', "%$q%")
-			->orWhere('country', 'like', "%$q%")
-			->orWhere('status' , 'like' ,"%$q%"
-		);
-	});
-}
+			$sub->where('name' , 'like', "%$q%")
+				->orWhere('country', 'like', "%$q%")
+				->orWhere('status' , 'like' ,"%$q%");
+		});
+	}
+
+	public static function getTotalArtists()
+    {
+        return self::count();
+    }
+
+	public static function getNewArtistsThisMonth()
+    {
+        return self::whereMonth('created_at', Carbon::now()->month)
+                    ->whereYear('created_at', Carbon::now()->year)
+                    ->count();
+    }
+
+	public static function getNewArtistsLastMonth()
+    {
+        $lastMonth = Carbon::now()->subMonth();
+        
+        return self::whereMonth('created_at', $lastMonth->month)
+                    ->whereYear('created_at', $lastMonth->year)
+                    ->count();
+    }
+
+	public static function getGrowthPercentage()
+    {
+        $thisMonth = self::getNewArtistsThisMonth();
+        $lastMonth = self::getNewArtistsLastMonth();
+        
+        if ($lastMonth == 0) {
+            return $thisMonth > 0 ? 100 : 0;
+        }
+        
+        $percentage = (($thisMonth - $lastMonth) / $lastMonth) * 100;
+        return round($percentage, 2);
+    }
+    
+    public static function getFullStatistics()
+    {
+        $total = self::getTotalArtists();
+        $thisMonth = self::getNewArtistsThisMonth();
+        $lastMonth = self::getNewArtistsLastMonth();
+        $growthPercentage = self::getGrowthPercentage();
+        
+        return [
+            'total_artists' => $total,
+            'new_artists_this_month' => $thisMonth,
+            'new_artists_last_month' => $lastMonth,
+            'growth_percentage' => $growthPercentage,
+            'status' => $growthPercentage >= 0 ? 'increase' : 'decrease'
+        ];
+    }
 }

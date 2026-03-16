@@ -10,7 +10,7 @@ class ArtistService {
 
     async searchArtist(keyword: string) {
         const res = await adminApi.post("/search-artist", {
-            q: keyword  // Đổi từ 'keyword' thành 'q' cho đồng bộ với UserService
+            q: keyword  
         });
         return res.data;
     }
@@ -34,14 +34,12 @@ class ArtistService {
     async updateArtist(id: number, payload: CreateArtistPayload) {
         const formData = new FormData();
         
-        // Xử lý tương tự UserService: bỏ qua trường avatar nếu có
         Object.keys(payload).forEach(key => {
             if (key !== 'avatar' && key !== 'banner'  && payload[key as keyof CreateArtistPayload]) {
                 formData.append(key, String(payload[key as keyof CreateArtistPayload]));
             }
         });
         
-        // Xử lý riêng file avatar nếu có
         if (payload.avatar instanceof File) {
             formData.append('avatar', payload.avatar);
         }
@@ -54,9 +52,14 @@ class ArtistService {
         
         return await adminApi.post(`/artists/update/${id}`, formData, {
             headers: {
-                'Content-Type': undefined,  // Để browser tự set boundary
+                'Content-Type': undefined, 
             },
         });
+    }
+
+    async getArtistStatistics(){
+        const res = await adminApi.get("/artists/statistics");
+        return res.data;
     }
 }
 
