@@ -6,8 +6,6 @@ use App\Helpers\FileUploadHelper;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Cache;
-
 use Illuminate\Support\Facades\Log;
 use App\Models\Role;
 use App\Models\User;
@@ -208,6 +206,46 @@ class UserManagerController extends Controller
         }
     }
 
+    public function getUserStatistics()
+    {
+        $stats = User::getUserStatistics();
     
+        return response()->json($stats);
+    }
+
+
+    public function getUserStats()
+    {
+        try {
+            $stats = User::getAllStatistics();
+            
+            return response()->json([
+                'success' => true,
+                'data' => $stats
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function getUserMonthlyComparison()
+    {
+        try {
+            $stats = User::getUserMonthlyStats();
+            
+            return response()->json([
+                'success' => true,
+                'data' => $stats
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
   
 }

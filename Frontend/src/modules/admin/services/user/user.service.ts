@@ -48,7 +48,11 @@ class UserService {
             'Content-Type': undefined,
             },
         }); 
-    } 
+    }
+    async getUserStatistics(){
+        const res = await adminApi.get("/users/statistics");
+        return res.data;
+    }
 }
 
 export default new UserService();

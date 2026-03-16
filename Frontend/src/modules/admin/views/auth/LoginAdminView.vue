@@ -54,7 +54,7 @@
           <input
             v-for="(digit, index) in otp"
             :key="index"
-            :ref="el => inputRefs[index] = el"
+            :ref="el => inputRefs[index] = el as HTMLInputElement | null"
             type="text"
             inputmode="numeric"
             maxlength="1"
@@ -131,7 +131,7 @@ const email  = ref("");
 const otp = ref(['', '', '', '', '', '']);
 
 
-const inputRefs = ref<(HTMLInputElement | null)[]>([]);
+const inputRefs = ref<(HTMLInputElement | null)[]>([])
 const errors = ref({
   otp: "",
   general: "",
@@ -245,14 +245,12 @@ const handleVerification = async () => {
 
 const handleResend = async () => {
   try {
+     const auth = useAuthStore();
     otp.value = ['', '', '', '', '', ''];
     errors.value.otp = "";
     errors.value.general = "";
     inputRefs.value[0]?.focus();
-    
-    // Call your resend API here
-    // Example: await api.post('/resend-otp', { email: email.value });
-    
+    await auth.sendEmail(email.value);
     console.log('Resending OTP...');
   } catch (error: any) {
     errors.value.general = error.response?.data?.message || "Unable to resend the code. Please try again.";

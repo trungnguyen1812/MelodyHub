@@ -11,6 +11,8 @@ use Illuminate\Database\Eloquent\Model;
 use Laravel\Sanctum\HasApiTokens;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\DB;
+
 
 /**
  * Class User
@@ -377,6 +379,301 @@ class User extends Authenticatable
 			->orderByDesc('ends_at');
 	}
 
+	public static function getUserStatistics()
+	{
+		$currentMonth = Carbon::now()->startOfMonth(); // 2026-03-01
+		$lastMonth = Carbon::now()->subMonth()->startOfMonth(); // 2026-02-01
+		$endOfLastMonth = $lastMonth->copy()->endOfMonth(); // 2026-02-28
+
+		// Lấy thống kê hiện tại theo role
+		$currentStats = DB::table('users as u')
+			->leftJoin('user_roles as ur', 'ur.user_id', '=', 'u.id')
+			->leftJoin('roles as r', 'r.id', '=', 'ur.role_id')
+			->whereNull('u.deleted_at')
+			->selectRaw("
+				COUNT(DISTINCT u.id) as total_users,
+				COUNT(DISTINCT CASE WHEN r.name = 'user_free' THEN u.id END) as free_users,
+				COUNT(DISTINCT CASE WHEN r.name = 'partner' THEN u.id END) as partners,
+				COUNT(DISTINCT CASE WHEN r.name IN ('boss','admin') THEN u.id END) as admins,
+				COUNT(DISTINCT CASE WHEN r.name IN ('user_vip_yearly', 'user_vip_monthly') THEN u.id END) as vip_users
+			")
+			->first();
+
+		// Lấy thống kê cuối tháng trước (để so sánh tổng số)
+		$lastMonthStats = DB::table('users as u')
+			->leftJoin('user_roles as ur', 'ur.user_id', '=', 'u.id')
+			->leftJoin('roles as r', 'r.id', '=', 'ur.role_id')
+			->whereNull('u.deleted_at')
+			->where('u.created_at', '<=', $endOfLastMonth) // Users created before end of last month
+			->selectRaw("
+				COUNT(DISTINCT u.id) as total_users,
+				COUNT(DISTINCT CASE WHEN r.name = 'user_free' THEN u.id END) as free_users,
+				COUNT(DISTINCT CASE WHEN r.name = 'partner' THEN u.id END) as partners,
+				COUNT(DISTINCT CASE WHEN r.name IN ('boss','admin') THEN u.id END) as admins,
+				COUNT(DISTINCT CASE WHEN r.name IN ('user_vip_yearly', 'user_vip_monthly') THEN u.id END) as vip_users
+			")
+			->first();
+
+		// Số người dùng mới trong tháng này
+		$newUsersThisMonth = DB::table('users as u')
+			->leftJoin('user_roles as ur', 'ur.user_id', '=', 'u.id')
+			->leftJoin('roles as r', 'r.id', '=', 'ur.role_id')
+			->whereNull('u.deleted_at')
+			->where('u.created_at', '>=', $currentMonth)
+			->selectRaw("
+				COUNT(DISTINCT u.id) as total_users,
+				COUNT(DISTINCT CASE WHEN r.name = 'user_free' THEN u.id END) as free_users,
+				COUNT(DISTINCT CASE WHEN r.name = 'partner' THEN u.id END) as partners,
+				COUNT(DISTINCT CASE WHEN r.name IN ('boss','admin') THEN u.id END) as admins,
+				COUNT(DISTINCT CASE WHEN r.name IN ('user_vip_yearly', 'user_vip_monthly') THEN u.id END) as vip_users
+			")
+			->first();
+
+		// Helper function tính growth (so sánh TỔNG số)
+		$calculateTotalGrowth = function($current, $previous) {
+			if ($previous == 0) {
+				return $current > 0 ? 100 : 0;
+			}
+			return round((($current - $previous) / $previous) * 100, 2);
+		};
+
+		// Helper function tính growth cho users mới
+		$calculateNewUsersGrowth = function($current, $previous) {
+			if ($previous == 0) {
+				return $current > 0 ? 100 : 0;
+			}
+			return round((($current - $previous) / $previous) * 100, 2);
+		};
+
+		$stats = (object)[
+			// Current counts
+			'total_users' => $currentStats->total_users ?? 0,
+			'free_users' => $currentStats->free_users ?? 0,
+			'partners' => $currentStats->partners ?? 0,
+			'admins' => $currentStats->admins ?? 0,
+			'vip_users' => $currentStats->vip_users ?? 0,
+			
+			// Last month totals (để tham khảo)
+			'total_users_last_month' => $lastMonthStats->total_users ?? 0,
+			'free_users_last_month' => $lastMonthStats->free_users ?? 0,
+			'partners_last_month' => $lastMonthStats->partners ?? 0,
+			'admins_last_month' => $lastMonthStats->admins ?? 0,
+			'vip_users_last_month' => $lastMonthStats->vip_users ?? 0,
+			
+			// GROWTH PERCENTAGES - So sánh TỔNG SỐ (đúng)
+			'total_growth_percentage' => $calculateTotalGrowth(
+				$currentStats->total_users ?? 0, 
+				$lastMonthStats->total_users ?? 0
+			), // = ((10-7)/7)*100 = 42.86% ✅
+			
+			'free_growth_percentage' => $calculateTotalGrowth(
+				$currentStats->free_users ?? 0, 
+				$lastMonthStats->free_users ?? 0
+			),
+			'partner_growth_percentage' => $calculateTotalGrowth(
+				$currentStats->partners ?? 0, 
+				$lastMonthStats->partners ?? 0
+			),
+			'admin_growth_percentage' => $calculateTotalGrowth(
+				$currentStats->admins ?? 0, 
+				$lastMonthStats->admins ?? 0
+			),
+			'vip_growth_percentage' => $calculateTotalGrowth(
+				$currentStats->vip_users ?? 0, 
+				$lastMonthStats->vip_users ?? 0
+			),
+			
+			// Growth trends
+			'total_growth_trend' => $calculateTotalGrowth($currentStats->total_users ?? 0, $lastMonthStats->total_users ?? 0) >= 0 ? 'up' : 'down',
+			'free_growth_trend' => $calculateTotalGrowth($currentStats->free_users ?? 0, $lastMonthStats->free_users ?? 0) >= 0 ? 'up' : 'down',
+			'partner_growth_trend' => $calculateTotalGrowth($currentStats->partners ?? 0, $lastMonthStats->partners ?? 0) >= 0 ? 'up' : 'down',
+			'admin_growth_trend' => $calculateTotalGrowth($currentStats->admins ?? 0, $lastMonthStats->admins ?? 0) >= 0 ? 'up' : 'down',
+			'vip_growth_trend' => $calculateTotalGrowth($currentStats->vip_users ?? 0, $lastMonthStats->vip_users ?? 0) >= 0 ? 'up' : 'down',
+			
+			// New users this month
+			'new_users_this_month' => $newUsersThisMonth->total_users ?? 0,
+			'new_free_users_this_month' => $newUsersThisMonth->free_users ?? 0,
+			'new_partners_this_month' => $newUsersThisMonth->partners ?? 0,
+			'new_admins_this_month' => $newUsersThisMonth->admins ?? 0,
+			'new_vip_users_this_month' => $newUsersThisMonth->vip_users ?? 0,
+			
+			// New users growth (so sánh tốc độ đăng ký mới)
+			'new_users_growth_percentage' => $calculateNewUsersGrowth(
+				$newUsersThisMonth->total_users ?? 0,
+				($lastMonthStats->total_users ?? 0) - ($lastMonthStatsBeforeLastMonth->total_users ?? 0) // Cần thêm biến này
+			),
+		];
+
+		return response()->json($stats);
+	}
+
+	public static function getUserMonthlyStats()
+    {
+        $currentMonth = Carbon::now()->startOfMonth();
+        $lastMonth = Carbon::now()->subMonth()->startOfMonth();
+        
+        // Thống kê tháng hiện tại
+        $currentMonthStats = self::getUserStatsByMonth($currentMonth);
+        
+        // Thống kê tháng trước
+        $lastMonthStats = self::getUserStatsByMonth($lastMonth);
+        
+        // Tính phần trăm thay đổi
+        return [
+            'current_month' => [
+                'period' => $currentMonth->format('M Y'),
+                'total_users' => $currentMonthStats->total_users ?? 0,
+                'free_users' => $currentMonthStats->free_users ?? 0,
+                'partners' => $currentMonthStats->partners ?? 0,
+                'admins' => $currentMonthStats->admins ?? 0,
+                'new_users' => $currentMonthStats->new_users ?? 0,
+            ],
+            'last_month' => [
+                'period' => $lastMonth->format('M Y'),
+                'total_users' => $lastMonthStats->total_users ?? 0,
+                'free_users' => $lastMonthStats->free_users ?? 0,
+                'partners' => $lastMonthStats->partners ?? 0,
+                'admins' => $lastMonthStats->admins ?? 0,
+                'new_users' => $lastMonthStats->new_users ?? 0,
+            ],
+            'growth' => [
+                'total_users' => self::calculateGrowth(
+                    $lastMonthStats->total_users ?? 0, 
+                    $currentMonthStats->total_users ?? 0
+                ),
+                'free_users' => self::calculateGrowth(
+                    $lastMonthStats->free_users ?? 0, 
+                    $currentMonthStats->free_users ?? 0
+                ),
+                'partners' => self::calculateGrowth(
+                    $lastMonthStats->partners ?? 0, 
+                    $currentMonthStats->partners ?? 0
+                ),
+                'admins' => self::calculateGrowth(
+                    $lastMonthStats->admins ?? 0, 
+                    $currentMonthStats->admins ?? 0
+                ),
+                'new_users' => self::calculateGrowth(
+                    $lastMonthStats->new_users ?? 0, 
+                    $currentMonthStats->new_users ?? 0
+                ),
+            ]
+        ];
+    }
+
+    /**
+     * Lấy thống kê người dùng theo tháng cụ thể
+     */
+    private static function getUserStatsByMonth($month)
+    {
+        $startOfMonth = $month->copy()->startOfMonth();
+        $endOfMonth = $month->copy()->endOfMonth();
+
+        return DB::table('users as u')
+            ->leftJoin('user_roles as ur', 'ur.user_id', '=', 'u.id')
+            ->leftJoin('roles as r', 'r.id', '=', 'ur.role_id')
+            ->whereNull('u.deleted_at')
+            ->where('u.created_at', '<=', $endOfMonth)
+            ->selectRaw("
+                COUNT(DISTINCT u.id) as total_users,
+                COUNT(DISTINCT CASE WHEN r.name = 'user_free' THEN u.id END) as free_users,
+                COUNT(DISTINCT CASE WHEN r.name = 'partner' THEN u.id END) as partners,
+                COUNT(DISTINCT CASE WHEN r.name IN ('boss','admin') THEN u.id END) as admins,
+                COUNT(DISTINCT CASE WHEN u.created_at BETWEEN ? AND ? THEN u.id END) as new_users
+            ", [$startOfMonth, $endOfMonth])
+            ->first();
+    }
+
+    /**
+     * Lấy thống kê 12 tháng gần nhất
+     */
+    public static function getUserYearlyStats()
+    {
+        $startDate = Carbon::now()->subMonths(11)->startOfMonth();
+        $endDate = Carbon::now()->endOfMonth();
+
+        $results = DB::table('users as u')
+            ->leftJoin('user_roles as ur', 'ur.user_id', '=', 'u.id')
+            ->leftJoin('roles as r', 'r.id', '=', 'ur.role_id')
+            ->whereNull('u.deleted_at')
+            ->where('u.created_at', '<=', $endDate)
+            ->selectRaw("
+                DATE_FORMAT(u.created_at, '%Y-%m') as month,
+                COUNT(DISTINCT u.id) as total_users,
+                COUNT(DISTINCT CASE WHEN r.name = 'user_free' THEN u.id END) as free_users,
+                COUNT(DISTINCT CASE WHEN r.name = 'partner' THEN u.id END) as partners,
+                COUNT(DISTINCT CASE WHEN r.name IN ('boss','admin') THEN u.id END) as admins,
+                COUNT(DISTINCT CASE WHEN u.created_at >= DATE_FORMAT(u.created_at, '%Y-%m-01') THEN u.id END) as new_users
+            ")
+            ->where('u.created_at', '>=', $startDate)
+            ->groupBy(DB::raw('DATE_FORMAT(u.created_at, "%Y-%m")'))
+            ->orderBy('month', 'asc')
+            ->get();
+
+        // Điền các tháng thiếu
+        $monthlyData = [];
+        for ($i = 0; $i < 12; $i++) {
+            $date = Carbon::now()->subMonths(11 - $i);
+            $monthKey = $date->format('Y-m');
+            $monthName = $date->format('M Y');
+            
+            $found = $results->firstWhere('month', $monthKey);
+            
+            $monthlyData[] = [
+                'month' => $monthName,
+                'month_key' => $monthKey,
+                'total_users' => $found->total_users ?? 0,
+                'free_users' => $found->free_users ?? 0,
+                'partners' => $found->partners ?? 0,
+                'admins' => $found->admins ?? 0,
+                'new_users' => $found->new_users ?? 0,
+            ];
+        }
+
+        return $monthlyData;
+    }
+
+    /**
+     * Lấy thống kê theo trạng thái người dùng
+     */
+    public static function getUserStatusStats()
+    {
+        return DB::table('users')
+            ->whereNull('deleted_at')
+            ->selectRaw("
+                COUNT(CASE WHEN status = 'active' THEN 1 END) as active_users,
+                COUNT(CASE WHEN status = 'inactive' THEN 1 END) as inactive_users,
+                COUNT(CASE WHEN status = 'banned' THEN 1 END) as banned_users,
+                COUNT(CASE WHEN status = 'pending' THEN 1 END) as pending_users
+            ")
+            ->first();
+    }
+
+    /**
+     * Tính phần trăm tăng/giảm
+     */
+    private static function calculateGrowth($previous, $current)
+    {
+        if ($previous == 0) {
+            return $current > 0 ? 100 : 0;
+        }
+        
+        $growth = (($current - $previous) / $previous) * 100;
+        return round($growth, 2);
+    }
+
+    /**
+     * Lấy tất cả thống kê trong một lần gọi
+     */
+    public static function getAllStatistics()
+    {
+        return [
+            'overall' => self::getUserStatistics(),
+            'monthly_comparison' => self::getUserMonthlyStats(),
+            'yearly_trend' => self::getUserYearlyStats(),
+            'status_stats' => self::getUserStatusStats(),
+        ];
+    }
 
 
 }

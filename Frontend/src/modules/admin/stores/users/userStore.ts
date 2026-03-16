@@ -2,6 +2,7 @@ import { defineStore } from "pinia";
 import userService from "@/modules/admin/services/user/user.service";
 import {UserInterface} from '@/modules/admin/interfaces/users/user.interface';
 import type { CreateUserPayload } from "@/modules/admin/interfaces/users/create-user.payload";
+import  { UserStatisticsData } from '@/modules/admin/interfaces/users/user.statistic';
 import adminApi from "@/plugins/axios_admin";
 
 
@@ -16,6 +17,38 @@ const ROLE_DISPLAY_MAP: Record<string, string> = {
     user_free: "Free User",
 };
 
+
+const defaultStatistics: UserStatisticsData = {
+    // Current counts
+    total_users: 0,
+    free_users: 0,
+    partners: 0,
+    admins: 0,
+    vip_users: 0,
+    
+    // Growth percentages
+    total_growth_percentage: 0,
+    free_growth_percentage: 0,
+    partner_growth_percentage: 0,
+    admin_growth_percentage: 0,
+    vip_growth_percentage: 0,
+    
+    // Growth trends
+    total_growth_trend: 'neutral',
+    free_growth_trend: 'neutral',
+    partner_growth_trend: 'neutral',
+    admin_growth_trend: 'neutral',
+    vip_growth_trend: 'neutral',
+    
+    // New users this month
+    new_users_this_month: 0,
+    new_free_users_this_month: 0,
+    new_partners_this_month: 0,
+    new_admins_this_month: 0,
+    new_vip_users_this_month: 0
+}
+
+
 export const getFullImageUrl = (path?: string | null) => {
     if (!path) return '/images/default-avatar.png';
 
@@ -24,17 +57,75 @@ export const getFullImageUrl = (path?: string | null) => {
     return `http://localhost:8000/storage/${path}`;
 };
 
-
 export const useUserStore = defineStore("user", {
     state: () => ({
         profile: null as UserInterface | null,
         users: [] as UserInterface[],
         loading: false,
         error: null as string | null,
+        statistics: { ...defaultStatistics } as UserStatisticsData,
     }),
 
     getters: {
         isProfileLoaded: (state) => !!state.profile,
+
+        safeStatistics: (state) => state.statistics || defaultStatistics,
+
+        // Getter tổng hợp cho growth data của từng loại
+        totalGrowthInfo: (state) => ({
+            icon: state.statistics.total_growth_trend === 'up' ? '↑' : 
+                  state.statistics.total_growth_trend === 'down' ? '↓' : '→',
+            value: Math.abs(state.statistics.total_growth_percentage),
+            class: state.statistics.total_growth_trend === 'up' ? 'positive' : 
+                   state.statistics.total_growth_trend === 'down' ? 'negative' : 'neutral',
+            text: `${state.statistics.total_growth_trend === 'up' ? '↑' : 
+                   state.statistics.total_growth_trend === 'down' ? '↓' : '→'} 
+                   ${Math.abs(state.statistics.total_growth_percentage)}% from last month`
+        }),
+
+        freeGrowthInfo: (state) => ({
+            icon: state.statistics.free_growth_trend === 'up' ? '↑' : 
+                  state.statistics.free_growth_trend === 'down' ? '↓' : '→',
+            value: Math.abs(state.statistics.free_growth_percentage),
+            class: state.statistics.free_growth_trend === 'up' ? 'positive' : 
+                   state.statistics.free_growth_trend === 'down' ? 'negative' : 'neutral',
+            text: `${state.statistics.free_growth_trend === 'up' ? '↑' : 
+                   state.statistics.free_growth_trend === 'down' ? '↓' : '→'} 
+                   ${Math.abs(state.statistics.free_growth_percentage)}% from last month`
+        }),
+
+        partnerGrowthInfo: (state) => ({
+            icon: state.statistics.partner_growth_trend === 'up' ? '↑' : 
+                  state.statistics.partner_growth_trend === 'down' ? '↓' : '→',
+            value: Math.abs(state.statistics.partner_growth_percentage),
+            class: state.statistics.partner_growth_trend === 'up' ? 'positive' : 
+                   state.statistics.partner_growth_trend === 'down' ? 'negative' : 'neutral',
+            text: `${state.statistics.partner_growth_trend === 'up' ? '↑' : 
+                   state.statistics.partner_growth_trend === 'down' ? '↓' : '→'} 
+                   ${Math.abs(state.statistics.partner_growth_percentage)}% from last month`
+        }),
+
+        adminGrowthInfo: (state) => ({
+            icon: state.statistics.admin_growth_trend === 'up' ? '↑' : 
+                  state.statistics.admin_growth_trend === 'down' ? '↓' : '→',
+            value: Math.abs(state.statistics.admin_growth_percentage),
+            class: state.statistics.admin_growth_trend === 'up' ? 'positive' : 
+                   state.statistics.admin_growth_trend === 'down' ? 'negative' : 'neutral',
+            text: `${state.statistics.admin_growth_trend === 'up' ? '↑' : 
+                   state.statistics.admin_growth_trend === 'down' ? '↓' : '→'} 
+                   ${Math.abs(state.statistics.admin_growth_percentage)}% from last month`
+        }),
+
+        vipGrowthInfo: (state) => ({
+            icon: state.statistics.vip_growth_trend === 'up' ? '↑' : 
+                  state.statistics.vip_growth_trend === 'down' ? '↓' : '→',
+            value: Math.abs(state.statistics.vip_growth_percentage),
+            class: state.statistics.vip_growth_trend === 'up' ? 'positive' : 
+                   state.statistics.vip_growth_trend === 'down' ? 'negative' : 'neutral',
+            text: `${state.statistics.vip_growth_trend === 'up' ? '↑' : 
+                   state.statistics.vip_growth_trend === 'down' ? '↓' : '→'} 
+                   ${Math.abs(state.statistics.vip_growth_percentage)}% from last month`
+        }),
     },
     
    
@@ -156,7 +247,61 @@ export const useUserStore = defineStore("user", {
             } finally {
                 this.loading = false;
             }
-        }
+        },
+                async fetchShowStatistics() {
+            this.loading = true
+            try {
+                const response = await userService.getUserStatistics()
+                console.log('Full response:', response)
+                
+                let rawData: any = response
+                
+                // Xử lý các cấu trúc khác nhau
+                if (rawData?.original) {
+                    rawData = rawData.original
+                }
+                
+                console.log('Raw data after processing:', rawData)
+                
+                // Map dữ liệu từ API vào interface mới
+                this.statistics = {
+                    // Current counts
+                    total_users: Number(rawData?.total_users) || 0,
+                    free_users: Number(rawData?.free_users) || 0,
+                    partners: Number(rawData?.partners) || 0,
+                    admins: Number(rawData?.admins) || 0,
+                    vip_users: Number(rawData?.vip_users) || 0,
+                    
+                    // Growth percentages
+                    total_growth_percentage: Number(rawData?.total_growth_percentage) || 0,
+                    free_growth_percentage: Number(rawData?.free_growth_percentage) || 0,
+                    partner_growth_percentage: Number(rawData?.partner_growth_percentage) || 0,
+                    admin_growth_percentage: Number(rawData?.admin_growth_percentage) || 0,
+                    vip_growth_percentage: Number(rawData?.vip_growth_percentage) || 0,
+                    
+                    // Growth trends
+                    total_growth_trend: rawData?.total_growth_trend || 'neutral',
+                    free_growth_trend: rawData?.free_growth_trend || 'neutral',
+                    partner_growth_trend: rawData?.partner_growth_trend || 'neutral',
+                    admin_growth_trend: rawData?.admin_growth_trend || 'neutral',
+                    vip_growth_trend: rawData?.vip_growth_trend || 'neutral',
+                    
+                    // New users this month
+                    new_users_this_month: Number(rawData?.new_users_this_month) || 0,
+                    new_free_users_this_month: Number(rawData?.new_free_users_this_month) || 0,
+                    new_partners_this_month: Number(rawData?.new_partners_this_month) || 0,
+                    new_admins_this_month: Number(rawData?.new_admins_this_month) || 0,
+                    new_vip_users_this_month: Number(rawData?.new_vip_users_this_month) || 0
+                }
+                
+                console.log('Statistics normalized:', this.statistics)
+            } catch (error) {
+                console.error('Failed to fetch statistics:', error)
+                this.statistics = { ...defaultStatistics }
+            } finally {
+                this.loading = false
+            }
+        },
     },
     
 });

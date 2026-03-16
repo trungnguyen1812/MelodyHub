@@ -161,7 +161,6 @@ const chartOptions = ref<ApexOptions>({
 
 onMounted(() => {
   const token = localStorage.getItem("admin_token");
-  console.log("admin_token (dashboard):", token);
 });
 </script>
 

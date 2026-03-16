@@ -101,9 +101,11 @@ Route::prefix('admin')->middleware(['admin.token'])->group(function () {
     Route::get('/list-user',[UserManagerController::class,'getAllUser']);
     Route::post('/add-user',[UserManagerController::class,'add']);
     Route::post('/search-user',[UserManagerController::class,'search']);
+    Route::get('/users/statistics' ,[UserManagerController::class, 'getUserStatistics']);
     Route::get('/users/{user}', [UserManagerController::class, 'show']);    
     Route::post('/user/delete/{user}',[UserManagerController::class,'delete']);
     Route::post('/users/update/{user}', [UserManagerController::class, 'update']);
+    
     // Route::get('/users', [AdminController::class, 'getUsers']);
     // Route::get('/reports', [AdminController::class, 'getReports']);
 
