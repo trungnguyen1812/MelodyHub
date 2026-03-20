@@ -246,13 +246,13 @@ async function deleteUser(id: number) {
         loading.value = true;
         await artistStore.fetchDelete(id);
         await artistStore.fetchArtists();
-        notificationStore.notify("Delete user successful", "success");
+        notificationStore.notify("Delete artist successful", "success");
 
         router.push({name:"admin.artistsmanager.all"});
 
     } catch (error: any) {
         const err = error as { response?: { status?: number } }
-
+        notificationStore.notify("Delete artist error", "error");
         if (err.response?.status === 404) {
             router.push('/404')
         } else if (err.response?.status === 401) {

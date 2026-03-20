@@ -12,7 +12,12 @@ import ArtistsDetailView from '@/modules/admin/views/artists/ArtistsDetail.view.
 import ArtistsAddView from '@/modules/admin/views/artists/ArtistsAdd.view.vue';
 import AllListArtistsView from '@/modules/admin/views/artists/AllListArtists.view.vue';
 import ArtistsUpdateView from '@/modules/admin/views/artists/ArtistsUpdate.view.vue';
-
+// managerment songs
+import SongsManagerView from '@/modules/admin/views/songs/SongsManagerView.vue';
+import SongDetailView from '@/modules/admin/views/songs/SongDetail.view.vue';
+import SongAddView from '@/modules/admin/views/songs/SongAddView.vue';
+import AllListSongsView from '@/modules/admin/views/songs/AllListSongsview.vue';
+import SongsUpdateView from '@/modules/admin/views/songs/SongUpdate.view.vue';
 
 
 // ĐẢM BẢO EXPORT ĐÚNG
@@ -124,6 +129,54 @@ export const ROUTER_ADMIN = [
         path: 'artists/update/:id',
         name: "admin.artistsmanager.update",
         component: ArtistsUpdateView,
+        props: true,
+        meta: {
+          requiresAuth: true,
+          requiresAdmin: true
+        }
+      },
+      /* ================================================ SONGS ================================================*/
+      {
+        path: "songs",
+        name: "admin.songsmanager",
+        component: SongsManagerView,
+        meta: {
+          requiresAuth: true,
+          requiresAdmin: true
+        }
+      },
+      {
+        path: "songs/create",
+        name: "admin.songsmanager.add",
+        component: SongAddView,
+        meta: {
+          requiresAuth: true,
+          requiresAdmin: true
+        }
+      },
+      {
+        path: "songs/all",
+        name: "admin.songsmanager.all",
+        component: AllListSongsView,
+        meta: {
+          requiresAuth: true,
+          requiresAdmin: true
+        }
+      },
+      {
+        path: 'songs/:id',
+        name: "admin.songsmanager.detail",
+        component: SongDetailView,
+        props: true,
+        meta: {
+          requiresAuth: true,
+          requiresAdmin: true
+        }
+      },
+      {
+        path: 'songs/update/:id',
+        name: "admin.songsmanager.update",
+        component: SongsUpdateView,
         props: true,
         meta: {
           requiresAuth: true,

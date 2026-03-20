@@ -4,12 +4,12 @@ import type { CreateArtistPayload } from "@/modules/admin/interfaces/artists/cre
 class ArtistService {
 
     async getAllArtist() {
-        const res = await adminApi.get("/list-artist");
+        const res = await adminApi.get("/artists");
         return res.data;
     }
 
     async searchArtist(keyword: string) {
-        const res = await adminApi.post("/search-artist", {
+        const res = await adminApi.post("/artists/search", {
             q: keyword  
         });
         return res.data;
@@ -20,11 +20,11 @@ class ArtistService {
     } 
 
     async deleteArtist(id: number) {
-        return await adminApi.post(`/artist/delete/${id}`);
+        return await adminApi.delete(`/artists/delete/${id}`);
     }
 
     async addArtist(payload: CreateArtistPayload) {
-        return adminApi.post('/add-artist', payload, {
+        return adminApi.post('/artists/add', payload, {
             headers: {
                 'Content-Type': 'multipart/form-data'
             }

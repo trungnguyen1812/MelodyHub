@@ -27,14 +27,17 @@ class AuthController extends Controller
         if (Auth::attempt($credentials)) {
             /** @var \App\Models\User $user */
             $user = Auth::user();
-            // Tạo token để frontend dùng
-            $token = $user->createToken('api-token')->plainTextToken;
+            $tokenResult = $user->createToken('api-token');
+
+            $tokenResult->accessToken->expires_at = now()->addDays(30);
+            $tokenResult->accessToken->save();
+
             
             return response()->json([
                 'message'       => 'Login successful',
                 'user'          => $user,
                 'roles_flags'   => $user->getRoleFlags(),
-                'token'         => $token
+                'token'         => $tokenResult->plainTextToken
             ]);
         }
         // if login false -> increase the number of attempts

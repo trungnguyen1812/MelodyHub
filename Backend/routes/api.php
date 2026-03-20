@@ -10,9 +10,8 @@ use App\Http\Controllers\Api\client\SubscriptionController;
 use App\Http\Controllers\Api\Payment\PaymentController;
 use App\Http\Controllers\Api\Payment\UserSubscriptionController;
 use App\Http\Controllers\Api\Admin\ArtistsManagerController;
-
-
-
+use App\Http\Controllers\Api\Admin\PartnersManagerController;
+use App\Http\Controllers\Api\Admin\SongsManagerController;
 
 // routes/api.php
 Route::match(['GET', 'POST'], 'payment/sepay/webhook', [
@@ -97,27 +96,44 @@ Route::prefix('admin')->middleware(['admin.token'])->group(function () {
     Route::get('/test', [AdminAuthController::class, 'testToken']);
 
     // Router user management
-    
-    Route::get('/list-user',[UserManagerController::class,'getAllUser']);
-    Route::post('/add-user',[UserManagerController::class,'add']);
-    Route::post('/search-user',[UserManagerController::class,'search']);
-    Route::get('/users/statistics' ,[UserManagerController::class, 'getUserStatistics']);
-    Route::get('/users/{user}', [UserManagerController::class, 'show']);    
-    Route::post('/user/delete/{user}',[UserManagerController::class,'delete']);
-    Route::post('/users/update/{user}', [UserManagerController::class, 'update']);
-    
-    // Route::get('/users', [AdminController::class, 'getUsers']);
-    // Route::get('/reports', [AdminController::class, 'getReports']);
+    Route::prefix('users')->group(function () {
+        Route::get('/', [UserManagerController::class, 'getAllUser']);
+        Route::post('/add', [UserManagerController::class, 'add']);
+        Route::post('/search', [UserManagerController::class, 'search']);
+        Route::get('/statistics', [UserManagerController::class, 'getUserStatistics']);
+        Route::get('/{user}', [UserManagerController::class, 'show']);
+        Route::post('/delete/{user}', [UserManagerController::class, 'delete']);
+        Route::post('/update/{user}', [UserManagerController::class, 'update']);
+    });
 
     // Router artists manager
-    Route::get('/list-artist', [ArtistsManagerController::class, 'getAllArtist']);
-    Route::post('/add-artist', [ArtistsManagerController::class, 'add']);
-    Route::post('/search-artist', [ArtistsManagerController::class, 'search']);
-    Route::get('/artists/statistics' ,[ArtistsManagerController::class, 'statistics']);
-    Route::get('/artists/{artist}', [ArtistsManagerController::class, 'show']); 
-    Route::post('/artist/delete/{artist}', [ArtistsManagerController::class, 'delete']);
-    Route::post('/artists/update/{artist}', [ArtistsManagerController::class, 'update']);
+    Route::prefix('artists')->group(function () {
+        Route::get('/', [ArtistsManagerController::class, 'getAllArtist']);
+        Route::post('/add', [ArtistsManagerController::class, 'add']);
+        Route::post('/search', [ArtistsManagerController::class, 'search']);
+        Route::get('/statistics', [ArtistsManagerController::class, 'statistics']);
+        Route::get('/{artist}', [ArtistsManagerController::class, 'show']);
+        Route::delete('/delete/{artist}', [ArtistsManagerController::class, 'delete']);
+        Route::post('/update/{artist}', [ArtistsManagerController::class, 'update']);
+    });
+
+    // Router songs manager
+    Route::prefix('songs')->group(function () {
+        Route::get('/',         [SongsManagerController::class, 'index']);
+        Route::post('/add',        [SongsManagerController::class, 'add']);
+        Route::get('/{song}',     [SongsManagerController::class, 'show']);
+        Route::post('/{song}',     [SongsManagerController::class, 'update']);
+        Route::post('/{song}',  [SongsManagerController::class, 'destroy']);
+    });
     
+    // Router partners  manager
+    Route::prefix('partners')->group(function () {
+        Route::get('/',         [PartnersManagerController::class, 'index']);
+        Route::post('/add',        [PartnersManagerController::class, 'add']);
+        Route::get('/{song}',     [PartnersManagerController::class, 'show']);
+        Route::post('/{song}',     [PartnersManagerController::class, 'update']);
+        Route::post('/{song}',  [PartnersManagerController::class, 'destroy']);
+    });
    
 });
 

@@ -48,7 +48,22 @@
             <span class="arrow">▼</span>
           </div>
           <ul class="submenu">
-            <li><img src="@/assets/images/icon/songs.svg" alt=""> Songs</li>
+            
+            <router-link
+              :to="{ name: 'admin.songsmanager' }"
+              custom
+              v-slot="{ navigate, isActive }"
+            >
+              <li
+                :class="{ active: isActive }"
+                @click="navigate"
+                @keyup.enter="navigate"
+                role="link"
+                tabindex="0"
+              >
+                <li><img src="@/assets/images/icon/songs.svg" alt=""> Songs</li>
+              </li>
+            </router-link>
             <router-link
               :to="{ name: 'admin.artistsmanager' }"
               custom

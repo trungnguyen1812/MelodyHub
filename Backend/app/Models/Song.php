@@ -91,7 +91,7 @@ class Song extends Model
 		'danceability' => 'float',
 		'track_number' => 'int',
 		'disc_number' => 'int',
-		'year' => 'datetime',
+		'year' => 'integer',
 		'file_size' => 'int',
 		'bitrate' => 'int',
 		'is_premium' => 'bool',

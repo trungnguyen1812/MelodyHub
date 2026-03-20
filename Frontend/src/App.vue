@@ -3,7 +3,7 @@
   <component :is="layout">
     <router-view />
   </component>
- 
+  <GlobalMiniPlayer />
 </template>
 
 <script setup lang="ts">
@@ -15,7 +15,7 @@ import { useAuthStore } from "@/store/authStore";
 import DefaultLayout from "@/layouts/ClientLayout.vue";
 import AdminLayout from "@/layouts/AdminLayout.vue";
 import Notification from '@/components/common/VcNotification/Notification.vue'; 
-
+import GlobalMiniPlayer from '@/components/common/VcGlobalMiniPlayer/GlobalMiniPlayer.vue'
 
 const route = useRoute();
 const authStore = useAuthStore();

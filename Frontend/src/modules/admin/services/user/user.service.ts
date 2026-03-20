@@ -8,18 +8,18 @@ import type { CreateUserPayload } from "@/modules/admin/interfaces/users/create-
 
 class UserService {
     async getAllUser() {
-        const res = await adminApi.get("/list-user");
+        const res = await adminApi.get("/users");
         return res.data;
     }
     async addUser(payload: CreateUserPayload){
-        return adminApi.post('/add-user', payload, {
+        return adminApi.post('/users/add', payload, {
             headers: {
             'Content-Type': 'multipart/form-data'
             }
         });
     }
     async searchUser(keyword: string){
-        const res = await adminApi.post("/search-user" ,{
+        const res = await adminApi.post("/users/search" ,{
             q:keyword
         }); 
         return res.data;
@@ -28,7 +28,7 @@ class UserService {
         return await adminApi.get(`/users/${id}`);
     }
     async deleteUser(id: number){
-        return await adminApi.post(`/user/delete/${id}`); 
+        return await adminApi.post(`/users/delete/${id}`); 
     }
     async updateUser(id: number, payload: CreateUserPayload) {
         const formData = new FormData();
