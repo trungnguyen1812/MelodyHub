@@ -125,7 +125,7 @@ Route::prefix('admin')->middleware(['admin.token'])->group(function () {
         Route::get('/{song}',     [SongsManagerController::class, 'show']);
         Route::delete('/delete/{song}', [SongsManagerController::class, 'delete']);
         Route::delete('/delete-multiple', [SongsManagerController::class, 'deleteMultiple']);
-        Route::post('/{song}',     [SongsManagerController::class, 'update']);
+        Route::post('/update/{song}', [SongsManagerController::class, 'update']);
     });
     
     // Router partners  manager

@@ -153,6 +153,7 @@ class SongsManagerController extends Controller
         if ($request->filled('status'))     $query->where('status',     $request->status);
         if ($request->filled('quality'))    $query->where('quality',    $request->quality);
         if ($request->filled('year'))       $query->whereYear('year',   $request->year);
+        if ($request->filled('genre_id')) $query->where('genre_id', $request->genre_id);
  
         if ($request->filled('is_premium'))
             $query->where('is_premium', filter_var($request->is_premium, FILTER_VALIDATE_BOOLEAN));
@@ -185,10 +186,6 @@ class SongsManagerController extends Controller
         ]);
     }
  
-    /**
-     * GET /admin/songs/{id}
-     * Chi tiết 1 bài hát theo id hoặc slug
-     */
     public function show(Request $request, string $idOrSlug): JsonResponse
     {
         $song = is_numeric($idOrSlug)
@@ -227,6 +224,150 @@ class SongsManagerController extends Controller
         } catch (\Exception $e) {
             Log::error("Failed to delete song: " . $e->getMessage());
             return response()->json(['message' => 'Failed to delete song'], 500);
+        }
+    }
+
+
+    public function update(Request $request, Song $song): JsonResponse
+    {
+        Log::info('Update song request', ['id' => $song->id, 'data' => $request->except('audio_file')]);
+
+        // ── 1. Validate ──
+        $request->validate([
+            'title'           => 'sometimes|string|max:255',
+            'slug'            => 'sometimes|string|unique:songs,slug,' . $song->id,
+            'artist_id'       => 'sometimes|exists:artists,id',
+            'album_id'        => 'nullable|exists:albums,id',
+            'year'            => 'nullable|integer|min:1900|max:2099',
+            'track_number'    => 'nullable|integer|min:1',
+            'disc_number'     => 'nullable|integer|min:1',
+            'isrc'            => 'nullable|string|max:20',
+            'copyright_owner' => 'sometimes|string|max:255',
+            'license_type'    => 'nullable|string|max:100',
+            'duration'        => 'nullable|integer|min:0',
+            'file_size'       => 'nullable|integer|min:0',
+            'bitrate'         => 'nullable|integer',
+            'quality'         => 'nullable|string|in:low,standard,high,lossless',
+            'lyrics'          => 'nullable|string',
+            'cover_url'       => 'nullable|string|max:500',
+            'cover_file'      => 'nullable|image|max:5120',
+            'audio_file'      => [
+                'nullable', 'file', 'max:51200',
+                function ($attribute, $value, $fail) {
+                    $ext     = strtolower($value->getClientOriginalExtension());
+                    $allowed = ['mp3', 'wav', 'flac', 'aac', 'ogg', 'm4a'];
+                    if (!in_array($ext, $allowed)) {
+                        $fail("The {$attribute} must be a valid audio file.");
+                    }
+                },
+            ],
+            'status'         => 'nullable|string|in:draft,published,blocked',
+            'partner_id'     => 'nullable|exists:partners,id',
+            'is_premium'     => 'nullable',
+            'is_explicit'    => 'nullable',
+            'is_featured'    => 'nullable',
+            'allow_download' => 'nullable',
+        ]);
+
+        DB::beginTransaction();
+
+        try {
+            $updateData = [];
+
+            // ── 2. Các field text ──
+            $fields = [
+                'title', 'slug', 'artist_id', 'album_id', 'track_number',
+                'disc_number', 'isrc', 'copyright_owner', 'license_type',
+                'lyrics', 'duration', 'bitrate', 'quality', 'partner_id', 'status',
+            ];
+
+            foreach ($fields as $field) {
+                if ($request->has($field)) {
+                    $updateData[$field] = $request->$field ?: null;
+                }
+            }
+
+            if ($request->has('year')) {
+                $updateData['year'] = $request->year ? (int) $request->year : null;
+            }
+
+            foreach (['is_premium', 'is_explicit', 'is_featured', 'allow_download'] as $bool) {
+                if ($request->has($bool)) {
+                    $updateData[$bool] = filter_var($request->$bool, FILTER_VALIDATE_BOOLEAN);
+                }
+            }
+
+            // ── 3. Cover image ──
+            if ($request->hasFile('cover_file')) {
+                // Xóa ảnh cũ trên Cloudinary
+                $this->cloudinaryService->deleteImageByUrl($song->cover_url);
+
+                // Upload ảnh mới
+                $updateData['cover_url'] = $this->cloudinaryService->uploadImage(
+                    $request->file('cover_file'),
+                    'songs/partners'
+                );
+            } elseif ($request->has('cover_url')) {
+                $updateData['cover_url'] = $request->cover_url ?: null;
+            }
+
+            // ── 4. Audio file mới ──
+            $newAudioStoredPath = null;
+            if ($request->hasFile('audio_file')) {
+                $audioFile          = $request->file('audio_file');
+                $newAudioStoredPath = $audioFile->store('audio_originals', 'local');
+                $updateData['file_size'] = $audioFile->getSize();
+
+                // Reset audio URLs — sẽ được điền lại sau khi transcode xong
+                $updateData['song_url']          = null;
+                $updateData['song_url_hq']       = null;
+                $updateData['song_url_lossless'] = null;
+
+                // Xóa folder audio cũ trên Cloudinary
+                $this->cloudinaryService->deleteSongFolder($song->id);
+
+                Log::info('New audio file stored', [
+                    'path'     => $newAudioStoredPath,
+                    'original' => $audioFile->getClientOriginalName(),
+                ]);
+            }
+
+            $song->update($updateData);
+
+            DB::commit();
+
+            // ── 5. Dispatch transcode job nếu có audio mới ──
+            if ($newAudioStoredPath) {
+                ProcessSongAudio::dispatch(
+                    $song->id,
+                    $newAudioStoredPath,
+                    $song->status
+                )->onQueue('audio');
+
+                Log::info("Song #{$song->id} re-queued for audio processing");
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => $newAudioStoredPath
+                    ? 'Song updated. New audio is being processed.'
+                    : 'Song updated successfully.',
+                'data' => [
+                    'id'        => $song->id,
+                    'title'     => $song->title,
+                    'cover_url' => $song->cover_url,
+                    'status'    => $song->status,
+                ],
+            ], 200);
+
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            Log::error("SongController@update failed: " . $e->getMessage());
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to update song: ' . $e->getMessage(),
+            ], 500);
         }
     }
 

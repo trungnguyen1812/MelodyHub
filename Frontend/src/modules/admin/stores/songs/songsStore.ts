@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import songsService from '@/modules/admin/services/songs/songs.service'
 import type { CreateSongPayload } from '@/modules/admin/interfaces/songs/create-song.payload'
+import type { UpdateSongPayload } from "@/modules/admin/interfaces/songs/update_song.payload";
 import type {
     Song,
     SongMeta,
@@ -143,6 +144,25 @@ export const useSongStore = defineStore('song', {
                     this.error = 'An unknown error occurred';
                 }
                 throw error;
+            } finally {
+                this.loading = false;
+            }
+        },
+        
+        async fetchUpdateSong(id: number, payload: UpdateSongPayload) {
+            this.loading = true;
+            this.error   = null;
+            try {
+                const res         = await songsService.updateSong(id, payload);
+                const updatedSong: Song = res.data.data;
+
+                const index = this.songs.findIndex(s => s.id === id);
+                if (index !== -1) this.songs[index] = { ...this.songs[index], ...updatedSong };
+
+                return updatedSong;
+            } catch (err: any) {
+                this.error = err?.response?.data?.message || 'Update song failed';
+                throw err;
             } finally {
                 this.loading = false;
             }

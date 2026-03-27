@@ -322,7 +322,7 @@
                             <polygon points="5 3 19 12 5 21 5 3"/>
                           </svg>
                         </button>
-                        <button class="act-btn act-btn--edit" title="Edit">
+                        <button class="act-btn act-btn--edit" title="Edit" @click="updateSong(song.id)">
                           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
                             <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
@@ -410,7 +410,7 @@
                 <div class="card-footer-row">
                   <span class="card-date">{{ formatDate(song.created_at) }}</span>
                   <div class="action-btns">
-                    <button class="act-btn act-btn--edit" title="Edit">
+                    <button class="act-btn act-btn--edit" title="Edit" @click="updateSong(song.id)">
                       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
                         <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
@@ -662,6 +662,13 @@ function goToDetail(id: number) {
     });
 }
 
+
+function updateSong(id: number) {
+    router.push({
+        name: "admin.songsmanager.update",
+        params: { id }
+    });
+}
 //method
 async function deleteSong(id: number) {
     try {
@@ -705,6 +712,7 @@ async function deleteSong(id: number) {
         loading.value = false;
     }
 }
+
 
 // ── Lifecycle ──
 onMounted(async () => {

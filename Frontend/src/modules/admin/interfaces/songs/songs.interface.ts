@@ -23,6 +23,11 @@ export interface SongPartner {
   id:           number
   company_name: string
 }
+
+export interface SongGenre {
+  id:           number
+  company_name: string
+}
  
 export interface SongStats {
   total_plays:     number
@@ -58,6 +63,7 @@ export interface Song {
   artist:          SongArtist | null
   album:           SongAlbum  | null
   partner:         SongPartner | null
+  genre:           SongGenre | null
   stats:           SongStats
   created_at:      string
   updated_at:      string
