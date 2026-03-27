@@ -10,6 +10,7 @@ use App\Http\Controllers\Api\client\SubscriptionController;
 use App\Http\Controllers\Api\Payment\PaymentController;
 use App\Http\Controllers\Api\Payment\UserSubscriptionController;
 use App\Http\Controllers\Api\Admin\ArtistsManagerController;
+use App\Http\Controllers\Api\Admin\GenresManagerController;
 use App\Http\Controllers\Api\Admin\PartnersManagerController;
 use App\Http\Controllers\Api\Admin\SongsManagerController;
 
@@ -122,8 +123,9 @@ Route::prefix('admin')->middleware(['admin.token'])->group(function () {
         Route::get('/',         [SongsManagerController::class, 'index']);
         Route::post('/add',        [SongsManagerController::class, 'add']);
         Route::get('/{song}',     [SongsManagerController::class, 'show']);
+        Route::delete('/delete/{song}', [SongsManagerController::class, 'delete']);
+        Route::delete('/delete-multiple', [SongsManagerController::class, 'deleteMultiple']);
         Route::post('/{song}',     [SongsManagerController::class, 'update']);
-        Route::post('/{song}',  [SongsManagerController::class, 'destroy']);
     });
     
     // Router partners  manager
@@ -133,6 +135,15 @@ Route::prefix('admin')->middleware(['admin.token'])->group(function () {
         Route::get('/{song}',     [PartnersManagerController::class, 'show']);
         Route::post('/{song}',     [PartnersManagerController::class, 'update']);
         Route::post('/{song}',  [PartnersManagerController::class, 'destroy']);
+    });
+
+    // Router partners  manager
+    Route::prefix('genres')->group(function () {
+        Route::get('/',         [GenresManagerController::class, 'index']);
+        Route::post('/add',        [GenresManagerController::class, 'add']);
+        Route::get('/{song}',     [GenresManagerController::class, 'show']);
+        Route::post('/{song}',     [GenresManagerController::class, 'update']);
+        Route::post('/{song}',  [GenresManagerController::class, 'destroy']);
     });
    
 });

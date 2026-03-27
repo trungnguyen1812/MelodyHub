@@ -18,7 +18,7 @@ import SongDetailView from '@/modules/admin/views/songs/SongDetail.view.vue';
 import SongAddView from '@/modules/admin/views/songs/SongAddView.vue';
 import AllListSongsView from '@/modules/admin/views/songs/AllListSongsview.vue';
 import SongsUpdateView from '@/modules/admin/views/songs/SongUpdate.view.vue';
-
+import SongLyrisView from '@/components/common/VcGlobalMiniPlayer/GlobalLyrisPlayer.vue';
 
 // ĐẢM BẢO EXPORT ĐÚNG
 export const ROUTER_ADMIN = [
@@ -177,6 +177,16 @@ export const ROUTER_ADMIN = [
         path: 'songs/update/:id',
         name: "admin.songsmanager.update",
         component: SongsUpdateView,
+        props: true,
+        meta: {
+          requiresAuth: true,
+          requiresAdmin: true
+        }
+      },
+      {
+        path: 'songs/:id',
+        name: "admin.songsmanager.lyris",
+        component: SongLyrisView,
         props: true,
         meta: {
           requiresAuth: true,

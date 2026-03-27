@@ -20,7 +20,7 @@
               </path>
             </g>
           </svg>
-          <input v-model="email" type="text" class="input" placeholder="Enter your Email" />
+          <input v-model="email" type="text" class="input" placeholder="Enter your Email" :disabled="isLoading" />
         </div>
 
         <div class="flex-column">
@@ -35,29 +35,52 @@
               d="m304 224c-8.832031 0-16-7.167969-16-16v-80c0-52.929688-43.070312-96-96-96s-96 43.070312-96 96v80c0 8.832031-7.167969 16-16 16s-16-7.167969-16-16v-80c0-70.59375 57.40625-128 128-128s128 57.40625 128 128v80c0 8.832031-7.167969 16-16 16zm0 0">
             </path>
           </svg>
-          <input v-model="password" type="password" class="input" placeholder="Enter your Password" />
-          <svg viewBox="0 0 576 512" height="1em" xmlns="http://www.w3.org/2000/svg">
-            <path
-              d="M288 32c-80.8 0-145.5 36.8-192.6 80.6C48.6 156 17.3 208 2.5 243.7c-3.3 7.9-3.3 16.7 0 24.6C17.3 304 48.6 356 95.4 399.4C142.5 443.2 207.2 480 288 480s145.5-36.8 192.6-80.6c46.8-43.5 78.1-95.4 93-131.1c3.3-7.9 3.3-16.7 0-24.6c-14.9-35.7-46.2-87.7-93-131.1C433.5 68.8 368.8 32 288 32zM144 256a144 144 0 1 1 288 0 144 144 0 1 1 -288 0zm144-64c0 35.3-28.7 64-64 64c-7.1 0-13.9-1.2-20.3-3.3c-5.5-1.8-11.9 1.6-11.7 7.4c.3 6.9 1.3 13.8 3.2 20.7c13.7 51.2 66.4 81.6 117.6 67.9s81.6-66.4 67.9-117.6c-11.1-41.5-47.8-69.4-88.6-71.1c-5.8-.2-9.2 6.1-7.4 11.7c2.1 6.4 3.3 13.2 3.3 20.3z">
-            </path>
-          </svg>
+          <input 
+            v-model="password" 
+            :type="showPassword ? 'text' : 'password'" 
+            class="input" 
+            placeholder="Enter your Password" 
+            :disabled="isLoading" 
+          />
+          <div class="eye-icon" @click="togglePasswordVisibility">
+            <svg v-if="!showPassword" viewBox="0 0 576 512" height="1em" xmlns="http://www.w3.org/2000/svg">
+              <path
+                d="M288 32c-80.8 0-145.5 36.8-192.6 80.6C48.6 156 17.3 208 2.5 243.7c-3.3 7.9-3.3 16.7 0 24.6C17.3 304 48.6 356 95.4 399.4C142.5 443.2 207.2 480 288 480s145.5-36.8 192.6-80.6c46.8-43.5 78.1-95.4 93-131.1c3.3-7.9 3.3-16.7 0-24.6c-14.9-35.7-46.2-87.7-93-131.1C433.5 68.8 368.8 32 288 32zM144 256a144 144 0 1 1 288 0 144 144 0 1 1 -288 0zm144-64c0 35.3-28.7 64-64 64c-7.1 0-13.9-1.2-20.3-3.3c-5.5-1.8-11.9 1.6-11.7 7.4c.3 6.9 1.3 13.8 3.2 20.7c13.7 51.2 66.4 81.6 117.6 67.9s81.6-66.4 67.9-117.6c-11.1-41.5-47.8-69.4-88.6-71.1c-5.8-.2-9.2 6.1-7.4 11.7c2.1 6.4 3.3 13.2 3.3 20.3z">
+              </path>
+            </svg>
+            <svg v-else viewBox="0 0 640 512" height="1em" xmlns="http://www.w3.org/2000/svg">
+              <path
+                d="M38.8 5.1C28.4-3.1 13.3-1.2 5.1 9.2S-1.2 34.7 9.2 42.9l592 464c10.4 8.2 25.5 6.3 33.7-4.1s6.3-25.5-4.1-33.7L525.6 386.7c39.6-40.6 66.4-86.1 79.9-118.4c3.3-7.9 3.3-16.7 0-24.6c-14.9-35.7-46.2-87.7-93-131.1C465.5 68.8 400.8 32 320 32c-68.2 0-125 26.3-169.3 60.8L38.8 5.1zM223.1 149.5C248.6 126.2 282.7 112 320 112c79.5 0 144 64.5 144 144c0 24.9-6.3 48.3-17.4 68.7L408 294.5c8.4-19.3 10.6-41.4 4.8-63.3c-11.1-41.5-47.8-69.4-88.6-71.1c-5.8-.2-9.2 6.1-7.4 11.7c2.1 6.4 3.3 13.2 3.3 20.3c0 10.2-2.4 19.8-6.6 28.3l-90.3-70.8zM373 389.9c-16.4 6.5-34.3 10.1-53 10.1c-79.5 0-144-64.5-144-144c0-6.9 .5-13.6 1.4-20.2L83.1 161.5C60.3 191.2 44 220.8 34.5 243.7c-3.3 7.9-3.3 16.7 0 24.6c14.9 35.7 46.2 87.7 93 131.1C174.5 443.2 239.2 480 320 480c47.8 0 89.9-12.9 126.2-32.5L373 389.9z">
+              </path>
+            </svg>
+          </div>
         </div>
 
         <div class="flex-row">
           <div>
-            <input type="checkbox" />
+            <input type="checkbox" :disabled="isLoading" />
             <label> Remember me </label>
           </div>
           <span class="span">Forgot password?</span>
         </div>
-        <button class="button-submit" type="submit">Sign In</button>
+        
+       
+        
+        <button class="button-submit" type="submit" :disabled="isLoading">
+          <span v-if="!isLoading">Sign In</span>
+          <span v-else class="button-loading">
+            <span class="button-spinner"></span>
+            Processing...
+          </span>
+        </button>
+        
         <p class="p">
-          Don't have an account? <button class="span" @click="RegisterView">Sign Up</button>
+          Don't have an account? <button class="span" @click="RegisterView" :disabled="isLoading">Sign Up</button>
         </p>
         <p class="p line">Or With</p>
 
         <div class="flex-row">
-          <button class="btn google" @click.prevent="loginWithGoogle">
+          <button class="btn google" @click.prevent="loginWithGoogle" :disabled="isLoading">
             <svg version="1.1" width="20" id="Layer_1" xmlns="http://www.w3.org/2000/svg"
               xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" viewBox="0 0 512 512"
               style="enable-background: new 0 0 512 512" xml:space="preserve">
@@ -74,13 +97,14 @@
 	c-66.729,0-123.429,42.957-143.965,102.724l-83.397-68.276h-0.014C71.23,56.123,157.06,0,256,0
 	C318.115,0,375.068,22.126,419.404,58.936z"></path>
             </svg>
-
-            Google</button>
+            Google
+          </button>
         </div>
       </form>
     </div>
   </div>
 </template>
+
 <script setup lang="ts">
 import router from "@/modules/router";
 import { ref } from "vue";
@@ -92,18 +116,31 @@ import "vue-toastification/dist/index.css";
 import { nextTick } from 'vue';
 
 const RegisterView = () => {
+  if (isLoading.value) return;
   router.push({
     name: "Register",
   });
 };
-//handel login witch email
+
 const email = ref("");
 const password = ref("");
+const isLoading = ref(false);
 const notificationStore = useNotificationStore();
 const userStore = useUserStore();
 
 const auth = useAuthStore();
+
+
+const showPassword = ref(false);
+
+const togglePasswordVisibility = () => {
+  showPassword.value = !showPassword.value;
+};
+
 const handleLogin = async () => {
+  if (isLoading.value) return;
+  
+  isLoading.value = true;
   try {
     const res = await auth.login(email.value, password.value);
     notificationStore.notify("Login successful", "success");
@@ -120,14 +157,18 @@ const handleLogin = async () => {
     console.error(err);
     notificationStore.notify(err.response?.data?.message || "Login failed", "error");
     setTimeout(() => notificationStore.clear(), 3000);
+  } finally {
+    isLoading.value = false;
   }
 };
 
-//handel login witch google 
 const loginWithGoogle = () => {
+  if (isLoading.value) return;
+  isLoading.value = true;
   window.location.href = 'http://localhost:8000/auth/redirect';
 };
 </script>
+
 <style scoped>
 /* From Uiverse.io by Praashoo7 */
 /* From Uiverse.io by micaelgomestavares */
@@ -180,6 +221,11 @@ const loginWithGoogle = () => {
   outline: none;
 }
 
+.input:disabled {
+  background-color: #f5f5f5;
+  cursor: not-allowed;
+}
+
 .inputForm:focus-within {
   border: 1.5px solid #2d79f3;
 }
@@ -206,6 +252,11 @@ const loginWithGoogle = () => {
   cursor: pointer;
 }
 
+.span:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 .button-submit {
   margin: 20px 0 10px 0;
   background-color: #151717;
@@ -217,10 +268,63 @@ const loginWithGoogle = () => {
   height: 50px;
   width: 100%;
   cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
 }
 
-.button-submit:hover {
+.button-submit:hover:not(:disabled) {
   background-color: #252727;
+}
+
+.button-submit:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.button-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.button-spinner {
+  width: 20px;
+  height: 20px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top: 2px solid white;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+/* Loading Container */
+.loading-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 12px;
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  border-radius: 10px;
+  margin: 10px 0;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+.spinner {
+  width: 24px;
+  height: 24px;
+  border: 3px solid rgba(45, 121, 243, 0.2);
+  border-top: 3px solid #2d79f3;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+.loading-text {
+  color: #2d79f3;
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: 0.5px;
 }
 
 .p {
@@ -246,7 +350,81 @@ const loginWithGoogle = () => {
   transition: 0.2s ease-in-out;
 }
 
-.btn:hover {
+.btn:hover:not(:disabled) {
   border: 1px solid #2d79f3;
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Animations */
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.8;
+    transform: scale(0.98);
+  }
+}
+
+/* Optional: Add ripple effect when loading */
+@keyframes ripple {
+  0% {
+    transform: scale(0);
+    opacity: 0.5;
+  }
+  100% {
+    transform: scale(4);
+    opacity: 0;
+  }
+}
+
+/* Disabled input styles */
+input:disabled {
+  background-color: #f8f9fa;
+  color: #6c757d;
+}
+
+/* Optional: Add progress bar animation at the top */
+.form::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 3px;
+  background: linear-gradient(90deg, #2d79f3, #4a9eff, #2d79f3);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.3s ease;
+}
+
+.form.loading::before {
+  transform: scaleX(1);
+  animation: progress 2s ease-in-out infinite;
+}
+
+@keyframes progress {
+  0% {
+    transform: scaleX(0);
+    transform-origin: left;
+  }
+  50% {
+    transform: scaleX(0.5);
+    transform-origin: left;
+  }
+  100% {
+    transform: scaleX(1);
+    transform-origin: right;
+  }
 }
 </style>

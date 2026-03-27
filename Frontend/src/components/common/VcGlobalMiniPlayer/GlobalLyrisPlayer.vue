@@ -89,10 +89,12 @@
               </svg>
             </button>
 
+            <!-- Lyrics Button -->
             <button 
               class="player-btn player-btn--lyrics" 
-              @click="goToLyrics" 
-              title="View Lyrics"
+              @click="toggleLyrics" 
+              :class="{ active: showLyrics }"
+              title="Show/Hide Lyrics"
             >
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M3 6h18M3 12h12M3 18h6"/>
@@ -140,18 +142,54 @@
             />
           </div>
         </div>
+
+        <!-- Lyrics Panel -->
+        <Transition name="lyrics-slide">
+          <div v-if="showLyrics" class="lyrics-panel">
+            <div class="lyrics-header">
+              <h3>Lyrics</h3>
+              <button class="lyrics-close" @click="showLyrics = false">×</button>
+            </div>
+            <div class="lyrics-content">
+              <div v-if="loadingLyrics" class="lyrics-loading">
+                <div class="spinner"></div>
+                <p>Loading lyrics...</p>
+              </div>
+              <div v-else-if="lyrics" class="lyrics-text">
+                <pre>{{ lyrics }}</pre>
+              </div>
+              <div v-else class="lyrics-empty">
+                <p>No lyrics available for this song</p>
+              </div>
+            </div>
+          </div>
+        </Transition>
+
       </div>
     </Transition>
   </Teleport>
 </template>
 
 <script setup lang="ts">
+import { ref } from 'vue'
 import { usePlayerStore } from '@/modules/admin/stores/songs/playerStore'
 import type { Song } from '@/modules/admin/interfaces/songs/songs.interface'
+import { useSongStore } from '@/modules/admin/stores/songs/songsStore'
 import { useRouter } from 'vue-router'
+import adminApi from '@/plugins/axios_admin';
+
 
 const router = useRouter()
 const player = usePlayerStore()
+const songStore = useSongStore()
+
+// Lyrics state
+const showLyrics = ref(false)
+const lyrics = ref<string | null>(null)
+const loadingLyrics = ref(false)
+
+console.log(player.currentSong);
+
 
 const goToDetail = () => {
   if (!player.currentSong) return
@@ -161,12 +199,27 @@ const goToDetail = () => {
   })
 }
 
-const goToLyrics = () => {
-  if (!player.currentSong) return
-  router.push({
-    name: 'admin.songsmanager.lyrics',
-    params: { id: player.currentSong.id }
-  })
+// Toggle lyrics panel and fetch lyrics if needed
+const toggleLyrics = async () => {
+  if (!showLyrics.value && !lyrics.value && player.currentSong) {
+    await fetchLyrics(player.currentSong)
+  }
+  showLyrics.value = !showLyrics.value
+}
+
+// Fetch lyrics from API
+const fetchLyrics = async (song: Song) => {
+  loadingLyrics.value = true
+  try {
+    // Giả sử API có endpoint để lấy lyrics
+    const response = await adminApi.get(`/songs/${song.id}/lyrics`)
+    lyrics.value = response.data.lyrics || null
+  } catch (error) {
+    console.error('Failed to fetch lyrics:', error)
+    lyrics.value = null
+  } finally {
+    loadingLyrics.value = false
+  }
 }
 
 // ── Cover style ──
@@ -223,9 +276,9 @@ const onVolumeChange = (e: Event) => {
 .mini-player {
   position: fixed;
   bottom: 0;
-  left: 24.8%;
+  left: 25%;
   right: 0;
-  width: 74%;
+  width: 73.90%;
   background: rgba(14, 18, 26, 0.96);
   border-top: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 0 0 20px 20px;
@@ -243,6 +296,22 @@ const onVolumeChange = (e: Event) => {
   padding: 12px 20px;
   max-width: 1400px;
   margin: 0 auto;
+}
+
+/* ── Progress top ── */
+.player-progress-top {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: rgba(255, 255, 255, 0.08);
+}
+.player-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #3b82f6, #06b6d4);
+  transition: width 0.2s linear;
+  border-radius: 0;
 }
 
 /* ── Cover ── */
@@ -435,6 +504,11 @@ const onVolumeChange = (e: Event) => {
   border-color: rgba(59, 130, 246, 0.4);
   transform: scale(1.05);
 }
+.player-btn--lyrics.active {
+  background: rgba(59, 130, 246, 0.2);
+  color: #60a5fa;
+  border-color: rgba(59, 130, 246, 0.5);
+}
 
 /* Close */
 .player-btn--close {
@@ -503,6 +577,119 @@ const onVolumeChange = (e: Event) => {
   cursor: pointer;
 }
 
+/* ── Lyrics Panel ── */
+.lyrics-panel {
+  position: absolute;
+  bottom: 100%;
+  left: 0;
+  right: 0;
+  background: rgba(14, 18, 26, 0.98);
+  backdrop-filter: blur(24px);
+  border-radius: 16px 16px 0 0;
+  margin-bottom: 8px;
+  max-height: 400px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: none;
+}
+
+.lyrics-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.lyrics-header h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #f0f4f8;
+}
+
+.lyrics-close {
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: #9ca3af;
+  transition: color 0.2s;
+  line-height: 1;
+  padding: 0;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+}
+
+.lyrics-close:hover {
+  color: #f87171;
+  background: rgba(239, 68, 68, 0.1);
+}
+
+.lyrics-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px;
+}
+
+.lyrics-text pre {
+  margin: 0;
+  font-family: inherit;
+  font-size: 14px;
+  line-height: 1.6;
+  color: #d1d5db;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+.lyrics-empty {
+  text-align: center;
+  color: #9ca3af;
+  padding: 40px 20px;
+}
+
+.lyrics-empty p {
+  margin: 0;
+}
+
+.lyrics-loading {
+  text-align: center;
+  padding: 40px 20px;
+  color: #9ca3af;
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  margin: 0 auto 16px;
+  border: 3px solid rgba(59, 130, 246, 0.3);
+  border-top-color: #3b82f6;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Lyrics transition */
+.lyrics-slide-enter-active,
+.lyrics-slide-leave-active {
+  transition: all 0.3s ease;
+}
+
+.lyrics-slide-enter-from,
+.lyrics-slide-leave-to {
+  opacity: 0;
+  transform: translateY(20px);
+}
+
 /* ─────────────────────────────────────────
    TRANSITION - SLIDE FROM BOTTOM
 ───────────────────────────────────────── */
@@ -540,6 +727,9 @@ const onVolumeChange = (e: Event) => {
   .player-vol-slider {
     width: 70px;
   }
+  .lyrics-panel {
+    max-height: 350px;
+  }
 }
 
 @media (max-width: 768px) {
@@ -576,6 +766,15 @@ const onVolumeChange = (e: Event) => {
   .player-vol-slider {
     width: 60px;
   }
+  .lyrics-panel {
+    max-height: 300px;
+  }
+  .lyrics-content {
+    padding: 16px;
+  }
+  .lyrics-text pre {
+    font-size: 13px;
+  }
 }
 
 @media (max-width: 640px) {
@@ -594,6 +793,9 @@ const onVolumeChange = (e: Event) => {
   }
   .player-time {
     width: 30px;
+  }
+  .lyrics-panel {
+    max-height: 250px;
   }
 }
 
@@ -623,6 +825,15 @@ const onVolumeChange = (e: Event) => {
   .player-btn--close {
     width: 28px;
     height: 28px;
+  }
+  .lyrics-header h3 {
+    font-size: 16px;
+  }
+  .lyrics-content {
+    padding: 12px;
+  }
+  .lyrics-text pre {
+    font-size: 12px;
   }
 }
 </style>

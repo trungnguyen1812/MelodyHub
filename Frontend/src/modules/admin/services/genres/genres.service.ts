@@ -1,32 +1,36 @@
 import adminApi from '@/plugins/axios_admin';
-import type { CreateSongPayload } from "@/modules/admin/interfaces/songs/create-song.payload";
-import type { SongFilterParams } from '@/modules/admin/interfaces/songs/songs.interface'
+import type { CreateArtistPayload } from "@/modules/admin/interfaces/artists/create-artist.payload";
 
-class SongService {
+class GenreService {
 
-     async getAllSongs(params: SongFilterParams = {}) {
-        return adminApi.get('/songs', { params })
-    }
- 
-    async getSong(idOrSlug: string | number) {
-        return adminApi.get(`/songs/${idOrSlug}`)
+    async getAllGenres() {
+        const res = await adminApi.get("/genres");
+        return res.data;
     }
 
-    async addSong(payload: CreateSongPayload) {
-        return adminApi.post('/songs/add', payload, {
-            headers: {
-                'Content-Type': 'multipart/form-data'
-            }
-        });
-    }
+    // async searchArtist(keyword: string) {
+    //     const res = await adminApi.post("/artists/search", {
+    //         q: keyword  
+    //     });
+    //     return res.data;
+    // }
 
-    async deleteSong(id: number) {
-        return await adminApi.delete(`/songs/delete/${id}`);
-    }
+    // async detailArtist(id: number) {
+    //     return await adminApi.get(`/artists/${id}`);
+    // } 
 
-    async deleteMultipleSongs(ids: number[]) {
-        return await adminApi.delete(`/songs/delete-multiple`, { data: { ids } });
-    }
+    // async deleteArtist(id: number) {
+    //     return await adminApi.delete(`/artists/delete/${id}`);
+    // }
+
+    // async addArtist(payload: CreateArtistPayload) {
+    //     return adminApi.post('/artists/add', payload, {
+    //         headers: {
+    //             'Content-Type': 'multipart/form-data'
+    //         }
+    //     });
+    // }
+
     // async updateArtist(id: number, payload: CreateArtistPayload) {
     //     const formData = new FormData();
         
@@ -59,4 +63,4 @@ class SongService {
     // }
 }
 
-export default new SongService();
+export default new GenreService();

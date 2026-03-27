@@ -109,10 +109,28 @@
           </button>
         </div>
 
+        <div>
+            <button class="btn-reload" @click="handleReload" :disabled="isReloading">
+              <svg
+                class="reload-icon"
+                :class="{ spinning: isReloading }"
+                xmlns="http://www.w3.org/2000/svg"
+                width="16" height="16"
+                viewBox="0 0 24 24"
+                fill="none" stroke="currentColor"
+                stroke-width="2"
+              >
+                <path d="M23 4v6h-6M1 20v-6h6"/>
+                <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+              </svg>
+              {{ isReloading ? 'Reloading...' : 'Reload' }}
+            </button>
+        </div>
+
         <Transition name="fade">
           <div v-if="selectedIds.length > 0" class="bulk-actions">
             <span class="bulk-count">{{ selectedIds.length }} selected</span>
-            <button class="bulk-btn bulk-btn--danger" @click="confirmBulkDelete">
+            <button class="bulk-btn bulk-btn--danger" @click="">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <polyline points="3 6 5 6 21 6"/>
                 <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
@@ -250,7 +268,7 @@
                         <span class="checkbox-custom"></span>
                       </label>
                     </td>
-                    <td class="td-song">
+                    <td class="td-song" @click="goToDetail(song.id)">
                       <div class="song-cell">
                         <div class="song-cover" :style="getCoverStyle(song)">
                           <svg v-if="!song.cover_url" width="13" height="13" viewBox="0 0 24 24" fill="rgba(255,255,255,0.7)">
@@ -276,10 +294,10 @@
                       <div class="plays-cell">
                         <div class="plays-bar-wrap">
                           <div class="plays-bar">
-                            <div class="plays-fill" :style="{ width: getPlaysPercent(song.stats.total_plays) + '%' }"></div>
+                            <div class="plays-fill" :style="{ width: getPlaysPercent(song.stats?.total_plays ?? 0) + '%' }"></div>
                           </div>
                         </div>
-                        <span class="plays-num">{{ formatNumber(song.stats.total_plays) }}</span>
+                        <span class="plays-num">{{ formatNumber(song.stats?.total_plays ?? 0) }}</span>
                       </div>
                     </td>
                     <td>
@@ -310,7 +328,7 @@
                             <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
                           </svg>
                         </button>
-                        <button class="act-btn act-btn--delete" title="Delete">
+                        <button class="act-btn act-btn--delete" title="Delete" @click="deleteSong(song.id)">
                           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <polyline points="3 6 5 6 21 6"/>
                             <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
@@ -365,7 +383,7 @@
               <div class="card-body">
                 <div class="card-header-row">
                   <div class="card-title-group">
-                    <p class="card-title">{{ song.title }}</p>
+                    <p class="card-title" @click="goToDetail(song.id)">{{ song.title }}</p>
                     <p class="card-artist">{{ song.artist?.name ?? '—' }}</p>
                   </div>
                   <span class="status-badge status-badge--sm" :class="'status--' + song.status">
@@ -467,12 +485,20 @@ import router from '@/modules/router'
 import { useSongStore } from '@/modules/admin/stores/songs/songsStore'
 import { usePlayerStore } from '@/modules/admin/stores/songs/playerStore'
 import type { Song, SongFilterParams } from '@/modules/admin/interfaces/songs/songs.interface'
+import { useRoute } from 'vue-router'
+import Swal from 'sweetalert2';
+import { useNotificationStore } from "@/store/notificationStore";
+import { storeToRefs } from "pinia";
+
 
 type SortBy   = 'newest' | 'oldest' | 'title' | 'plays' | 'duration'
 type ViewMode = 'table' | 'grid'
 
+const route = useRoute()
 const songStore = useSongStore()
+const {  loading } = storeToRefs(songStore);
 const player    = usePlayerStore()
+const notificationStore = useNotificationStore();
 
 // ── UI state ──
 const searchQuery     = ref('')
@@ -483,6 +509,7 @@ const viewMode        = ref<ViewMode>('table')
 const currentPage     = ref(1)
 const perPage         = ref(20)
 const selectedIds     = ref<number[]>([])
+const isReloading = ref(false)
 
 // ── Cover style ──
 const gradients = [
@@ -505,7 +532,7 @@ const hasActiveFilters = computed(() =>
   !!searchQuery.value || !!selectedStatus.value || !!selectedQuality.value
 )
 const maxPlays = computed(() =>
-  Math.max(...songStore.songs.map(s => s.stats.total_plays), 1)
+  Math.max(...songStore.songs.map(s => s.stats?.total_plays ?? 0), 1)
 )
 const allChecked = computed(() =>
   songStore.songs.length > 0 && songStore.songs.every(s => selectedIds.value.includes(s.id))
@@ -553,6 +580,33 @@ const buildParams = () => ({
 
 const loadSongs = async () => { await songStore.fetchSongs(buildParams() as SongFilterParams) }
 
+function pollSongStatus(songId: number) {
+  const interval = setInterval(async () => {
+    try {
+      const song = await songStore.fetchSongById(songId)
+      if (song.urls) {
+        clearInterval(interval)
+        await songStore.fetchSongs()
+        notificationStore.notify('Song is ready to play!', 'success')
+        setTimeout(() => notificationStore.clear(), 4000)
+      }
+    } catch {
+      clearInterval(interval)
+    }
+  }, 5000)
+
+  setTimeout(() => clearInterval(interval), 600_000)
+}
+
+const handleReload = async () => {
+  isReloading.value = true
+  try {
+    await loadSongs()
+  } finally {
+    isReloading.value = false
+  }
+}
+
 const changePage = async (page: number) => {
   currentPage.value = page
   await loadSongs()
@@ -591,11 +645,6 @@ const toggleSelect = (id: number) => {
   if (idx === -1) selectedIds.value.push(id)
   else selectedIds.value.splice(idx, 1)
 }
-const confirmBulkDelete = () => {
-  if (confirm(`Delete ${selectedIds.value.length} selected songs? This cannot be undone.`)) {
-    selectedIds.value = []
-  }
-}
 
 // ── Play (delegate to playerStore) ──
 const playSong = (song: Song) => {
@@ -605,9 +654,67 @@ const playSong = (song: Song) => {
 // ── Navigation ──
 const ViewAddSong = () => router.push({ name: 'admin.songsmanager.add' })
 
+
+function goToDetail(id: number) {
+    router.push({
+        name: "admin.songsmanager.detail",
+        params: { id }
+    });
+}
+
+//method
+async function deleteSong(id: number) {
+    try {
+        const result = await Swal.fire({
+            title: 'Delete song',
+            text: 'Are you sure you want to delete this song? This action cannot be undone.',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'Yes, delete it!',
+            cancelButtonText: 'Cancel',
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            reverseButtons: true,
+            customClass: {
+                confirmButton: 'btn btn-danger',
+                cancelButton: 'btn btn-secondary'
+            }
+        });
+
+        if (!result.isConfirmed) return;
+
+        loading.value = true;
+        await songStore.fetchDelete(id);
+        await songStore.fetchSongs();
+        notificationStore.notify("Delete song successful", "success");
+
+        router.push({name:"admin.songsmanager.all"});
+
+    } catch (error: any) {
+        const err = error as { response?: { status?: number } }
+        notificationStore.notify("Delete artist error", "error");
+        if (err.response?.status === 404) {
+            router.push('/404')
+        } else if (err.response?.status === 401) {
+            router.push('/login')
+        } else {
+
+        }
+
+    } finally {
+        loading.value = false;
+    }
+}
+
 // ── Lifecycle ──
-onMounted(() => loadSongs())
-// Không cần onBeforeUnmount stopSong — player tồn tại global
+onMounted(async () => {
+  await loadSongs()
+
+  const processingId = route.query.processing
+  if (processingId) {
+    pollSongStatus(Number(processingId))
+  }
+})
 </script>
 
 <style scoped>
@@ -1036,5 +1143,36 @@ onMounted(() => loadSongs())
   .toolbar__left, .toolbar__right { flex-wrap: wrap; }
   .search-box input { width: 100%; }
   .grid-view { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); }
+}
+/* ─────────────────────────────────────────
+   RELOAD BTN
+───────────────────────────────────────── */
+.btn-reload {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  background: transparent;
+  border: 1px solid rgba(99, 179, 237, 0.3);
+  border-radius: 8px;
+  color: #63b3ed;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-reload:hover {
+  background: rgba(99, 179, 237, 0.1);
+  border-color: #63b3ed;
+}
+
+.btn-reload:active,
+.btn-reload.spinning .reload-icon {
+  animation: spin 0.6s linear;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
 }
 </style>

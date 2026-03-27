@@ -267,7 +267,7 @@ onMounted(() => {
 <style scoped>
 /* Base Styles */
 .dashboard-container {
-    height: 82vh;
+    height: auto;
     width: 100%;
     border-radius: 14px;
     margin-top: 7px;
@@ -483,13 +483,13 @@ onMounted(() => {
     flex: 1;
     background: rgba(0, 0, 0, 0.2);
     border-radius: 12px;
-    padding: 20px;
+    padding: 20px 20px;
     border: 1px solid rgba(0, 170, 255, 0.2);
     display: flex;
-    height: 20vh;
+    /* height: 20vh; */
     flex-direction: column;
-    overflow-y: auto;
-    overflow-x: hidden;
+    /* overflow-y: auto;
+    overflow-x: hidden; */
 }
 
 .table-section .section-header {
@@ -526,7 +526,7 @@ onMounted(() => {
 }
 
 .users-table th {
-    padding: 15px;
+    padding: 8px 12px;
     text-align: left;
     font-weight: 500;
     color: rgba(255, 255, 255, 0.7);

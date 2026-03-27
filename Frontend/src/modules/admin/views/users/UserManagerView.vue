@@ -44,8 +44,8 @@
             <div class="stat-content">
                 <h3>Total Users</h3>
                 <CountUp 
-                :key="userStore.safeStatistics.total_users"
-                :endVal="userStore.safeStatistics.total_users" 
+                :key="userStore.safeStatistics?.total_users|0"
+                :endVal="userStore.safeStatistics?.total_users|0" 
                 :duration="1" 
                 class="stat-number"
                 />
@@ -70,8 +70,8 @@
             <div class="stat-content">
                 <h3>User VIP</h3>
                 <CountUp 
-                :key="userStore.safeStatistics.vip_users"
-                :endVal="userStore.safeStatistics.vip_users" 
+                :key="userStore.safeStatistics?.vip_users|0"
+                :endVal="userStore.safeStatistics?.vip_users|0" 
                 :duration="1" 
                 class="stat-number"
                 />
@@ -96,8 +96,8 @@
             <div class="stat-content">
                 <h3>Partner</h3>
                 <CountUp 
-                :key="userStore.safeStatistics.partners"
-                :endVal="userStore.safeStatistics.partners" 
+                :key="userStore.safeStatistics?.partners|0"
+                :endVal="userStore.safeStatistics?.partners|0" 
                 :duration="1" 
                 class="stat-number"
                 />
@@ -122,8 +122,8 @@
             <div class="stat-content">
                 <h3>Admins</h3>
                 <CountUp 
-                :key="userStore.safeStatistics.admins"
-                :endVal="userStore.safeStatistics.admins" 
+                :key="userStore.safeStatistics?.admins|0"
+                :endVal="userStore.safeStatistics?.admins|0" 
                 :duration="1" 
                 class="stat-number"
                 />
@@ -225,11 +225,9 @@
         </div>
     </div>
     <div v-if="loading" class="loading-state">
-        Loading users...
     </div>
     <div v-else-if="users.length === 0" class="empty-state">
-        <div class="empty-icon">👥</div>
-        <p>No users found</p>
+        
     </div>
 </template>
 
@@ -336,7 +334,8 @@ async function deleteUser(id: number) {
     }
 }
 
-const usersToShow = computed(() => userStore.users.slice(0, 10));
+const usersToShow = computed(() => (userStore.users ?? []).slice(0, 10));
+
 
 onMounted(() => {
     userStore.fetchUsers();
@@ -347,7 +346,7 @@ onMounted(() => {
 <style scoped>
 /* Base Styles */
 .dashboard-container {
-    height: 82vh;
+    height: auto;
     width: 100%;
     border-radius: 14px;
     margin-top: 7px;
@@ -606,12 +605,13 @@ onMounted(() => {
 }
 
 .users-table th {
-    padding: 15px;
+    padding: 8px 12px;
     text-align: left;
     font-weight: 500;
     color: rgba(255, 255, 255, 0.7);
     border-bottom: 1px solid rgba(0, 170, 255, 0.3);
     white-space: nowrap;
+    position: relative; 
 }
 
 .users-table td {

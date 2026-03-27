@@ -252,7 +252,6 @@ export const useUserStore = defineStore("user", {
             this.loading = true
             try {
                 const response = await userService.getUserStatistics()
-                console.log('Full response:', response)
                 
                 let rawData: any = response
                 
@@ -261,7 +260,6 @@ export const useUserStore = defineStore("user", {
                     rawData = rawData.original
                 }
                 
-                console.log('Raw data after processing:', rawData)
                 
                 // Map dữ liệu từ API vào interface mới
                 this.statistics = {
@@ -294,7 +292,6 @@ export const useUserStore = defineStore("user", {
                     new_vip_users_this_month: Number(rawData?.new_vip_users_this_month) || 0
                 }
                 
-                console.log('Statistics normalized:', this.statistics)
             } catch (error) {
                 console.error('Failed to fetch statistics:', error)
                 this.statistics = { ...defaultStatistics }

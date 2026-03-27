@@ -36,6 +36,7 @@ export interface CreateSongPayload {
  
   status: 'draft' | 'published' | 'blocked'
   partner_id: number | ''
+  genre_id: number | ''
   is_premium: boolean
   is_explicit: boolean
   is_featured: boolean

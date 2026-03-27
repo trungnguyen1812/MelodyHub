@@ -146,8 +146,7 @@ class OTPController extends Controller
 
         $adminToken = hash('sha256', $email . $otp . time() . uniqid());
 
-        $adminTokenExpiry = 480; // 1 phút để test
-        // $adminTokenExpiry = 480; // 8 giờ khi deploy
+        $adminTokenExpiry = 480;
 
         Cache::put('admin_token_' . $adminToken, [
             'user_id' => $user->id,

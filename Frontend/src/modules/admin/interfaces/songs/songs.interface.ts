@@ -68,6 +68,7 @@ export interface SongMeta {
   last_page:    number
   per_page:     number
   total:        number
+  
 }
  
 export interface SongListResponse {

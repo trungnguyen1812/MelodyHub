@@ -1,7 +1,7 @@
 import { defineStore } from "pinia";
-import AuthService from "@/services/auth.services";
+import AuthService from "@/services/auth.service";
 import { data } from "autoprefixer";
-import authServices from "@/services/auth.services";
+import authServices from "@/services/auth.service";
 import { ref} from "vue";
 
 interface User {

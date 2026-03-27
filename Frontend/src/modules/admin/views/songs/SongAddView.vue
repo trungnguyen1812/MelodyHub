@@ -24,11 +24,21 @@
           </svg>
           Save Draft
         </button>
-        <button class="btn-publish" @click="publish">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+        <button 
+          class="btn-publish" 
+          @click="publish"
+          :disabled="loading"
+          :class="{ 'is-loading': loading }"
+        >
+          <svg v-if="!loading" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
             <polyline points="20 6 9 17 4 12" />
           </svg>
-          Publish Song
+
+          <span v-else class="spinner"></span>
+
+          <span>
+            {{ loading ? 'Publishing...' : 'Publish Song' }}
+          </span>
         </button>
       </div>
     </div>
@@ -338,6 +348,22 @@
               </label>
             </div>
           </div>
+           <!-- Genre -->
+          <div class="field">
+            <label class="field-label">Genre <span class="required">*</span></label>
+            <div class="status-options">
+              <label
+                v-for="genre in Genres"
+                :key="genre.id"
+                class="status-option"
+                :class="{ active: form.genre_id === genre.id, 'status-option--published': form.genre_id === genre.id }"
+              >
+                <input type="radio" :value="genre.id" v-model="form.genre_id" hidden />
+                <span class="status-dot"></span>
+                {{ genre.name }}
+              </label>
+            </div>
+          </div>
 
           <!-- Partner -->
           <div class="field">
@@ -382,11 +408,23 @@
               <polyline points="9 18 15 12 9 6" />
             </svg>
           </button>
-          <button v-else class="btn-publish" @click="publish">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
-              <polyline points="20 6 9 17 4 12" />
-            </svg>
-            Publish Song
+          <button 
+            v-else 
+            class="btn-publish" 
+            @click="publish"
+            :disabled="loading"
+          >
+            <template v-if="!loading">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                <polyline points="20 6 9 17 4 12" />
+              </svg>
+              Publish Song
+            </template>
+
+            <template v-else>
+              <span class="spinner"></span>
+              Publishing...
+            </template>
           </button>
         </div>
       </div>
@@ -498,11 +536,13 @@
 import { ref, computed, watch, onUnmounted, onMounted, reactive } from 'vue'
 import { useArtistStore } from '@/modules/admin/stores/artists/artistsStore'
 import { usePartnerStore } from '@/modules/admin/stores/partners/partnersStore'
+import { useGenrestore } from '@/modules/admin/stores/genres/genresStore'
 import { useSongStore } from '@/modules/admin/stores/songs/songsStore'
 import type { ArtistInterface } from '@/modules/admin/interfaces/artists/artist.interface'
 import type { Album, Flag, CreateSongPayload } from '@/modules/admin/interfaces/songs/create-song.payload'
 import { useNotificationStore } from '@/store/notificationStore'
 import { useCloudinaryUpload } from '@/composables/Usecloudinaryupload'
+import { storeToRefs } from 'pinia'
 import router from "@/modules/router"
 
 const emit = defineEmits<{ (e: 'back'): void }>()
@@ -510,6 +550,7 @@ const emit = defineEmits<{ (e: 'back'): void }>()
 // ── Stores ──
 const useArtist = useArtistStore()
 const usePartner = usePartnerStore()
+const useGenre = useGenrestore()
 const useSong = useSongStore()
 const notificationStore = useNotificationStore()
 
@@ -576,7 +617,7 @@ const form = reactive<CreateSongPayload>({
   duration: 0, file_size: 0, bitrate: 320, quality: 'high',
   cover_file: null, cover_url: '',
   lyrics: '',
-  status: 'draft', partner_id: '',
+  status: 'draft', partner_id: '',genre_id: '',
   is_premium: false, is_explicit: false, is_featured: false, allow_download: false,
 })
 
@@ -595,6 +636,7 @@ const flags: Flag[] = [
 const waveHeights: number[] = [8, 14, 20, 28, 18, 10, 24, 32, 16, 12, 26, 20, 8, 30, 18, 14, 22, 28, 10, 20]
 const animatedHeights = ref<number[]>([...waveHeights])
 let waveAnimFrame: number | null = null
+const { Genres } = storeToRefs(useGenre)
 
 // ── File & Audio state ──
 // audioFile là nguồn truth duy nhất cho UI preview
@@ -717,10 +759,7 @@ function stopWave(): void {
 
 // ── File handlers ──
 
-/**
- * Hàm set audio dùng chung — chỉ cần set audioFile ref,
- * watch sẽ tự sync form.audio_file và tạo objectURL.
- */
+
 function setAudioFile(file: File): void {
   audioFile.value = file
   detectDuration(file)
@@ -800,6 +839,8 @@ function saveDraft(): void {
 }
 
 async function publish(): Promise<void> {
+  if (loading.value) return; 
+
   let allValid = true
   for (let s = 0; s < steps.length; s++) {
     if (!validateStep(s)) {
@@ -808,7 +849,9 @@ async function publish(): Promise<void> {
       break
     }
   }
+
   if (!allValid) return
+
   form.status = 'published'
   await submitForm()
 }
@@ -822,9 +865,15 @@ async function copyPayload(): Promise<void> {
 async function submitForm(): Promise<void> {
   try {
     loading.value = true
-    await useSong.fetchAddSong(form)
-    notificationStore.notify('Song created successfully!', 'success')
-    router.push({ name: 'admin.songsmanager.all' })
+    const newSong = await useSong.fetchAddSong(form)
+    notificationStore.notify('Song uploaded! Processing audio...', 'info')
+    router.push({ 
+            name: 'admin.songsmanager.all',
+            query: { processing: newSong.id }
+          })
+    
+    pollSongStatus(newSong.id)
+
   } catch (err: any) {
     notificationStore.notify(err.response?.data?.message || 'Failed to create song', 'error')
   } finally {
@@ -833,11 +882,30 @@ async function submitForm(): Promise<void> {
   }
 }
 
+function pollSongStatus(songId: number) {
+  const interval = setInterval(async () => {
+    try {
+      const song = await useSong.fetchSongById(songId)
+
+      if (song.urls) {
+        clearInterval(interval)
+        notificationStore.notify('Song is ready to play!', 'success')
+        setTimeout(() => notificationStore.clear(), 4000)
+      }
+    } catch {
+      clearInterval(interval)
+    }
+  }, 5000) 
+
+  setTimeout(() => clearInterval(interval), 600_000)
+}
+
 // ── Lifecycle ──
 onMounted(async () => {
   try {
     await useArtist.fetchArtists()
     await usePartner.fetchPartners()
+    await useGenre.fetchGenres()
   } catch {
     notificationStore.notify('Error fetching data', 'error')
   }
@@ -954,6 +1022,26 @@ onMounted(async () => {
 
 .btn-publish:hover {
   opacity: .85;
+}
+
+.spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid #fff;
+  border-top: 2px solid transparent;
+  border-radius: 50%;
+  animation: spin .6s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.btn-publish:disabled {
+  opacity: .6;
+  cursor: not-allowed;
 }
 
 /* ── Steps Bar ── */

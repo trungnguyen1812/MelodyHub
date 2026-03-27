@@ -10,12 +10,13 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Http\JsonResponse;
 use App\Http\Resources\SongResource;
 
-use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary;
+use App\Services\CloudinaryService;
 
 class SongsManagerController extends Controller
 {
     public function add(Request $request): JsonResponse
     {
+        log::info($request);
         // ── 1. Validate ──
         $request->validate([
             'title'           => 'required|string|max:255',
@@ -34,7 +35,18 @@ class SongsManagerController extends Controller
             'quality'         => 'nullable|string|in:low,standard,high,lossless',
             'lyrics'          => 'nullable|string',
             'cover_url'       => 'nullable|string|max:500',
-            'audio_file'      => 'required|file|mimes:mp3,wav,flac,aac,ogg,m4a|max:204800',
+            'audio_file'      => [
+                                    'required',
+                                    'file',
+                                    'max:51200',
+                                    function ($attribute, $value, $fail) {
+                                        $ext = strtolower($value->getClientOriginalExtension());
+                                        $allowed = ['mp3', 'wav', 'flac', 'aac', 'ogg', 'm4a'];
+                                        if (!in_array($ext, $allowed)) {
+                                            $fail("The {$attribute} must be a valid audio file (mp3, wav, flac, aac, ogg, m4a).");
+                                        }
+                                    },
+                                ],
             'status'          => 'nullable|string|in:draft,published,blocked',
             'partner_id'      => 'nullable|exists:partners,id',
             'is_premium'      => 'nullable',
@@ -46,7 +58,6 @@ class SongsManagerController extends Controller
         DB::beginTransaction();
  
         try {
-            // ── 2. Lưu file audio gốc vào storage/app/audio_originals ──
             $audioFile  = $request->file('audio_file');
             $storedPath = $audioFile->store('audio_originals', 'local');
  
@@ -60,9 +71,6 @@ class SongsManagerController extends Controller
                 'casted' => $request->year ? (int) $request->year : null,
                 'type' => gettype($request->year)
             ]);
-            // ── 3. Tạo Song record với status = 'processing' ──
-            // song_url / song_url_hq / song_url_lossless sẽ được
-            // Queue Job fill vào sau khi transcode + upload Cloudinary xong
             $song = Song::create([
                 'title'             => $request->title,
                 'slug'              => $request->slug,
@@ -79,9 +87,7 @@ class SongsManagerController extends Controller
                 'file_size'         => $audioFile->getSize(),
                 'bitrate'           => $request->bitrate        ?? 320,
                 'quality'           => $request->quality        ?? 'high',
-                // ✅ cover_url: frontend đã upload lên Cloudinary rồi gửi URL lên
                 'cover_url'         => $request->cover_url      ?: null,
-                // ⏳ Audio URLs: để trống — Job sẽ cập nhật sau khi transcode xong
                 'song_url'          => null,
                 'song_url_hq'       => null,
                 'song_url_lossless' => null,
@@ -95,12 +101,10 @@ class SongsManagerController extends Controller
  
             DB::commit();
  
-            // ── 4. Dispatch Queue Job ──
-            // Job: ffmpeg transcode 3 chất lượng → upload Cloudinary → update DB
             ProcessSongAudio::dispatch(
                 $song->id,
                 $storedPath,
-                $request->status ?? 'published'   // status cuối sau khi xử lý xong
+                $request->status ?? 'published'  
             )->onQueue('audio');
  
             Log::info("Song #{$song->id} queued for audio processing", [
@@ -114,7 +118,7 @@ class SongsManagerController extends Controller
                     'id'        => $song->id,
                     'title'     => $song->title,
                     'cover_url' => $song->cover_url,
-                    'status'    => $song->status,  // "processing"
+                    'status'    => $song->status, 
                 ],
             ], 201);
  
@@ -196,4 +200,73 @@ class SongsManagerController extends Controller
             'data'    => new SongResource($song),
         ]);
     }
+    
+    public function __construct(
+        protected CloudinaryService $cloudinaryService
+    ) {}
+
+    public function delete(Song $song): JsonResponse
+    {
+        try {
+            DB::transaction(function () use ($song) {
+                $coverUrl = $song->cover_url;
+                $songId   = $song->id;
+
+                Log::info("Delete song", [
+                    'id'       => $songId,
+                    'coverUrl' => $coverUrl,
+                ]);
+
+                $song->delete();
+
+                $this->cloudinaryService->deleteSong($coverUrl, null, $songId);
+            });
+
+            return response()->json(['message' => 'Song deleted successfully'], 200);
+
+        } catch (\Exception $e) {
+            Log::error("Failed to delete song: " . $e->getMessage());
+            return response()->json(['message' => 'Failed to delete song'], 500);
+        }
+    }
+
+    public function deleteMultiple(Request $request): JsonResponse
+    {
+        $ids = $request->input('ids', []);
+
+        if (empty($ids)) {
+            return response()->json(['message' => 'No song IDs provided'], 422);
+        }
+
+        $songs = Song::whereIn('id', $ids)->get();
+
+        if ($songs->isEmpty()) {
+            return response()->json(['message' => 'No songs found'], 404);
+        }
+
+        try {
+            DB::transaction(function () use ($songs) {
+                foreach ($songs as $song) {
+                    $coverUrl = $song->cover_url;
+                    $songId   = $song->id;
+
+                    Log::info("Delete song", [
+                        'id'       => $songId,
+                        'coverUrl' => $coverUrl,
+                    ]);
+
+                    $song->delete();
+
+                    $this->cloudinaryService->deleteSong($coverUrl, null, $songId);
+                }
+            });
+
+            return response()->json(['message' => 'Songs deleted successfully'], 200);
+
+        } catch (\Exception $e) {
+            Log::error("Failed to delete multiple songs: " . $e->getMessage());
+            return response()->json(['message' => 'Failed to delete songs'], 500);
+        }
+    }
+   
 }

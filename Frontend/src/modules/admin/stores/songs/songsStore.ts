@@ -5,6 +5,7 @@ import type {
     Song,
     SongMeta,
     SongFilterParams,
+    SongStats,
 } from '@/modules/admin/interfaces/songs/songs.interface'
 
 export const useSongStore = defineStore('song', {
@@ -12,6 +13,7 @@ export const useSongStore = defineStore('song', {
         songs:       [] as Song[],
         currentSong: null as Song | null,
         meta:        null as SongMeta | null,
+        Stats:       null as SongStats | null,
         loading:     false,
         error:       null as string | null,
     }),
@@ -96,6 +98,53 @@ export const useSongStore = defineStore('song', {
                 throw err
             } finally {
                 this.loading = false
+            }
+        },
+
+        async fetchSongById(id: number) {
+            const res = await songsService.getSong(id)
+            const song: Song = res.data.data
+            // Cập nhật luôn trong list nếu có
+            const index = this.songs.findIndex(s => s.id === id)
+            if (index !== -1) this.songs[index] = song
+            return song
+        },
+
+        async fetchDelete(id: number) {
+            try {
+                this.loading = true;
+                this.error = null;
+                const response = await songsService.deleteSong(id);
+                return response;
+            } catch (error) {
+                if (error instanceof Error) {
+                    this.error = error.message;
+                } else if (typeof error === 'string') {
+                    this.error = error;
+                } else {
+                    this.error = 'An unknown error occurred';
+                }
+                throw error;
+            } finally {
+                this.loading = false;
+            }
+        },
+
+        async fetchDeleteMultiple(ids: number[]) {
+            try {
+                this.loading = true;
+                this.error = null;
+                const response = await songsService.deleteMultipleSongs(ids);
+                return response;
+            } catch (error) {
+                if (error instanceof Error) {
+                    this.error = error.message;
+                } else {
+                    this.error = 'An unknown error occurred';
+                }
+                throw error;
+            } finally {
+                this.loading = false;
             }
         },
 
