@@ -280,7 +280,17 @@
                         </div>
                         <div class="song-info">
                           <p class="song-title">{{ song.title }}</p>
-                          <p class="song-meta-sub">{{ song.year ?? '' }} {{ song.is_explicit ? '🅴' : '' }} {{ song.is_featured ? '✦' : '' }}</p>
+                          <p class="song-meta-sub">{{ song.year ?? '' }} {{ song.is_explicit ? '🅴' : '' }} {{ song.is_featured ? '✦' : '' }}
+                            <span
+                                class="genre-tag"
+                                :style="{
+                                  borderColor: song.genre?.color || undefined,
+                                  color: song.genre?.color || undefined
+                                }"
+                              >
+                                {{ song.genre?.name }}
+                              </span>
+                          </p>
                         </div>
                       </div>
                     </td>
@@ -394,6 +404,15 @@
                 <div class="card-divider"></div>
                 <div class="card-meta-row">
                   <span class="quality-badge quality-badge--sm" :class="'quality--' + song.quality">{{ song.quality }}</span>
+                    <span
+                      class="genre-tag"
+                      :style="{
+                        borderColor: song.genre?.color || undefined,
+                        color: song.genre?.color || undefined
+                      }"
+                    >
+                      {{ song.genre?.name }}
+                    </span>
                   <div class="card-stats">
                     <span class="card-stat">
                       <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
@@ -1177,6 +1196,20 @@ onMounted(async () => {
 .btn-reload:active,
 .btn-reload.spinning .reload-icon {
   animation: spin 0.6s linear;
+}
+
+.genre-tag {
+  display: inline-block;
+  padding: 4px 10px;
+  font-size: 11px;
+  font-weight: 500;
+  border-radius: 999px;
+  border: 1px solid;
+  line-height: 1;
+  white-space: nowrap;
+
+  /* nền nhẹ theo màu */
+  background-color: rgba(0, 0, 0, 0.05);
 }
 
 @keyframes spin {

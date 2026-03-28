@@ -67,6 +67,16 @@
                 <span v-if="song.is_premium" class="flag-badge flag--premium">⭐ Premium</span>
                 <span v-if="song.is_explicit" class="flag-badge flag--explicit">🔞 Explicit</span>
                 <span v-if="song.is_featured" class="flag-badge flag--featured">🔥 Featured</span>
+                <span
+                  v-if="song.genre"
+                  class="genre-tag"
+                  :style="{
+                    borderColor: song.genre?.color || undefined,
+                    color: song.genre?.color || undefined
+                  }"
+                >
+                  {{ song.genre?.name }}
+                </span>
               </div>
 
               <h1 class="hero__title">{{ song.title }}</h1>
@@ -692,6 +702,20 @@ onBeforeUnmount(() => destroyAudio())
 .album-card__cover { width: 48px; height: 48px; border-radius: 8px; background: linear-gradient(135deg,#a78bfa,#7c3aed); flex-shrink: 0; }
 .album-card__title { font-size: 14px; font-weight: 600; color: #f1f5f9; }
 .album-card__slug { font-size: 12px; color: #64748b; margin-top: 2px; }
+
+.genre-tag {
+  display: inline-block;
+  padding: 4px 10px;
+  font-size: 11px;
+  font-weight: 500;
+  border-radius: 999px;
+  border: 1px solid;
+  line-height: 1;
+  white-space: nowrap;
+
+  /* nền nhẹ theo màu */
+  background-color: rgba(0, 0, 0, 0.05);
+}
 
 /* ── Responsive ── */
 @media (max-width: 1024px) {

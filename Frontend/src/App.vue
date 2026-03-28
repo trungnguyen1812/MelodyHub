@@ -3,7 +3,7 @@
   <component :is="layout">
     <router-view />
   </component>
-  <GlobalMiniPlayer v-show="layout === AdminLayout" />
+  <GlobalMiniPlayer v-show="isAdminLayout" />
 </template>
 
 <script setup lang="ts">
@@ -20,6 +20,8 @@ import GlobalMiniPlayer from '@/components/common/VcGlobalMiniPlayer/GlobalMiniP
 
 const route = useRoute();
 const authStore = useAuthStore();
+
+const isAdminLayout = computed(() => layout.value === AdminLayout)
 
 const layout = computed(() => {
   const l = route.meta.layout;

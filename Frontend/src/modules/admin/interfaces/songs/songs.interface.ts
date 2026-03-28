@@ -25,8 +25,12 @@ export interface SongPartner {
 }
 
 export interface SongGenre {
-  id:           number
-  company_name: string
+  id: number
+  name: string
+  slug: string
+  description?: string | null
+  cover_url?: string | null
+  color?: string | null
 }
  
 export interface SongStats {

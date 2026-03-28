@@ -7,11 +7,13 @@ import type {
     SongMeta,
     SongFilterParams,
     SongStats,
+    SongGenre,
 } from '@/modules/admin/interfaces/songs/songs.interface'
 
 export const useSongStore = defineStore('song', {
     state: () => ({
         songs:       [] as Song[],
+        SongGenre:   [] as SongGenre[],
         currentSong: null as Song | null,
         meta:        null as SongMeta | null,
         Stats:       null as SongStats | null,

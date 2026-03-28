@@ -188,7 +188,6 @@ const showLyrics = ref(false)
 const lyrics = ref<string | null>(null)
 const loadingLyrics = ref(false)
 
-console.log(player.currentSong);
 
 
 const goToDetail = () => {

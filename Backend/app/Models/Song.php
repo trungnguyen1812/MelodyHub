@@ -56,6 +56,8 @@ use Illuminate\Database\Eloquent\Model;
  * 
  * @property Album|null $album
  * @property Artist $artist
+ * @property Genre $genre
+
  * @property Partner|null $partner
  * @property Song|null $song
  * @property Collection|Comment[] $comments
@@ -85,6 +87,7 @@ class Song extends Model
 		'original_song_id' => 'int',
 		'artist_id' => 'int',
 		'album_id' => 'int',
+		'genre_id' => 'int',
 		'duration' => 'int',
 		'bpm' => 'int',
 		'energy' => 'float',
@@ -141,6 +144,7 @@ class Song extends Model
 		'total_shares',
 		'total_downloads',
 		'partner_id',
+		'genre_id',
 		'copyright_owner',
 		'license_type',
 		'status'
@@ -159,6 +163,11 @@ class Song extends Model
 	public function partner()
 	{
 		return $this->belongsTo(Partner::class);
+	}
+
+	public function genre()
+	{
+		return $this->belongsTo(Genre::class, 'genre_id');
 	}
 
 	public function song()
@@ -208,11 +217,7 @@ class Song extends Model
 		return $this->hasMany(SongDownload::class);
 	}
 
-	public function genres()
-	{
-		return $this->belongsToMany(Genre::class, 'song_genres')
-					->withPivot('id', 'is_primary');
-	}
+	
 
 	public function song_likes()
 	{

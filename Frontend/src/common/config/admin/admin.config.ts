@@ -185,7 +185,7 @@ export const ROUTER_ADMIN = [
       },
       {
         path: 'songs/:id',
-        name: "admin.songsmanager.lyris",
+        name: "admin.songsmanager.lyrics",
         component: SongLyrisView,
         props: true,
         meta: {

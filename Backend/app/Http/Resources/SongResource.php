@@ -66,6 +66,16 @@ class SongResource extends JsonResource
                 'cover_url' => $this->album->cover_url ?? null,
             ] : null),
 
+            // genres
+            'genre' => $this->whenLoaded('genre', fn() => $this->genre ? [
+                'id'          => $this->genre->id,
+                'name'        => $this->genre->name,
+                'slug'        => $this->genre->slug,
+                'description' => $this->genre->description,
+                'cover_url'   => $this->genre->cover_url ?? null,
+                'color'       => $this->genre->color ?? null,
+            ] : null),
+
             // ── Partner ──
             'partner' => $this->whenLoaded('partner', fn() => $this->partner ? [
                 'id'           => $this->partner->id,

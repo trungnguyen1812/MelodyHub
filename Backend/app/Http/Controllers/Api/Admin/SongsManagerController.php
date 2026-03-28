@@ -49,6 +49,7 @@ class SongsManagerController extends Controller
                                 ],
             'status'          => 'nullable|string|in:draft,published,blocked',
             'partner_id'      => 'nullable|exists:partners,id',
+            'genre_id'        => 'nullable|exists:genres,id',
             'is_premium'      => 'nullable',
             'is_explicit'     => 'nullable',
             'is_featured'     => 'nullable',
@@ -96,6 +97,7 @@ class SongsManagerController extends Controller
                 'is_featured'       => filter_var($request->is_featured,   FILTER_VALIDATE_BOOLEAN),
                 'allow_download'    => filter_var($request->allow_download, FILTER_VALIDATE_BOOLEAN),
                 'partner_id'        => $request->partner_id     ?: null,
+                'genre_id'          => $request->genre_id     ?: null,
                 'status'            => $request->status,
             ]);
  
@@ -136,7 +138,7 @@ class SongsManagerController extends Controller
     public function index(Request $request): JsonResponse
     {
         $query = Song::query()
-            ->with(['artist', 'album', 'partner']);
+            ->with(['artist', 'album', 'partner','genre']);
  
         // ── Tìm kiếm theo title / slug ──
         if ($search = $request->get('search')) {
@@ -154,7 +156,7 @@ class SongsManagerController extends Controller
         if ($request->filled('quality'))    $query->where('quality',    $request->quality);
         if ($request->filled('year'))       $query->whereYear('year',   $request->year);
         if ($request->filled('genre_id')) $query->where('genre_id', $request->genre_id);
- 
+        
         if ($request->filled('is_premium'))
             $query->where('is_premium', filter_var($request->is_premium, FILTER_VALIDATE_BOOLEAN));
         if ($request->filled('is_featured'))
@@ -189,8 +191,8 @@ class SongsManagerController extends Controller
     public function show(Request $request, string $idOrSlug): JsonResponse
     {
         $song = is_numeric($idOrSlug)
-            ? Song::with(['artist', 'album', 'partner'])->findOrFail($idOrSlug)
-            : Song::with(['artist', 'album', 'partner'])->where('slug', $idOrSlug)->firstOrFail();
+            ? Song::with(['artist', 'album', 'partner','genre'])->findOrFail($idOrSlug)
+            : Song::with(['artist', 'album', 'partner','genre'])->where('slug', $idOrSlug)->firstOrFail();
  
         return response()->json([
             'success' => true,
