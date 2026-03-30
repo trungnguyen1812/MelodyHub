@@ -3,7 +3,7 @@
   <component :is="layout">
     <router-view />
   </component>
-  <GlobalMiniPlayer v-show="isAdminLayout" />
+  <GlobalMiniPlayer/>
 </template>
 
 <script setup lang="ts">
@@ -11,17 +11,13 @@ import { useRoute } from "vue-router";
 import { computed, onMounted } from "vue";
 import { useAuthStore } from "@/store/authStore";
 
-// Layouts
 import DefaultLayout from "@/layouts/ClientLayout.vue";
 import AdminLayout from "@/layouts/AdminLayout.vue";
 import Notification from '@/components/common/VcNotification/Notification.vue'; 
 import GlobalMiniPlayer from '@/components/common/VcGlobalMiniPlayer/GlobalMiniPlayer.vue'
 
-
 const route = useRoute();
 const authStore = useAuthStore();
-
-const isAdminLayout = computed(() => layout.value === AdminLayout)
 
 const layout = computed(() => {
   const l = route.meta.layout;
@@ -29,6 +25,9 @@ const layout = computed(() => {
   if (l === "none" || !l) return "EmptyLayout";
   return DefaultLayout;
 });
+
+const isAdminLayout  = computed(() => layout.value === AdminLayout)
+const isClientLayout = computed(() => layout.value === DefaultLayout)
 
 onMounted(async () => {
   if (authStore.isAuthenticated && !authStore.permissionLoaded) {
@@ -43,15 +42,13 @@ onMounted(async () => {
 });
 </script>
 
-
 <style>
-html,
-body {
+html, body {
   height: 100%;
   margin: 0;
   padding: 0;
   background: linear-gradient(to bottom, #081019, #0c191c);
-  color: #ffffff; /* màu chữ trắng nếu cần */
-  font-family: sans-serif; /* tùy chọn */
+  color: #ffffff;
+  font-family: sans-serif;
 }
 </style>

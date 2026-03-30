@@ -8,16 +8,17 @@
       <VcSlide :slides="slideList" />
     </div>
     <VcCarouselArtists :artists="dataArtist" />
-    <VcNewMusic :newMusics="dataPopular" />
-    <VcCarouselPopular :populars="dataPopular" />
-    <VcListPropose :songs="songs"/>
-    <VcChart :songs="songs"/>
+    <VcNewMusic :songs="dataNewSong" />
+    <VcCarouselPopular :populars="dataNewSong" />
+    <!-- <VcListPropose :songs="songs"/>
+    <VcChart :songs="songs"/> -->
     <VcTypeMusic />
   </div>
 </template>
 
 
 <script setup lang="ts">
+import { onMounted, computed, ref } from 'vue'
 import VcSlide from "@/components/common/VcSlide/VcSlide.vue";
 import VcCarouselArtists from "@/components/common/VcCarousel/VcCarouselArtists.vue";
 import VcNewMusic from "@/components/common/VcCarousel/VcCarouselNewMusic.vue";
@@ -26,42 +27,37 @@ import VcListPropose from "@/components/common/VcList/VcList_Propose.vue";
 import VcChart from '@/components/common/VcChart/VcChart.vue';
 import VcTypeMusic from "@/components/common/VcList/Vclist_Categories.vue";
 
-// import data 
-import dataArtist from '@/common/data/artists';
-import dataPopular from '@/common/data/popular';
-import songsData from '@/common/data/songs';
-import { ref , onMounted  } from "vue";
-// Slides
+import { useArtistStore, getFullImageUrl } from '@/modules/admin/stores/artists/artistsStore'
+import { useSongStore } from '@/modules/admin/stores/songs/songsStore'
+
 import bg1 from "@/assets/images/bg-img/preview-page2.jpg";
 import bg2 from "@/assets/images/bg-img/preview-page1.jpg";
 import bg3 from "@/assets/images/bg-img/preview-page0.jpg";
 
-const loading = ref(true)
+const artistStore = useArtistStore()
+const dataArtist = computed(() =>
+  artistStore.artists.map(a => ({
+    ...a,
+    avatar_url: getFullImageUrl(a.avatar_url),
+    banner_url: getFullImageUrl(a.banner_url)
+  }))
+)
+
+const songStore = useSongStore()
+const dataNewSong = computed(() => songStore.songs)
+
+const loading = computed(() => artistStore.loading || songStore.loading)
 
 onMounted(() => {
-  setTimeout(() => {
-    loading.value = false
-  }, 400) // có thể tăng/giảm tuỳ bạn
+  artistStore.fetchArtists()
+  songStore.fetchSongs()
 })
 
-const songs = ref(songsData);
-
-
 const slideList = [
-  {
-    bg: bg1,
-    title: "Beyond Time",
-    subtitle: "LATEST ALBUM",
-    button: "Discover",
-  },
-  {
-    bg: bg2,
-    title: "Echoes of Nature",
-    subtitle: "NEW RELEASE",
-    button: "Listen Now",
-  },
-  { bg: bg3, title: "Rise Again", subtitle: "FEATURED", button: "Explore" },
-];
+  { bg: bg1, title: "Beyond Time",      subtitle: "LATEST ALBUM", button: "Discover"   },
+  { bg: bg2, title: "Echoes of Nature", subtitle: "NEW RELEASE",  button: "Listen Now" },
+  { bg: bg3, title: "Rise Again",       subtitle: "FEATURED",     button: "Explore"    },
+]
 </script>
 
 <style scoped>

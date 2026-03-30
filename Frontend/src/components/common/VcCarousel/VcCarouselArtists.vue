@@ -8,7 +8,6 @@
           @click="scrollLeft"
           class="nav-btn prev-btn w-10 h-10 rounded-full bg-gray-800 hover:bg-gray-700 text-white flex items-center justify-center transition-all duration-200"
         >
-          <!-- svg left arrow -->
           <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
             <path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z" />
           </svg>
@@ -17,7 +16,6 @@
           @click="scrollRight"
           class="nav-btn next-btn w-10 h-10 rounded-full bg-gray-800 hover:bg-gray-700 text-white flex items-center justify-center transition-all duration-200"
         >
-          <!-- svg right arrow -->
           <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
             <path d="M8.59 16.59L10 18l6-6-6-6-1.41 1.41L13.17 12z" />
           </svg>
@@ -47,17 +45,17 @@
             class="artist-avatar relative w-40 h-40 rounded-full overflow-hidden mb-4 group"
           >
             <img
-              :src="artist.image"
+              :src="getArtistAvatar(artist)"
               :alt="artist.name"
               class="object-cover w-full h-full transition duration-300 group-hover:brightness-75"
               @error="handleImageError"
             />
-            <!-- XÓA lớp phủ đen, chỉ giữ nút play hiện khi hover -->
             <div
               class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition duration-300"
             >
               <button
                 class="play-btn w-14 h-14 rounded-full bg-white text-black flex items-center justify-center shadow-xl hover:scale-110 transition-transform duration-200"
+                @click="playArtistSongs(artist)"
               >
                 <svg
                   width="20"
@@ -83,41 +81,40 @@
   </section>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import router from "@/modules/router";
-import { ref, onMounted, watch } from "vue";
-import { toRefs } from "vue";
+import { ref, onMounted, onUnmounted, watch } from "vue";
+import {ArtistInterface} from '@/modules/admin/interfaces/artists/artist.interface';
 
-// Props nhận từ ngoài
-const props = defineProps({
-  artists: {
-    type: Array,
-    required: true,
-  },
-});
 
-const AllArtistsView =()=>{
-  router.push({name: "AllArtists"});
-}
+type Artist = ArtistInterface;
 
-const { artists } = toRefs(props);
+const props = defineProps<{
+  artists: Artist[];
+}>();
 
-const carouselInner = ref(null);
-const currentOffset = ref(0);
+const emit = defineEmits<{
+  (e: 'playArtist', artist: Artist): void;
+}>();
 
-const itemWidth = 192; // 40*4.8 + gap (kiểm tra lại css nếu khác)
+const AllArtistsView = () => {
+  router.push({ name: "AllArtists" });
+};
+
+const carouselInner = ref<HTMLDivElement | null>(null);
+const currentOffset = ref<number>(0);
+
+const itemWidth = 192; 
 const visibleItems = 6;
 
-// Scroll trái
-const scrollLeft = () => {
+const scrollLeft = (): void => {
   currentOffset.value = Math.max(0, currentOffset.value - itemWidth * 2);
 };
 
-// Scroll phải
-const scrollRight = () => {
+const scrollRight = (): void => {
   const maxOffset = Math.max(
     0,
-    (artists.value.length - visibleItems) * itemWidth
+    (props.artists.length - visibleItems) * itemWidth
   );
   currentOffset.value = Math.min(
     currentOffset.value + itemWidth * 2,
@@ -125,17 +122,41 @@ const scrollRight = () => {
   );
 };
 
-// Xử lý ảnh lỗi
-const handleImageError = (event) => {
-  event.target.src = "/default-artist.jpg";
+const handleImageError = (event: Event): void => {
+  const imgElement = event.target as HTMLImageElement;
+  imgElement.src = "/default-artist.jpg";
 };
 
-// Nếu dữ liệu artists thay đổi hoặc resize cửa sổ => reset offset hoặc tính lại offset nếu cần
-watch(artists, () => {
+const getArtistAvatar = (artist: Artist): string | undefined => {
+  return artist.avatar_url ?? undefined;
+};
+// Play artist songs
+const playArtistSongs = (artist: Artist): void => {
+  emit('playArtist', artist);
+};
+
+watch(() => props.artists, () => {
   currentOffset.value = 0;
+});
+
+let resizeObserver: ResizeObserver | null = null;
+
+onMounted(() => {
+  if (carouselInner.value) {
+    resizeObserver = new ResizeObserver(() => {
+      currentOffset.value = 0;
+    });
+    resizeObserver.observe(carouselInner.value);
+  }
+});
+
+onUnmounted(() => {
+  if (resizeObserver) {
+    resizeObserver.disconnect();
+  }
 });
 </script>
 
 <style scoped>
-/* CSS giữ nguyên như bạn có */
+
 </style>
