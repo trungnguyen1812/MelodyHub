@@ -2,7 +2,7 @@
   <section class="hot-artists-section px-6 py-8">
     <!-- Header with title and navigation -->
     <div class="flex items-center justify-between mb-8">
-      <h2 class="text-3xl font-bold text-white">Release New Music</h2>
+      <h2 class="text-3xl font-bold text-white">Popular Music</h2>
       <div class="flex items-center gap-4">
         <button
           @click="scrollLeft"
@@ -159,8 +159,8 @@
 <script setup lang="ts">
 import router from "@/modules/router";
 import { ref, watch, onMounted, onUnmounted, computed } from "vue";
-import { usePlayerStore } from '@/modules/admin/stores/songs/playerStore'
-import { useSongStore } from '@/modules/admin/stores/songs/songsStore'
+import { usePlayerStore } from '@/store/playerStore'
+import { useSongStore } from '@/modules/client/stores/songs/songsStore'
 import type {
     Song,
     SongMeta,
@@ -168,13 +168,12 @@ import type {
     SongStats,
     SongGenre,
     SongArtist
-} from '@/modules/admin/interfaces/songs/songs.interface'
+} from '@/interfaces/songs.interface'
 
 type artist = SongArtist;
 const player    = usePlayerStore()
 const songStore = useSongStore()
 
-// Props nhận từ ngoài với kiểu TypeScript
 const props = defineProps<{
   populars: Song[];
 }>();
@@ -192,15 +191,13 @@ const carouselInner = ref<HTMLDivElement | null>(null);
 const currentOffset = ref<number>(0);
 const isHovered = ref<string | number | null>(null);
 
-const itemWidth = 192; // 192px cho mỗi card
+const itemWidth = 192; 
 const visibleItems = 6;
 
-// Kiểm tra bài hát hiện tại có đang play không
 const isCurrentSongPlaying = (song: Song): boolean => {
   return player.currentSong?.id === song.id;
 };
 
-// Hàm xử lý cover URL, chuyển null thành undefined
 const getSongCover = (song: Song): string | undefined => {
   return song.cover_url ?? undefined;
 };
@@ -225,22 +222,19 @@ const handleImageError = (event: Event): void => {
   imgElement.src = "/default-album.jpg";
 };
 
-// Play song với hiệu ứng
 const playSong = (song: Song) => {
   if (isCurrentSongPlaying(song) && player.isPlaying) {
     player.toggle();
   } else {
-    player.play(song, songStore.songs);
+    player.play(song, props.populars);
     emit('playSong', song);
   }
 };
 
-// Reset offset khi songs thay đổi
 watch(() => props.populars, () => {
   currentOffset.value = 0;
 });
 
-// Handle window resize để reset offset
 let resizeObserver: ResizeObserver | null = null;
 
 onMounted(() => {
@@ -266,6 +260,7 @@ onUnmounted(() => {
 }
 
 .carousel-inner {
+  padding-top: 10px;
   will-change: transform;
   gap: 2rem;
 }

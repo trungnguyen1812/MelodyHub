@@ -1,6 +1,6 @@
 import { defineStore } from "pinia";
 
-type NotificationType = "success" | "error" | "cancel" | "info" | "";
+type NotificationType = "success" | "error" | "cancel" | "info" | "warning" | "";
 
 interface NotificationState {
   message: string;
@@ -38,6 +38,9 @@ export const useNotificationStore = defineStore("notification", {
       this.notify(msg, "info");
     },
 
+    warning(msg: string) {
+      this.notify(msg, "warning");
+    },
     clear() {
       this.message = "";
       this.type = "";

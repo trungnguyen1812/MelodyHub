@@ -1,7 +1,7 @@
 import adminApi from '@/plugins/axios_admin';
 import type { CreateSongPayload } from "@/modules/admin/interfaces/songs/create-song.payload";
 import type { UpdateSongPayload } from "@/modules/admin/interfaces/songs/update_song.payload";
-import type { SongFilterParams } from '@/modules/admin/interfaces/songs/songs.interface'
+import type { SongFilterParams } from '@/interfaces/songs.interface'
 
 class SongService {
 

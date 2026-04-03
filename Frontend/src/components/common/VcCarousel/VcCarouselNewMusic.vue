@@ -159,8 +159,8 @@
 <script setup lang="ts">
 import router from "@/modules/router";
 import { ref, watch, onMounted, onUnmounted, computed } from "vue";
-import { usePlayerStore } from '@/modules/admin/stores/songs/playerStore'
-import { useSongStore } from '@/modules/admin/stores/songs/songsStore'
+import { usePlayerStore } from '@/store/playerStore'
+import { useSongStore } from '@/modules/client/stores/songs/songsStore'
 import type {
     Song,
     SongMeta,
@@ -168,7 +168,7 @@ import type {
     SongStats,
     SongGenre,
     SongArtist
-} from '@/modules/admin/interfaces/songs/songs.interface'
+} from '@/interfaces/songs.interface'
 
 type artist = SongArtist;
 const player    = usePlayerStore()
@@ -230,7 +230,7 @@ const playSong = (song: Song) => {
   if (isCurrentSongPlaying(song) && player.isPlaying) {
     player.toggle();
   } else {
-    player.play(song, songStore.songs);
+    player.play(song, props.songs);
     emit('playSong', song);
   }
 };
@@ -266,6 +266,7 @@ onUnmounted(() => {
 }
 
 .carousel-inner {
+  padding-top: 10px;
   will-change: transform;
   gap: 2rem;
 }

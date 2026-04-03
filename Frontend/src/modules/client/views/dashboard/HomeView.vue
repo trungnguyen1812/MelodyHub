@@ -9,7 +9,7 @@
     </div>
     <VcCarouselArtists :artists="dataArtist" />
     <VcNewMusic :songs="dataNewSong" />
-    <VcCarouselPopular :populars="dataNewSong" />
+    <VcCarouselPopular :populars="PopularSong" />
     <!-- <VcListPropose :songs="songs"/>
     <VcChart :songs="songs"/> -->
     <VcTypeMusic />
@@ -27,9 +27,8 @@ import VcListPropose from "@/components/common/VcList/VcList_Propose.vue";
 import VcChart from '@/components/common/VcChart/VcChart.vue';
 import VcTypeMusic from "@/components/common/VcList/Vclist_Categories.vue";
 
-import { useArtistStore, getFullImageUrl } from '@/modules/admin/stores/artists/artistsStore'
-import { useSongStore } from '@/modules/admin/stores/songs/songsStore'
-
+import { useArtistStore, getFullImageUrl } from '@/modules/client/stores/artists/artistsStore'
+import { useSongStore } from '@/modules/client/stores/songs/songsStore'
 import bg1 from "@/assets/images/bg-img/preview-page2.jpg";
 import bg2 from "@/assets/images/bg-img/preview-page1.jpg";
 import bg3 from "@/assets/images/bg-img/preview-page0.jpg";
@@ -44,13 +43,15 @@ const dataArtist = computed(() =>
 )
 
 const songStore = useSongStore()
-const dataNewSong = computed(() => songStore.songs)
+const dataNewSong = computed(() => songStore.newSongs)
+const PopularSong = computed(() => songStore.popularSongs)
 
 const loading = computed(() => artistStore.loading || songStore.loading)
 
 onMounted(() => {
-  artistStore.fetchArtists()
-  songStore.fetchSongs()
+  artistStore.fetchArtists(10)
+  songStore.fetchNewSongs(10)
+  songStore.fetchPopularSongs(10)
 })
 
 const slideList = [

@@ -8,7 +8,7 @@ import type {
     SongFilterParams,
     SongStats,
     SongGenre,
-} from '@/modules/admin/interfaces/songs/songs.interface'
+} from '@/interfaces/songs.interface'
 
 export const useSongStore = defineStore('song', {
     state: () => ({

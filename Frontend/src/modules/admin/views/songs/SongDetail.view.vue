@@ -398,7 +398,7 @@
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useSongStore } from '@/modules/admin/stores/songs/songsStore'
-import type { Song } from '@/modules/admin/interfaces/songs/songs.interface'
+import type { Song } from '@/interfaces/songs.interface'
 
 const route      = useRoute()
 const router     = useRouter()

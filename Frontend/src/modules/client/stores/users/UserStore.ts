@@ -10,7 +10,7 @@ import { Subscription } from '@/modules/client/interfaces/users/Subscription';
 
 
 
-export const useUserStore = defineStore('user', {
+export const useUserStore = defineStore('client_user', {
   state: () => ({
     subscriptionPlans: [] as SubscriptionPlan[],
     userSubscriptions: [] as any[],

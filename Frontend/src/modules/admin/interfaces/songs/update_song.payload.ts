@@ -20,8 +20,8 @@ export interface UpdateSongPayload {
  
   cover_file: File | null  
   cover_url: string        
- 
   lyrics: string
+  descriptions: string
  
   status: 'draft' | 'published' | 'blocked'
   partner_id: number | ''

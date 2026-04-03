@@ -10,6 +10,15 @@ import AllNewMusicView from '@/modules/client/views/music/AllNewMusicView.vue';
 import AllPopularMusicView from '@/modules/client/views/music/AllPopularMusicView.vue';
 // partner
 import PartnerIndexView from '@/modules/client/views/partner/Partner.index.view.vue';
+import PartnerRegisterView from '@/modules/client/views/partner/Partner.register.view.vue';
+import PartnerDashboardView from '@/modules/client/views/partner/partner.dashboard.view.vue';
+// partner Music distribution partners + Advertising partners
+import PartnerMusicView from '@/modules/client/views/partner/PartnerMusic/Partner.music.view.vue';
+import PartnerAdvertisingdView from '@/modules/client/views/partner/partner.dashboard.view.vue';
+// song manager 
+import SongAddView from '@/modules/client/views/music/SongAddView.vue';
+import SongDetailView from '@/modules/client/views/music/SongDetail.view.vue';
+import SongUpdateView from '@/modules/client/views/music/SongUpdate.view.vue';
 // user
 import UserUpgradeView from '@/modules/client/views/user/UserUpgrade.view.vue';
 
@@ -48,17 +57,57 @@ export const CLIENT_ROUTES = [
         name: 'client.music.popular',
         component: AllPopularMusicView
       },
-      {
-        path: 'partner/index',
-        name: 'client.partner.index',
-        component: PartnerIndexView
-      },
+      
       // user
       {
         path: 'user/upgrade',
         name: 'client.user.upgrade',
         component: UserUpgradeView
       },
+      // partner + partner type
+      {
+        path: 'partner/index',
+        name: 'client.partner.index',
+        component: PartnerIndexView
+      },
+      {
+        path: 'partner/register',
+        name: 'client.partner.register',
+        component: PartnerRegisterView
+      },
+      {
+        path: 'partner/dashboard',
+        name: 'client.partner.dashboard',
+        component: PartnerDashboardView
+      },
+      // partner Music distribution partners
+      {
+        path: 'partner/music',
+        name: 'client.partner.music',
+        component: PartnerMusicView
+      },
+      {
+        path: 'song/add',
+        name: 'client.song.add',
+        component: SongAddView
+      },
+      {
+        path: 'songs/update/:id',
+        name: 'client.song.update',
+        component: SongUpdateView
+      },
+      {
+        path: 'songs/:id',
+        name: 'client.song.detail',
+        component: SongDetailView
+      },
+      // partner Advertising partners
+      {
+        path: 'partner/Advertisingd',
+        name: 'client.partner.Advertisingd',
+        component: PartnerAdvertisingdView
+      },
+     
     ]
   }
 ];

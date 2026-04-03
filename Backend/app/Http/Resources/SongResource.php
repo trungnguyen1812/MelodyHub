@@ -23,15 +23,21 @@ class SongResource extends JsonResource
             'title'          => $this->title,
             'slug'           => $this->slug,
             'duration'       => $this->duration,
-            'duration_format' => $this->formatDuration($this->duration),
-            'year'           => $this->year ? (int) date('Y', strtotime($this->year)) : null,
+            'duration_format'=> $this->formatDuration($this->duration),
+            'year'           => $this->year ? (int) $this->year : null,
             'track_number'   => $this->track_number,
             'disc_number'    => $this->disc_number,
             'isrc'           => $this->isrc,
             'bitrate'        => $this->bitrate,
             'quality'        => $this->quality,
             'file_size'      => $this->file_size,
-            'lyrics'         => $this->lyrics,
+            // ─── Lyrics fields (fix) ───
+            'lyrics'         => $this->getLyricsFormatted(),
+            'lyrics_status'  => $this->lyrics_status,
+            'lyrics_error'   => $this->lyrics_error,
+            'lyrics_processed_at' => $this->lyrics_processed_at?->toISOString(),
+            'has_lyrics'     => $this->hasLyrics(),
+
             'cover_url'      => $this->cover_url,
             'is_premium'     => (bool) $this->is_premium,
             'is_explicit'    => (bool) $this->is_explicit,
@@ -102,4 +108,56 @@ class SongResource extends JsonResource
         $s = $seconds % 60;
         return sprintf('%d:%02d', $m, $s);
     }
+
+    private function getLyricsFormatted()
+    {
+        // Nếu lyrics là JSON (từ Whisper)
+        if ($this->isJson($this->lyrics)) {
+            $lyricsArray = json_decode($this->lyrics, true);
+            
+            // Nếu là dạng có timestamp
+            if (isset($lyricsArray[0]['start']) && isset($lyricsArray[0]['text'])) {
+                return [
+                    'type' => 'timed',
+                    'segments' => $lyricsArray,
+                    'plain_text' => $this->extractPlainText($lyricsArray),
+                ];
+            }
+            
+            return $lyricsArray;
+        }
+        
+        // Nếu lyrics là text thường
+        if ($this->lyrics && !empty($this->lyrics)) {
+            return [
+                'type' => 'plain',
+                'text' => $this->lyrics,
+            ];
+        }
+        
+        // Chưa có lyrics
+        return null;
+    }
+
+    /**
+     * Extract plain text from timed lyrics segments
+     */
+    private function extractPlainText(array $segments): string
+    {
+        return implode("\n", array_column($segments, 'text'));
+    }
+
+    /**
+     * Check if string is JSON
+     */
+    private function isJson($string): bool
+    {
+        if (!is_string($string) || empty($string)) {
+            return false;
+        }
+        
+        json_decode($string);
+        return json_last_error() === JSON_ERROR_NONE;
+    }
+
 }

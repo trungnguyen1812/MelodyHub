@@ -1,6 +1,6 @@
 import { defineStore } from "pinia";
 import GenresService from "@/modules/admin/services/genres/genres.service";
-import {GenreInterface} from '@/modules/admin/interfaces/genres/genre.interface';
+import {GenreInterface} from '@/interfaces/genre.interface';
 
 export const getFullImageUrl = (path?: string | null) => {
     if (!path) return '/images/default-avatar.png';

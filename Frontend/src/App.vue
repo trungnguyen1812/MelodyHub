@@ -15,9 +15,11 @@ import DefaultLayout from "@/layouts/ClientLayout.vue";
 import AdminLayout from "@/layouts/AdminLayout.vue";
 import Notification from '@/components/common/VcNotification/Notification.vue'; 
 import GlobalMiniPlayer from '@/components/common/VcGlobalMiniPlayer/GlobalMiniPlayer.vue'
+import { useUserStore } from '@/modules/client/stores/users/UserStore';
 
 const route = useRoute();
 const authStore = useAuthStore();
+const userStore = useUserStore();
 
 const layout = computed(() => {
   const l = route.meta.layout;
@@ -26,17 +28,21 @@ const layout = computed(() => {
   return DefaultLayout;
 });
 
-const isAdminLayout  = computed(() => layout.value === AdminLayout)
-const isClientLayout = computed(() => layout.value === DefaultLayout)
 
 onMounted(async () => {
-  if (authStore.isAuthenticated && !authStore.permissionLoaded) {
-    try {
-      await authStore.checkPermission();
-    } catch {
-      authStore.permissionLoaded = true;
-    }
-  } else {
+  if (!authStore.isAuthenticated) {
+    authStore.permissionLoaded = true;
+    return;
+  }
+
+  if (authStore.permissionLoaded) return;
+
+  try {
+    await Promise.all([
+      authStore.checkPermission(),    
+      userStore.fetchSubscriptionStatus(),
+    ]);
+  } catch {
     authStore.permissionLoaded = true;
   }
 });

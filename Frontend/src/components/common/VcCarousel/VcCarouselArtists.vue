@@ -84,7 +84,7 @@
 <script setup lang="ts">
 import router from "@/modules/router";
 import { ref, onMounted, onUnmounted, watch } from "vue";
-import {ArtistInterface} from '@/modules/admin/interfaces/artists/artist.interface';
+import {ArtistInterface} from '@/interfaces/artists.interface';
 
 
 type Artist = ArtistInterface;

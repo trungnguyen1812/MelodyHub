@@ -315,8 +315,8 @@
             <!-- Lyrics -->
             <div class="lyrics-wrap">
               <div class="field" style="height:100%">
-                <label class="field-label">Lyrics</label>
-                <textarea v-model="form.lyrics" class="field-textarea"
+                <label class="field-label">Descriptions</label>
+                <textarea v-model="form.descriptions" class="field-textarea"
                   placeholder="Paste or type song lyrics here…&#10;&#10;[Verse 1]&#10;..." rows="14"></textarea>
                 <p class="field-hint">Supports plain text. Line breaks are preserved.</p>
               </div>
@@ -538,7 +538,7 @@ import { useArtistStore } from '@/modules/admin/stores/artists/artistsStore'
 import { usePartnerStore } from '@/modules/admin/stores/partners/partnersStore'
 import { useGenrestore } from '@/modules/admin/stores/genres/genresStore'
 import { useSongStore } from '@/modules/admin/stores/songs/songsStore'
-import type { ArtistInterface } from '@/modules/admin/interfaces/artists/artist.interface'
+import type { ArtistInterface } from '@/interfaces/artists.interface'
 import type { Album, Flag, CreateSongPayload } from '@/modules/admin/interfaces/songs/create-song.payload'
 import { useNotificationStore } from '@/store/notificationStore'
 import { useCloudinaryUpload } from '@/composables/Usecloudinaryupload'
@@ -616,7 +616,7 @@ const form = reactive<CreateSongPayload>({
   audio_file: null,
   duration: 0, file_size: 0, bitrate: 320, quality: 'high',
   cover_file: null, cover_url: '',
-  lyrics: '',
+  descriptions: '',
   status: 'draft', partner_id: '',genre_id: '',
   is_premium: false, is_explicit: false, is_featured: false, allow_download: false,
 })

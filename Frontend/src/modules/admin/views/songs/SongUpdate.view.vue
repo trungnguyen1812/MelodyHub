@@ -287,7 +287,7 @@
                   <circle cx="8.5" cy="8.5" r="1.5" /><polyline points="21 15 16 10 5 21" />
                 </svg>
               </div>
-              <h2 class="section-title">Artwork & Lyrics</h2>
+              <h2 class="section-title">Artwork & Descriptions</h2>
             </div>
 
             <div class="artwork-layout">
@@ -323,8 +323,8 @@
               <!-- Lyrics -->
               <div class="lyrics-wrap">
                 <div class="field" style="height:100%">
-                  <label class="field-label">Lyrics</label>
-                  <textarea v-model="form.lyrics" class="field-textarea"
+                  <label class="field-label">Descriptions</label>
+                  <textarea v-model="form.descriptions" class="field-textarea"
                     placeholder="Paste or type song lyrics here…&#10;&#10;[Verse 1]&#10;..." rows="14"></textarea>
                   <p class="field-hint">Supports plain text. Line breaks are preserved.</p>
                 </div>
@@ -536,7 +536,7 @@ import { useArtistStore } from '@/modules/admin/stores/artists/artistsStore'
 import { usePartnerStore } from '@/modules/admin/stores/partners/partnersStore'
 import { useGenrestore } from '@/modules/admin/stores/genres/genresStore'
 import { useSongStore } from '@/modules/admin/stores/songs/songsStore'
-import type { ArtistInterface } from '@/modules/admin/interfaces/artists/artist.interface'
+import type { ArtistInterface } from '@/interfaces/artists.interface'
 import type { Album, Flag } from '@/modules/admin/interfaces/songs/create-song.payload'
 import type { UpdateSongPayload } from "@/modules/admin/interfaces/songs/update_song.payload";
 import { useNotificationStore } from '@/store/notificationStore'
@@ -612,7 +612,7 @@ const form = reactive<UpdateSongPayload>({
   audio_file: null,
   duration: 0, file_size: 0, bitrate: 320, quality: 'high',
   cover_file: null, cover_url: '',
-  lyrics: '',
+  descriptions: '',lyrics:'',
   status: 'draft', partner_id: '',genre_id: '',
   is_premium: false, is_explicit: false, is_featured: false, allow_download: false,
 })
@@ -659,6 +659,7 @@ async function loadSong(): Promise<void> {
     form.quality         = song.quality         ?? 'high'
     form.cover_url       = song.cover_url       ?? ''
     form.lyrics          = song.lyrics          ?? ''
+
 
     const editableStatuses = ['draft', 'published', 'blocked'] as const
     form.status = editableStatuses.includes(song.status as any)

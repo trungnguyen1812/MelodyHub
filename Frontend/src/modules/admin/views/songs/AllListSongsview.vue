@@ -502,8 +502,8 @@
 import { ref, computed, onMounted } from 'vue'
 import router from '@/modules/router'
 import { useSongStore } from '@/modules/admin/stores/songs/songsStore'
-import { usePlayerStore } from '@/modules/admin/stores/songs/playerStore'
-import type { Song, SongFilterParams } from '@/modules/admin/interfaces/songs/songs.interface'
+import { usePlayerStore } from '@/store/playerStore'
+import type { Song, SongFilterParams } from '@/interfaces/songs.interface'
 import { useRoute } from 'vue-router'
 import Swal from 'sweetalert2';
 import { useNotificationStore } from "@/store/notificationStore";

@@ -142,43 +142,52 @@
                     <div class="contact-form">
                         <div class="form-grid">
                             <div class="form-group">
-                                <label for="company">Company Name *</label>
-                                <input type="text" id="company" v-model="form.company" placeholder="Your company name">
+                                <label for="company">Company Name <span class="note">*</span></label>
+                                <input type="text" id="company" v-model="form.company"
+                                    placeholder="Your company name"
+                                    :class="{ 'is-invalid': errors.company }">
+                                <span v-if="errors.company" class="error">{{ errors.company }}</span>
                             </div>
+
                             <div class="form-group">
-                                <label for="name">Your Name *</label>
-                                <input type="text" id="name" v-model="form.name" placeholder="Full name">
+                                <label for="name">Your Name</label>
+                                <input type="text" id="name" :value="userName" disabled>
                             </div>
+
                             <div class="form-group">
-                                <label for="email">Email Address *</label>
-                                <input type="email" id="email" v-model="form.email" placeholder="you@company.com">
+                                <label for="email">Company Email <span class="note">*</span></label>
+                                <input type="email" id="email" v-model="form.email"
+                                    placeholder="you@company.com"
+                                    :class="{ 'is-invalid': errors.email }">
+                                <span v-if="errors.email" class="error">{{ errors.email }}</span>
                             </div>
+
                             <div class="form-group">
-                                <label for="phone">Phone Number</label>
+                                <label for="phone">Company Phone Number</label>
                                 <input type="tel" id="phone" v-model="form.phone" placeholder="+84">
                             </div>
+
                             <div class="form-group full-width">
-                                <label for="interest">Partnership Interest *</label>
-                                <select id="interest" v-model="form.interest">
-                                    <option value="">Select partnership type</option>
-                                    <option value="artist">Artist/Label Partnership</option>
-                                    <option value="brand">Brand/Sponsor Partnership</option>
-                                    <option value="tech">Technology Partnership</option>
-                                    <option value="other">Other Collaboration</option>
+                                <label for="interest">Type Of Partner <span class="note">*</span></label>
+                                <select id="interest" v-model="form.typePartner_id"
+                                    :class="{ 'is-invalid': errors.typePartner_id }">
+                                    <option value="">Select partnerscompanyhip type</option>
+                                    <option v-for="a in TypePartners" :key="a.id" :value="a.id">
+                                        {{ a.name }}
+                                    </option>
                                 </select>
+                                <span v-if="errors.typePartner_id" class="error">{{ errors.typePartner_id }}</span>
                             </div>
-                            <div class="form-group full-width">
-                                <label for="message">Tell us about your goals</label>
-                                <textarea id="message" v-model="form.message" placeholder="How can we collaborate? What are your objectives?"></textarea>
+
+                            <!-- Footer button -->
+                            <div class="form-footer">
+                                <button class="submit-btn" @click="submitForm" :disabled="loading">
+                                    <span v-if="loading" class="spinner"></span>
+                                    {{ loading ? 'Redirecting...' : 'Continue to Registration' }}
+                                </button>
+                                <p class="form-note">You'll be redirected to complete your full partner application.</p>
                             </div>
-                        </div>
-                        
-                        <div class="form-footer">
-                            <button class="submit-btn" @click="submitForm" :disabled="loading">
-                                {{ loading ? 'Sending...' : 'Submit Partnership Request' }}
-                            </button>
-                            <p class="form-note">We'll contact you within 24 hours to discuss partnership opportunities.</p>
-                        </div>
+                        </div>   
                     </div>
                 </div>
             </div>
@@ -209,89 +218,114 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive } from 'vue'
+import { ref, reactive, computed, onMounted } from 'vue'
+import { useAuthStore } from "@/store/authStore"
+import { useTypePartnerstore } from '@/modules/client/stores/typePartners/typePartnersStore'
+import { storeToRefs } from 'pinia'
+import { useNotificationStore } from '@/store/notificationStore'
+import { useRouter } from 'vue-router'
 
+const router              = useRouter()
+const authStore           = useAuthStore()
+const typePartnerStore    = useTypePartnerstore()
+const notificationStore   = useNotificationStore()
+
+const { TypePartners } = storeToRefs(typePartnerStore)
+
+// ── Form ──
 const form = reactive({
-    company: '',
-    name: '',
-    email: '',
-    phone: '',
-    interest: '',
-    message: ''
+    company:        '',
+    email:          '',
+    phone:          '',
+    typePartner_id: '' as number | '',
 })
 
 const loading = ref(false)
-const activeModal = ref<string | null>(null)
-const faqs = ref([
-    {
-        question: 'What are the benefits of becoming a MelodyHub partner?',
-        answer: 'Partners gain access to our growing user base, advanced analytics tools, revenue sharing opportunities, dedicated support team, and exclusive promotional features.',
-        open: false
-    },
-    {
-        question: 'How long does the onboarding process take?',
-        answer: 'Typically 3-5 business days after approval. We expedite the process for established artists and brands.',
-        open: false
-    },
-    {
-        question: 'Is there a minimum commitment period?',
-        answer: 'We offer flexible partnership terms starting from 3 months to multi-year agreements, depending on the partnership model.',
-        open: false
-    },
-    {
-        question: 'What revenue sharing models are available?',
-        answer: 'We offer multiple models including revenue share, flat fee, hybrid models, and custom arrangements based on partnership type and volume.',
-        open: false
-    },
-    {
-        question: 'Do you provide marketing support?',
-        answer: 'Yes, we offer comprehensive marketing support including campaign planning, content creation, social media promotion, and performance analytics.',
-        open: false
+
+// ── userName chỉ đọc từ store, disabled field không cần setter ──
+const userName = computed(() => authStore.user?.name ?? '')
+
+// ── Errors ──
+const errors = reactive({
+    company:        '',
+    email:          '',
+    typePartner_id: '',
+})
+
+// ── Validate ──
+const validate = (): boolean => {
+    let valid = true
+
+    errors.company        = ''
+    errors.email          = ''
+    errors.typePartner_id = ''
+
+    if (!form.company.trim()) {
+        errors.company = 'Company name is required'
+        valid = false
     }
+    if (!form.email.trim()) {
+        errors.email = 'Company email is required'
+        valid = false
+    }
+    if (!form.typePartner_id) {
+        errors.typePartner_id = 'Please select a partner type'
+        valid = false
+    }
+
+    return valid
+}
+
+// ── Submit → chuyển sang trang register kèm query ──
+const submitForm = async () => {
+    if (!validate()) {
+        notificationStore.notify('Please fill in all required fields.', 'error')
+        return
+    }
+
+    loading.value = true
+    try {
+        router.push({
+            name: 'client.partner.register',
+            query: {
+                company:        form.company,
+                email:          form.email,
+                phone:          form.phone,
+                typePartner_id: form.typePartner_id,
+            }
+        })
+    } catch (error) {
+        console.error('Error:', error)
+        notificationStore.notify('Something went wrong. Please try again.', 'error')
+    } finally {
+        loading.value = false
+    }
+}
+
+// ── FAQ ──
+const faqs = ref([
+    { question: 'What are the benefits of becoming a MelodyHub partner?',  answer: 'Partners gain access to our growing user base, advanced analytics tools, revenue sharing opportunities, dedicated support team, and exclusive promotional features.', open: false },
+    { question: 'How long does the onboarding process take?',               answer: 'Typically 3-5 business days after approval. We expedite the process for established artists and brands.',                                                              open: false },
+    { question: 'Is there a minimum commitment period?',                    answer: 'We offer flexible partnership terms starting from 3 months to multi-year agreements, depending on the partnership model.',                                              open: false },
+    { question: 'What revenue sharing models are available?',               answer: 'We offer multiple models including revenue share, flat fee, hybrid models, and custom arrangements based on partnership type and volume.',                               open: false },
+    { question: 'Do you provide marketing support?',                        answer: 'Yes, we offer comprehensive marketing support including campaign planning, content creation, social media promotion, and performance analytics.',                        open: false },
 ])
 
 const scrollToForm = () => {
-    const element = document.getElementById('contact-form')
-    element?.scrollIntoView({ behavior: 'smooth' })
+    document.getElementById('contact-form')?.scrollIntoView({ behavior: 'smooth' })
 }
 
 const toggleFaq = (index: number) => {
     faqs.value[index].open = !faqs.value[index].open
 }
 
-const openModal = (type: string) => {
-    activeModal.value = type
-    // You can implement modal logic here
-    console.log('Opening modal for:', type)
-}
-
-const submitForm = async () => {
-    if (!form.company || !form.name || !form.email || !form.interest) {
-        alert('Please fill in all required fields')
-        return
-    }
-
-    loading.value = true
+onMounted(async () => {
     try {
-        // Implement API call here
-        console.log('Form submitted:', form)
-        
-        // Simulate API call
-        await new Promise(resolve => setTimeout(resolve, 1500))
-        
-        alert('Thank you for your interest! Our partnership team will contact you within 24 hours.')
-        
-        // Reset form
-        Object.keys(form).forEach(key => {
-            form[key as keyof typeof form] = ''
-        })
-    } catch (error) {
-        console.error('Error submitting form:', error)
-        alert('Something went wrong. Please try again.')
-    } finally {
-        loading.value = false
+        await typePartnerStore.fetchTypePartners()
+    } catch {
+        notificationStore.notify('Error fetching partner types.', 'error')
     }
-}
+})
 </script>
 
 <style scoped>
@@ -830,6 +864,7 @@ const submitForm = async () => {
 
 .contact-form {
     background: white;
+    color: black;
     border-radius: 20px;
     padding: 50px;
     max-width: 900px;
@@ -884,6 +919,8 @@ const submitForm = async () => {
 }
 
 .form-footer {
+    max-width: 400px;
+    margin: 0 auto;
     text-align: center;
 }
 
@@ -1131,5 +1168,9 @@ const submitForm = async () => {
         width: 100%;
         max-width: 300px;
     }
+}
+
+.note{
+    color: red;
 }
 </style>

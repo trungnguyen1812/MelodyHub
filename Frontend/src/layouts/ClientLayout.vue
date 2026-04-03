@@ -40,10 +40,10 @@
               </a>
             </div>
           </div>
-          <router-link to="/partner/index"
-            class="text-sm font-medium text-white hover:text-cyan-400 drop-shadow-[0_0_10px_#22d3ee] transition-colors duration-200">
+          <button @click="goToCollaborations"
+            class="text-sm font-medium text-white hover:text-cyan-400 drop-shadow-[0_0_10px_#22d3ee] transition-colors duration-200 cursor-pointer">
             Collaborations
-          </router-link>
+          </button>
         </nav>
       </div>
 
@@ -199,12 +199,13 @@ import { ref, onMounted, onBeforeUnmount } from "vue";
 import { useAuthStore } from "@/store/authStore";
 import { useRouter } from "vue-router";
 import { useUserStore } from '@/modules/client/stores/users/UserStore';
+import { useCheckPermission } from '@/composables/useCheckPermission'
 
 
 const subscriptionStore = useUserStore();
 const router = useRouter();
 const authStore = useAuthStore();
-
+const { goToCollaborations } = useCheckPermission()
 //hadle logout client 
 const handleLogout = async () => {
   await authStore.logout();

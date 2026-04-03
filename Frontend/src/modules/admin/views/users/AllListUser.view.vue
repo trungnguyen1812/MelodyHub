@@ -57,7 +57,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <tr v-for="user in users" :key="user.id">
+                        <tr v-for="user in paginatedUsers" :key="user.id">
                             
                             <td class="user-cell">
                                 <div class="user-avatar">
@@ -145,11 +145,10 @@
         </div>
     </div>
     <div v-if="loading" class="loading-state">
-        Loading users...
+       
     </div>
     <div v-else-if="users.length === 0" class="empty-state">
-        <div class="empty-icon">👥</div>
-        <p>No users found</p>
+        
     </div>
 </template>
 
@@ -252,7 +251,7 @@ const totalPages = computed(() => Math.ceil(users.value.length / itemsPerPage));
 const paginationStart = computed(() => ((currentPage.value - 1) * itemsPerPage) + 1);
 const paginationEnd = computed(() => Math.min(currentPage.value * itemsPerPage, users.value.length));
 
-const paginatedArtists = computed(() => {
+const paginatedUsers = computed(() => {
     const start = (currentPage.value - 1) * itemsPerPage;
     const end = start + itemsPerPage;
     return users.value.slice(start, end);
@@ -279,7 +278,7 @@ onMounted(() => {
     flex-direction: column;
     padding: 25px;
     position: relative;
-
+    
     font-family: 'Afacad', sans-serif;
     color: white;
 }

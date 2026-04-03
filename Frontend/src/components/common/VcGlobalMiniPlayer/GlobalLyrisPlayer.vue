@@ -172,8 +172,8 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import { usePlayerStore } from '@/modules/admin/stores/songs/playerStore'
-import type { Song } from '@/modules/admin/interfaces/songs/songs.interface'
+import { usePlayerStore } from '@/store/playerStore'
+import type { Song } from '@/interfaces/songs.interface'
 import { useSongStore } from '@/modules/admin/stores/songs/songsStore'
 import { useRouter } from 'vue-router'
 import adminApi from '@/plugins/axios_admin';

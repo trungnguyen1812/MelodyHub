@@ -157,7 +157,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <tr v-for="user in usersToShow" :key="user.id">
+                        <tr v-for="user in paginatedUsers" :key="user.id">
                             <td class="user-cell">
                                 <div class="user-avatar">
                                     <img :src="getFullImageUrl(user.avatar_url)" :alt="user.name" class="avatar-img" />
@@ -222,11 +222,30 @@
                     <span>Loading data...</span>
                 </div>
             </div>
+            <!-- Pagination -->
+            <div v-if="users.length > 0" class="pagination">
+                <div class="pagination-info">
+                    Showing {{ paginationStart }} to {{ paginationEnd }} of {{ users.length }} entries
+                </div>
+                <div class="pagination-controls">
+                    <button class="pagination-btn" :disabled="currentPage === 1" @click="currentPage--">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="size-4">
+                            <path fill-rule="evenodd" d="M11.78 5.22a.75.75 0 0 1 0 1.06L8.06 10l3.72 3.72a.75.75 0 1 1-1.06 1.06l-4.25-4.25a.75.75 0 0 1 0-1.06l4.25-4.25a.75.75 0 0 1 1.06 0Z" clip-rule="evenodd" />
+                        </svg>
+                    </button>
+                    <span class="pagination-current">{{ currentPage }} / {{ totalPages }}</span>
+                    <button class="pagination-btn" :disabled="currentPage === totalPages" @click="currentPage++">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="size-4">
+                            <path fill-rule="evenodd" d="M8.22 5.22a.75.75 0 0 1 1.06 0l4.25 4.25a.75.75 0 0 1 0 1.06l-4.25 4.25a.75.75 0 0 1-1.06-1.06L11.94 10 8.22 6.28a.75.75 0 0 1 0-1.06Z" clip-rule="evenodd" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
     <div v-if="loading" class="loading-state">
     </div>
-    <div v-else-if="users.length === 0" class="empty-state">
+    <div v-else-if="!users || users.length === 0" class="empty-state">
         
     </div>
 </template>
@@ -244,9 +263,11 @@ const userStore = useUserStore();
 const notificationStore = useNotificationStore();
 const keyword = ref("");
 let searchTimeout: number | null = null;
-const { users, loading } = storeToRefs(userStore);
+const { loading } = storeToRefs(userStore);
+const users = computed(() => userStore.users ?? []);
 const userCount = ref(0);
-
+const currentPage = ref(1);
+const itemsPerPage = 10;
 
 const CreateUser = () => {
     router.push({ name: "admin.usermanager.add" });
@@ -337,6 +358,15 @@ async function deleteUser(id: number) {
 const usersToShow = computed(() => (userStore.users ?? []).slice(0, 10));
 
 
+const totalPages = computed(() => Math.ceil(users.value.length / itemsPerPage));
+const paginationStart = computed(() => ((currentPage.value - 1) * itemsPerPage) + 1);
+const paginationEnd = computed(() => Math.min(currentPage.value * itemsPerPage, users.value.length));
+
+const paginatedUsers = computed(() => {
+    const start = (currentPage.value - 1) * itemsPerPage;
+    const end = start + itemsPerPage;
+    return users.value.slice(start, end);
+});
 onMounted(() => {
     userStore.fetchUsers();
     userStore.fetchShowStatistics();

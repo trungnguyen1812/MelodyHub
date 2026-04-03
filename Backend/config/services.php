@@ -44,6 +44,9 @@ return [
         'bank_account' => env('SEPAY_BANK_ACCOUNT'),
         'bank_provider' => env('SEPAY_BANK_PROVIDER'),
     ],
-
+    // config groq
+    'groq' => [
+        'api_key' => env('GROQ_API_KEY'),
+    ],
 
 ];

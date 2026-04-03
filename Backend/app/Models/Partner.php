@@ -15,6 +15,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * Class Partner
  * 
  * @property int $id
+ * @property int $partner_type_id
  * @property int $user_id
  * @property string $company_name
  * @property string $company_email
@@ -64,6 +65,7 @@ class Partner extends Model
 
 	protected $casts = [
 		'user_id' => 'int',
+		'partner_type_id' => 'int',
 		'contract_start_date' => 'datetime',
 		'contract_end_date' => 'datetime',
 		'revenue_share_percentage' => 'float',
@@ -80,6 +82,7 @@ class Partner extends Model
 
 	protected $fillable = [
 		'user_id',
+		'partner_type_id',
 		'company_name',
 		'company_email',
 		'company_phone',
@@ -134,5 +137,10 @@ class Partner extends Model
 	public function songs()
 	{
 		return $this->hasMany(Song::class);
+	}
+
+	public function partnerType()
+	{
+		return $this->belongsTo(PartnerType::class, 'partner_type_id');
 	}
 }

@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import type { Song } from '@/modules/admin/interfaces/songs/songs.interface'
+import type { Song } from '@/interfaces/songs.interface'
 
 export const usePlayerStore = defineStore('player', () => {
     const audio = ref<HTMLAudioElement | null>(null)
@@ -46,6 +46,7 @@ export const usePlayerStore = defineStore('player', () => {
     }
 
     function toggle() {
+    
         if (!audio.value) return
         if (isPlaying.value) { audio.value.pause(); isPlaying.value = false }
         else { audio.value.play(); isPlaying.value = true }
@@ -54,6 +55,7 @@ export const usePlayerStore = defineStore('player', () => {
     function stop() { _destroy() }
 
     function playPrev() {
+        
         if (hasPrev.value) play(queue.value[currentIndex.value - 1])
     }
 
@@ -61,6 +63,7 @@ export const usePlayerStore = defineStore('player', () => {
         if (hasNext.value) play(queue.value[currentIndex.value + 1])
     }
 
+    
     function seek(val: number) {
         if (audio.value) audio.value.currentTime = val
         currentTime.value = val

@@ -16,7 +16,6 @@ class SongsManagerController extends Controller
 {
     public function add(Request $request): JsonResponse
     {
-        log::info($request);
         // ── 1. Validate ──
         $request->validate([
             'title'           => 'required|string|max:255',
@@ -67,11 +66,7 @@ class SongsManagerController extends Controller
                 'size'     => $audioFile->getSize(),
                 'original' => $audioFile->getClientOriginalName(),
             ]);
-            Log::info('Year value before insert', [
-                'raw' => $request->year,
-                'casted' => $request->year ? (int) $request->year : null,
-                'type' => gettype($request->year)
-            ]);
+            
             $song = Song::create([
                 'title'             => $request->title,
                 'slug'              => $request->slug,

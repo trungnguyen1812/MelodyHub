@@ -13,6 +13,13 @@ use App\Http\Controllers\Api\Admin\ArtistsManagerController;
 use App\Http\Controllers\Api\Admin\GenresManagerController;
 use App\Http\Controllers\Api\Admin\PartnersManagerController;
 use App\Http\Controllers\Api\Admin\SongsManagerController;
+use App\Http\Controllers\Api\Client\ClientArtistsController;
+use App\Http\Controllers\Api\Client\ClientGenresController;
+use App\Http\Controllers\Api\Client\ClientPartnersController;
+use App\Http\Controllers\Api\Client\ClientSongsController;
+use App\Http\Controllers\Api\Client\ClientTypePartnerController;
+use App\Models\Partner;
+use App\Models\Song;
 
 // routes/api.php
 Route::match(['GET', 'POST'], 'payment/sepay/webhook', [
@@ -34,20 +41,30 @@ Route::prefix('client')->group(function () {
     Route::middleware(['authapi:sanctum'])->group(function() {
         Route::post('/logout', [AuthController::class, 'logout']);
     });
-    // kiểm tra admin-token (chỉ check token hợp lệ)
     Route::middleware(['authapi:sanctum'])->get('/check-permission', function (Request $request) {
-
-        $user = $request->user();
+        $user       = $request->user();
         $rolesFlags = $user->getRoleFlags();
 
         $isAdmin = $rolesFlags['is_admin']
                 || $rolesFlags['is_boss']
                 || $rolesFlags['is_content_manager'];
 
+        $partner = Partner::where('user_id', $user->id)
+                    ->whereIn('status', ['active', 'pending'])
+                    ->with('partnerType') 
+                    ->first();
+
+        $partnerTypeName = $partner?->partnerType?->name ?? null;
+
         return response()->json([
-            'is_admin'    => $isAdmin,
-            'user'        => $user,
-            'roles_flags' => $rolesFlags,
+            'is_admin'              => $isAdmin,
+            'is_partner'            => !is_null($partner),
+            'is_music_distribution' => $partnerTypeName === 'Music distribution partners',  
+            'is_advertising'        => $partnerTypeName === 'Advertising partners',  
+            'partner_type_name'     => $partnerTypeName,        
+            'partner'               => $partner,
+            'user'                  => $user,
+            'roles_flags'           => $rolesFlags,
         ]);
     });
     // 
@@ -56,13 +73,69 @@ Route::prefix('client')->group(function () {
     Route::post('/payment/create-qr', [PaymentController::class, 'create_QR'])
         ->middleware('auth:sanctum');
 
-    
-
     Route::middleware('auth:sanctum')->get(
         '/me/subscription',
         [UserSubscriptionController::class, 'me']
     );
+    // artists Client 
+    Route::prefix('artists')->group(function () {
+        Route::get('/allArtists', [ClientArtistsController::class,'getAllArtist']);
+        // Route::post('/add', [ArtistsManagerController::class, 'add']);
+        Route::post('/search', [ClientArtistsController::class, 'search']);
+        Route::get('/statistics', [ClientArtistsController::class, 'statistics']);
+        Route::get('/{artist}', [ClientArtistsController::class, 'show']);
 
+        // Route::delete('/delete/{artist}', [ArtistsManagerController::class, 'delete']);
+        // Route::post('/update/{artist}', [ArtistsManagerController::class, 'update']);
+    });
+    
+    // Router songs manager
+    Route::prefix('songs')->group(function () {
+
+        Route::get('/{song}/lyrics', [ClientSongsController::class, 'getLyricsSong']);
+        Route::get('/allSongs', [ClientSongsController::class, 'index']);
+        Route::get('/new', [ClientSongsController::class, 'getNewSongs']);      
+        Route::get('/popular', [ClientSongsController::class, 'getPopularSongs']);  
+        Route::post('/add', [ClientSongsController::class, 'add']);
+        
+        // QUAN TRỌNG: Đặt route cụ thể trước route wildcard
+        Route::get('/by-slug/{slug}', [ClientSongsController::class, 'showBySlug']);
+        Route::get('/{id}', [ClientSongsController::class, 'show'])->where('id', '[0-9]+');
+        
+        Route::delete('/delete/{song}', [ClientSongsController::class, 'delete']);
+        Route::delete('/delete-multiple', [ClientSongsController::class, 'deleteMultiple']);
+        Route::post('/update/{song}', [ClientSongsController::class, 'update']);
+    });
+    // Router partners type manager
+    Route::prefix('partnerTypes')->group(function () {
+        Route::get('/',         [ClientTypePartnerController::class, 'getAllTypePartnar']);
+        // Route::get('/new',       [ClientSongsController::class, 'getNewSongs']);      
+        // Route::get('/popular',   [ClientSongsController::class, 'getPopularSongs']);  
+        // Route::post('/add',        [SongsManagerController::class, 'add']);
+        // Route::get('/{song}',     [ClientSongsController::class, 'show']);
+        // Route::delete('/delete/{song}', [SongsManagerController::class, 'delete']);
+        // Route::delete('/delete-multiple', [SongsManagerController::class, 'deleteMultiple']);
+        // Route::post('/update/{song}', [SongsManagerController::class, 'update']);
+    });
+    // // Router partners  manager
+    Route::prefix('partners')->group(function () {
+        Route::get('/',         [ClientPartnersController::class, 'index']);
+        Route::middleware('auth:sanctum')->group(function () {
+            Route::post('/add', [ClientPartnersController::class, 'add']);
+        });
+        // Route::get('/{song}',     [PartnersManagerController::class, 'show']);
+        // Route::post('/{song}',     [PartnersManagerController::class, 'update']);
+        // Route::post('/{song}',  [PartnersManagerController::class, 'destroy']);
+    });
+
+    // // Router Genres  manager
+    Route::prefix('genres')->group(function () {
+        Route::get('/',         [ClientGenresController::class, 'index']);
+        // Route::post('/add',        [GenresManagerController::class, 'add']);
+        // Route::get('/{song}',     [GenresManagerController::class, 'show']);
+        // Route::post('/{song}',     [GenresManagerController::class, 'update']);
+        // Route::post('/{song}',  [GenresManagerController::class, 'destroy']);
+    });
 
 
 });

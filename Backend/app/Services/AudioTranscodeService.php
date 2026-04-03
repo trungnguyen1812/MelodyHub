@@ -2,30 +2,23 @@
 
 namespace App\Services;
 
-use FFMpeg\FFMpeg;
 use FFMpeg\FFProbe;
-use FFMpeg\Format\Audio\Mp3;
-use FFMpeg\Format\Audio\Flac;
 use Illuminate\Support\Facades\Log;
+use Cloudinary\Cloudinary;
 
 class AudioTranscodeService
 {
-    protected FFMpeg  $ffmpeg;
-    protected FFProbe $ffprobe;
+    protected Cloudinary $cloudinary;
+    protected FFProbe    $ffprobe;
 
     public function __construct()
     {
-        // FFMpeg tự detect ffmpeg/ffprobe từ PATH
-        // Nếu cài ở path custom, set trong config/ffmpeg.php hoặc qua env
-
-         Log::info('FFmpeg paths', [
-            'ffmpeg'  => env('FFMPEG_BINARIES'),
-            'ffprobe' => env('FFPROBE_BINARIES'),
-        ]);
-
-        $this->ffmpeg = FFMpeg::create([
-            'ffmpeg.binaries'  => env('FFMPEG_BINARIES',  '/usr/bin/ffmpeg'),   // ✅ có fallback
-            'ffprobe.binaries' => env('FFPROBE_BINARIES', '/usr/bin/ffprobe'),  // ✅ có fallback
+        $this->cloudinary = new Cloudinary([
+            'cloud' => [
+                'cloud_name' => env('CLOUDINARY_CLOUD_NAME'),
+                'api_key'    => env('CLOUDINARY_API_KEY'),
+                'api_secret' => env('CLOUDINARY_API_SECRET'),
+            ]
         ]);
 
         $this->ffprobe = FFProbe::create([
@@ -34,58 +27,7 @@ class AudioTranscodeService
     }
 
     /**
-     * Transcode file gốc ra 3 chất lượng.
-     *
-     * @param  string $originalPath  Đường dẫn tuyệt đối file gốc
-     * @param  int    $songId        Dùng để đặt tên file tạm
-     * @return array{low: string, standard: string, lossless: string}
-     */
-    public function transcodeAll(string $originalPath, int $songId): array
-    {
-        $tmpDir = sys_get_temp_dir() . "/song_{$songId}_" . uniqid();
-        mkdir($tmpDir, 0755, true);
-
-        $paths = [
-            'low'      => "$tmpDir/low.mp3",
-            'standard' => "$tmpDir/standard.mp3",
-            'lossless' => "$tmpDir/lossless.flac",
-        ];
-
-        Log::info("AudioTranscodeService: bắt đầu transcode song #{$songId}", [
-            'source' => $originalPath,
-            'tmp'    => $tmpDir,
-        ]);
-
-        $audio = $this->ffmpeg->open($originalPath);
-
-        // ── LOW: MP3 128 kbps ──
-        $formatLow = new Mp3();
-        $formatLow->setAudioChannels(2)
-                  ->setAudioKiloBitrate(128);
-        $audio->save($formatLow, $paths['low']);
-        Log::info("AudioTranscodeService: ✓ low (128kbps) done");
-
-        // ── STANDARD: MP3 320 kbps ──
-        $formatStd = new Mp3();
-        $formatStd->setAudioChannels(2)
-                  ->setAudioKiloBitrate(320);
-        $audio->save($formatStd, $paths['standard']);
-        Log::info("AudioTranscodeService: ✓ standard (320kbps) done");
-
-        // ── LOSSLESS: FLAC ──
-        // FLAC giữ nguyên sample rate & channel từ file gốc
-        $formatFlac = new Flac();
-        $formatFlac->setAudioChannels(2);
-        // Không set bitrate cho FLAC vì lossless — FFMpeg tự quyết định
-        $audio->save($formatFlac, $paths['lossless']);
-        Log::info("AudioTranscodeService: ✓ lossless (FLAC) done");
-
-        return $paths;
-    }
-
-    /**
      * Lấy duration (giây) từ file audio bằng FFProbe.
-     * Dùng khi frontend không gửi duration chính xác.
      */
     public function getDuration(string $filePath): int
     {
@@ -96,5 +38,75 @@ class AudioTranscodeService
             ?->get('duration');
 
         return (int) round((float) $duration);
+    }
+
+    /**
+     * Upload file gốc lên Cloudinary, trả về public_id
+     */
+    public function uploadOriginal(string $originalPath, int $songId): string
+    {
+        Log::info("AudioTranscodeService: uploading song #{$songId} to Cloudinary");
+
+        $result = $this->cloudinary->uploadApi()->upload($originalPath, [
+            'resource_type' => 'video',
+            'folder'        => 'songs',
+            'public_id'     => "song_{$songId}",
+            'overwrite'     => true,
+        ]);
+
+        Log::info("AudioTranscodeService: ✓ upload done", ['public_id' => $result['public_id']]);
+
+        return $result['public_id'];
+    }
+
+    /**
+     * Tạo URL stream/download theo chất lượng — transcode on-the-fly khi user request
+     */
+    public function getUrl(string $publicId, string $quality = 'standard'): string
+    {
+        $transformations = match ($quality) {
+            'low' => [
+                'format'          => 'mp3',
+                'audio_codec'     => 'mp3',
+                'audio_frequency' => 44100,
+                'bit_rate'        => '128k',
+            ],
+            'standard' => [
+                'format'          => 'mp3',
+                'audio_codec'     => 'mp3',
+                'audio_frequency' => 44100,
+                'bit_rate'        => '320k',
+            ],
+            'lossless' => [
+                'format'      => 'flac',
+                'audio_codec' => 'flac',
+            ],
+            default => [
+                'format'   => 'mp3',
+                'bit_rate' => '128k',
+            ]
+        };
+
+        return $this->cloudinary->image($publicId)
+            ->delivery($transformations)
+            ->toUrl();
+    }
+
+    /**
+     * Lấy URL theo quyền user
+     */
+    public function getUrlByPermission(string $publicId, bool $isVip): string
+    {
+        return $this->getUrl($publicId, $isVip ? 'lossless' : 'low');
+    }
+
+    /**
+     * Xoá file khỏi Cloudinary
+     */
+    public function delete(string $publicId): void
+    {
+        $this->cloudinary->uploadApi()->destroy($publicId, [
+            'resource_type' => 'video',
+        ]);
     }
 }

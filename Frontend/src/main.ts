@@ -1,15 +1,22 @@
 import { createApp } from 'vue';
-import { createPinia } from "pinia";
-import VueApexCharts from "vue3-apexcharts";
-import router from "./modules/router";
+import { createPinia } from 'pinia';
+import VueApexCharts from 'vue3-apexcharts';
+import router from './modules/router';
 import Notification from '@/components/common/VcNotification/Notification.vue';
 import App from './App.vue';
 import api from '@/utils/axios';
 
+// ─── 1.  app & pinia   ───────────────────────────────────────────
 const app = createApp(App);
 const pinia = createPinia();
 
-// Gắn axios vào global
+// ─── 2.  Pinia  ───────────────────
+app.use(pinia);
+
+// ─── 3.  Router ───────────────────────────────────────────────────────────
+app.use(router);
+
+// ─── 4. Global properties ────────────────────────────────────────────────────
 app.config.globalProperties.$api = api;
 
 declare module 'vue' {
@@ -18,51 +25,40 @@ declare module 'vue' {
   }
 }
 
-// Tạo custom directive cho count-up
-app.directive('count-up', {
-  mounted(el, binding) {
-    const { startVal = 0, endVal, duration = 2 } = binding.value;
-    let current = startVal;
-    const increment = (endVal - startVal) / (duration * 60); // 60fps
-    
-    const updateNumber = () => {
-      current += increment;
-      if (current < endVal) {
-        el.textContent = Math.floor(current).toLocaleString();
-        requestAnimationFrame(updateNumber);
-      } else {
-        el.textContent = endVal.toLocaleString();
-      }
-    };
-    
-    updateNumber();
-  },
-  updated(el, binding) {
-    if (binding.value.endVal !== binding.oldValue?.endVal) {
-      // Cập nhật khi giá trị thay đổi
-      const { startVal = 0, endVal, duration = 2 } = binding.value;
-      let current = startVal;
-      const increment = (endVal - startVal) / (duration * 60);
-      
-      const updateNumber = () => {
-        current += increment;
-        if (current < endVal) {
-          el.textContent = Math.floor(current).toLocaleString();
-          requestAnimationFrame(updateNumber);
-        } else {
-          el.textContent = endVal.toLocaleString();
-        }
-      };
-      
-      updateNumber();
-    }
-  }
-});
-
-app.component("apexchart", VueApexCharts);
+// ─── 5. Global components ────────────────────────────────────────────────────
+app.component('apexchart', VueApexCharts);
 app.component('Notification', Notification);
 
-app.use(pinia);
-app.use(router);
+// ─── 6. Custom directive: v-count-up ─────────────────────────────────────────
+function runCountUp(el: HTMLElement, startVal: number, endVal: number, duration: number) {
+  let current = startVal;
+  const increment = (endVal - startVal) / (duration * 60); // 60fps
 
+  const update = () => {
+    current += increment;
+    if (current < endVal) {
+      el.textContent = Math.floor(current).toLocaleString();
+      requestAnimationFrame(update);
+    } else {
+      el.textContent = endVal.toLocaleString();
+    }
+  };
+
+  update();
+}
+
+app.directive('count-up', {
+  mounted(el, binding) {
+    const { startVal = 0, endVal = 0, duration = 2 } = binding.value ?? {};
+    runCountUp(el, startVal, endVal, duration);
+  },
+  updated(el, binding) {
+    if (binding.value?.endVal !== binding.oldValue?.endVal) {
+      const { startVal = 0, endVal = 0, duration = 2 } = binding.value ?? {};
+      runCountUp(el, startVal, endVal, duration);
+    }
+  },
+});
+
+// ─── 7. Mount  ───────────────────────────────────────────────────────
 app.mount('#app');

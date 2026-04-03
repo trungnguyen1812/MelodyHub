@@ -1,6 +1,6 @@
 import { defineStore } from "pinia";
 import ArtistService from "@/modules/admin/services/artists/artists.service";
-import {ArtistInterface} from '@/modules/admin/interfaces/artists/artist.interface';
+import {ArtistInterface} from '@/interfaces/artists.interface';
 import type { CreateArtistPayload } from '@/modules/admin/interfaces/artists/create-artist.payload';
 import type { ArtistStatistics, FormattedArtistStatistics } from '@/modules/admin/interfaces/artists/artist.statistic.interface';
 import adminApi from "@/plugins/axios_admin";
