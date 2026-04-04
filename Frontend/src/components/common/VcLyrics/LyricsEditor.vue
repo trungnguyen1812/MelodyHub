@@ -327,7 +327,7 @@ function onLrcImport(e: Event) {
 
   // Reset input để có thể import lại cùng file
   ;(e.target as HTMLInputElement).value = ''
-
+  
   const reader = new FileReader()
   reader.onload = (ev) => {
     const content = ev.target?.result as string

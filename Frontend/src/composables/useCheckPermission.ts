@@ -16,13 +16,13 @@ export function useCheckPermission() {
       const data = res.data
     
       if (!data.is_partner) {
-        router.push({ name: 'client.partner.register' })
+        router.push({ name: 'client.partner.index' })
       } else if (data.is_music_distribution) {
         router.push({ name: 'client.partner.dashboard' })
       } else if (data.is_advertising) {
         router.push({ name: 'client.partner.Advertisingd' })
       } else {
-        router.push({ name: 'client.partner.register' })
+        router.push({ name: 'client.partner.index' })
       }
     } catch (err: any ) {
         notificationStore.notify(err.response?.data?.message || 'Failed to  Collaborations view', 'error')

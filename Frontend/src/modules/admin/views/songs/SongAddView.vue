@@ -278,7 +278,7 @@
                 <polyline points="21 15 16 10 5 21" />
               </svg>
             </div>
-            <h2 class="section-title">Artwork & Lyrics</h2>
+            <h2 class="section-title">Artwork & Descriptions</h2>
           </div>
 
           <div class="artwork-layout">
@@ -315,10 +315,12 @@
             <!-- Lyrics -->
             <div class="lyrics-wrap">
               <div class="field" style="height:100%">
-                <label class="field-label">Descriptions</label>
-                <textarea v-model="form.descriptions" class="field-textarea"
-                  placeholder="Paste or type song lyrics here…&#10;&#10;[Verse 1]&#10;..." rows="14"></textarea>
-                <p class="field-hint">Supports plain text. Line breaks are preserved.</p>
+                <label class="field-label">Lyrics</label>
+                <LyricsEditor
+                  v-model="form.lyrics"
+                  :src="form.cover_url"
+                />
+                <p class="field-hint">Dán lyrics thô → gán timestamps bằng nút ⏱ trong khi nghe nhạc.</p>
               </div>
             </div>
           </div>
@@ -541,6 +543,8 @@ import { useSongStore } from '@/modules/admin/stores/songs/songsStore'
 import type { ArtistInterface } from '@/interfaces/artists.interface'
 import type { Album, Flag, CreateSongPayload } from '@/modules/admin/interfaces/songs/create-song.payload'
 import { useNotificationStore } from '@/store/notificationStore'
+import LyricsEditor from '@/components/common/VcLyrics/LyricsEditor.vue'
+import type { LyricLine } from '@/components/common/VcLyrics/LyricsEditor.vue'
 import { useCloudinaryUpload } from '@/composables/Usecloudinaryupload'
 import { storeToRefs } from 'pinia'
 import router from "@/modules/router"
@@ -616,7 +620,7 @@ const form = reactive<CreateSongPayload>({
   audio_file: null,
   duration: 0, file_size: 0, bitrate: 320, quality: 'high',
   cover_file: null, cover_url: '',
-  descriptions: '',
+  lyrics: [],
   status: 'draft', partner_id: '',genre_id: '',
   is_premium: false, is_explicit: false, is_featured: false, allow_download: false,
 })

@@ -16,11 +16,11 @@ class ProcessSongAudio implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    public $tries = 3;
+    public $tries   = 3;
     public $backoff = [30, 60, 120];
 
     public function __construct(
-        public int $songId,
+        public int    $songId,
         public string $localPath,
         public string $status
     ) {}
@@ -90,24 +90,37 @@ class ProcessSongAudio implements ShouldQueue
                 'status'    => $finalStatus,
             ]);
 
-            // 5. Dispatch GenerateLyricsJob
-            // Luôn reset và dispatch lại khi có audio mới (bất kể lyrics_status cũ là gì)
+            // 5. Kiểm tra lyrics hiện tại để quyết định có chạy Groq không
             if ($publicId) {
-                $song->update([
-                    'lyrics_status' => 'pending',
-                    'lyrics_error'  => null,
-                    'lyrics'        => null,
-                ]);
+                $lyricsSource = $this->detectLyricsSource($song->lyrics);
 
-                GenerateLyricsJob::dispatch($song->id, $publicId)
-                    ->onQueue('lyrics');
+                if ($lyricsSource === 'lrc') {
+                    // LRC đã có timestamps đầy đủ → KHÔNG reset, KHÔNG chạy Groq
+                    Log::info('LRC lyrics detected — skipping GenerateLyricsJob', [
+                        'song_id' => $song->id,
+                    ]);
 
-                Log::info('Lyrics generation job dispatched', [
-                    'song_id'   => $song->id,
-                    'public_id' => $publicId,
-                ]);
+                } else {
+                    // Lyrics thô hoặc chưa có → reset + chạy Groq
+                    $song->update([
+                        'lyrics_status' => 'pending',
+                        'lyrics_error'  => null,
+                        // Giữ nguyên lyrics nếu là text thô (Groq sẽ align timestamps)
+                        // Chỉ xóa nếu không có gì cả
+                        'lyrics'        => $lyricsSource === 'raw' ? $song->lyrics : null,
+                    ]);
+
+                    GenerateLyricsJob::dispatch($song->id, $publicId)
+                        ->onQueue('lyrics');
+
+                    Log::info('GenerateLyricsJob dispatched', [
+                        'song_id'       => $song->id,
+                        'public_id'     => $publicId,
+                        'lyrics_source' => $lyricsSource,
+                    ]);
+                }
             } else {
-                Log::warning('No public_id, skipping lyrics generation', [
+                Log::warning('No public_id — skipping lyrics generation', [
                     'song_id' => $song->id,
                 ]);
             }
@@ -129,6 +142,31 @@ class ProcessSongAudio implements ShouldQueue
 
             throw $e;
         }
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // Phát hiện nguồn gốc lyrics hiện tại trong DB
+    //
+    //  'lrc' → tất cả dòng có start > 0  (từ file .lrc) → skip Groq
+    //  'raw' → có text nhưng start = 0   (text thô)     → Groq align
+    //  'none'→ không có gì               (trống)        → Groq transcribe
+    // ─────────────────────────────────────────────────────────────
+    private function detectLyricsSource(mixed $raw): string
+    {
+        if (empty($raw)) return 'none';
+
+        $lines = is_array($raw) ? $raw : json_decode($raw, true);
+
+        if (json_last_error() !== JSON_ERROR_NONE || !is_array($lines) || empty($lines)) {
+            return 'none';
+        }
+
+        $hasText = collect($lines)->contains(fn($l) => !empty(trim($l['text'] ?? '')));
+        if (!$hasText) return 'none';
+
+        $allHaveTimestamps = collect($lines)->every(fn($l) => ($l['start'] ?? 0) > 0);
+
+        return $allHaveTimestamps ? 'lrc' : 'raw';
     }
 
     private function extractPublicIdFromUrl(string $url): ?string

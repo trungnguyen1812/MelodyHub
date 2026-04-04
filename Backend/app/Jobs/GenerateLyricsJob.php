@@ -46,32 +46,57 @@ class GenerateLyricsJob implements ShouldQueue
 
             $song->update(['lyrics_status' => 'processing', 'lyrics_error' => null]);
 
-            // Download audio về temp với đuôi .mp3
-            $audioUrl = $this->buildAudioUrl($this->audioPublicId);
-            $tempPath = $this->downloadAudio($audioUrl);
-
-            // Kiểm tra lyrics hiện tại của bài hát
+            // Parse lyrics hiện tại từ DB
             $existingLyrics = $this->parseExistingLyrics($song->lyrics);
-            $hasManualLyrics = count($existingLyrics) > 0 &&
-                               collect($existingLyrics)->contains(fn($l) => !empty(trim($l['text'] ?? '')));
 
-            if ($hasManualLyrics) {
-                // ── MODE 1: Admin đã nhập lyrics → Groq chỉ cấp timestamps ──
-                Log::info('Manual lyrics found — using Groq for timestamps only', [
-                    'song_id'     => $this->songId,
-                    'line_count'  => count($existingLyrics),
+            $hasText = count($existingLyrics) > 0 &&
+                       collect($existingLyrics)->contains(fn($l) => !empty(trim($l['text'] ?? '')));
+
+            // CASE 1: Lyrics từ .lrc — tất cả dòng đã có timestamps → SKIP Groq hoàn toàn
+            $hasTimestamps = $hasText &&
+                             collect($existingLyrics)->every(fn($l) => ($l['start'] ?? 0) > 0);
+
+            if ($hasTimestamps) {
+                Log::info('LRC lyrics detected — skipping Groq entirely', [
+                    'song_id'    => $this->songId,
+                    'line_count' => count($existingLyrics),
                 ]);
+
+                $formattedLyrics = array_values(
+                    array_filter($existingLyrics, fn($l) => !empty(trim($l['text'] ?? '')))
+                );
+
+                $mode = 'lrc';
+
+            } elseif ($hasText) {
+                // CASE 2: Lyrics thô (admin nhập tay, không có timestamps) → Groq lấy timestamps
+                Log::info('Raw lyrics detected — using Groq for timestamps alignment', [
+                    'song_id'    => $this->songId,
+                    'line_count' => count($existingLyrics),
+                ]);
+
+                $tempPath        = $this->downloadAudio($this->buildAudioUrl($this->audioPublicId));
                 $formattedLyrics = $this->alignLyricsWithTimestamps($tempPath, $existingLyrics);
+
+                $mode = 'align';
+
             } else {
-                // ── MODE 2: Chưa có lyrics → Groq transcribe (admin sẽ sửa text sau) ──
-                Log::info('No manual lyrics — running full Groq transcription', [
+                // CASE 3: Chưa có lyrics → Groq transcribe full
+                Log::info('No lyrics detected — running full Groq transcription', [
                     'song_id' => $this->songId,
                 ]);
+
+                $tempPath        = $this->downloadAudio($this->buildAudioUrl($this->audioPublicId));
                 $formattedLyrics = $this->transcribeOnly($tempPath);
+
+                $mode = 'transcribe';
             }
 
             if (empty($formattedLyrics)) {
-                Log::warning('GenerateLyricsJob: empty result', ['song_id' => $this->songId]);
+                Log::warning('GenerateLyricsJob: empty result', [
+                    'song_id' => $this->songId,
+                    'mode'    => $mode,
+                ]);
             }
 
             $song->update([
@@ -84,7 +109,7 @@ class GenerateLyricsJob implements ShouldQueue
             Log::info('GenerateLyricsJob completed', [
                 'song_id'  => $this->songId,
                 'segments' => count($formattedLyrics),
-                'mode'     => $hasManualLyrics ? 'align' : 'transcribe',
+                'mode'     => $mode,
             ]);
 
         } catch (\Exception $e) {
@@ -106,7 +131,7 @@ class GenerateLyricsJob implements ShouldQueue
     }
 
     // ─────────────────────────────────────────────────────────────
-    // MODE 1: Align — Groq transcribe lấy timestamps,
+    // CASE 2: Align — Groq transcribe lấy timestamps,
     //         ghép với text admin đã nhập theo thứ tự dòng
     // ─────────────────────────────────────────────────────────────
     private function alignLyricsWithTimestamps(string $filePath, array $manualLines): array
@@ -114,22 +139,20 @@ class GenerateLyricsJob implements ShouldQueue
         $groqResult = $this->callGroqApi($filePath);
         $segments   = $groqResult['segments'] ?? [];
 
-        if (empty($segments)) {
-            Log::warning('Groq returned no segments for alignment — keeping manual text with zero timestamps', [
-                'song_id' => $this->songId,
-            ]);
-            return array_values(array_filter($manualLines, fn($l) => !empty(trim($l['text'] ?? ''))));
-        }
-
-
         $cleanLines = array_values(
             array_filter($manualLines, fn($l) => !empty(trim($l['text'] ?? '')))
         );
 
+        if (empty($segments)) {
+            Log::warning('Groq returned no segments — keeping manual text with zero timestamps', [
+                'song_id' => $this->songId,
+            ]);
+            return $cleanLines;
+        }
+
         $totalLines = count($cleanLines);
         $totalSegs  = count($segments);
-
-        $result = [];
+        $result     = [];
 
         for ($i = 0; $i < $totalLines; $i++) {
             $segIdx = (int) round($i * ($totalSegs - 1) / max($totalLines - 1, 1));
@@ -137,6 +160,7 @@ class GenerateLyricsJob implements ShouldQueue
 
             $seg = $segments[$segIdx];
 
+            // Ưu tiên giữ timestamp sẵn có nếu > 0, không thì lấy từ Groq
             $existingStart = (float) ($cleanLines[$i]['start'] ?? 0);
             $existingEnd   = (float) ($cleanLines[$i]['end']   ?? 0);
 
@@ -157,7 +181,7 @@ class GenerateLyricsJob implements ShouldQueue
     }
 
     // ─────────────────────────────────────────────────────────────
-    // MODE 2: Transcribe only — không có lyrics sẵn
+    // CASE 3: Transcribe only — chưa có lyrics
     // ─────────────────────────────────────────────────────────────
     private function transcribeOnly(string $filePath): array
     {
@@ -179,6 +203,7 @@ class GenerateLyricsJob implements ShouldQueue
             ];
         }
 
+        // Fallback nếu không có segments nhưng có text
         if (empty($result) && !empty(trim($text))) {
             $result[] = ['start' => 0, 'end' => 0, 'text' => trim($text)];
         }

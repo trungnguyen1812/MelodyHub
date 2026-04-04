@@ -118,7 +118,7 @@
             <div class="form-grid form-grid--4">
               <div class="field" :class="{ 'field--error': stepErrors[0].year }">
                 <label class="field-label">Year<span class="required">*</span></label>
-                <input v-model="form.year" type="number" class="field-input" placeholder="2026" min="1900" max="2099"
+                <input v-model.number="form.year" type="number" class="field-input" placeholder="2026" min="1900" max="2099"
                   @input="clearError(0, 'year')" />
                 <p v-if="stepErrors[0].year" class="field-error">{{ stepErrors[0].year }}</p>
               </div>
@@ -323,10 +323,12 @@
               <!-- Lyrics -->
               <div class="lyrics-wrap">
                 <div class="field" style="height:100%">
-                  <label class="field-label">Descriptions</label>
-                  <textarea v-model="form.descriptions" class="field-textarea"
-                    placeholder="Paste or type song lyrics here…&#10;&#10;[Verse 1]&#10;..." rows="14"></textarea>
-                  <p class="field-hint">Supports plain text. Line breaks are preserved.</p>
+                  <label class="field-label">Lyrics</label>
+                  <LyricsEditor
+                    v-model="form.lyrics"
+                    :src="audioObjectUrl || currentAudioUrl"
+                  />
+                  <p class="field-hint">Dán lyrics thô → gán timestamps bằng nút ⏱ trong khi nghe nhạc.</p>
                 </div>
               </div>
             </div>
@@ -543,6 +545,8 @@ import { useNotificationStore } from '@/store/notificationStore'
 import { useCloudinaryUpload } from '@/composables/Usecloudinaryupload'
 import { storeToRefs } from 'pinia'
 import router from '@/modules/router'
+import LyricsEditor from '@/components/common/VcLyrics/LyricsEditor.vue'
+import type { LyricLine } from '@/components/common/VcLyrics/LyricsEditor.vue'
 
 // ── Route ──
 const route  = useRoute()
@@ -606,16 +610,18 @@ function goToStep(i: number): void {
 // UpdateSongPayload: same as Create but audio_file is optional
 const form = reactive<UpdateSongPayload>({
   title: '', slug: '', artist_id: '', album_id: '',
-  year: new Date().getFullYear(),
+  year: null as any,
   track_number: null, disc_number: 1, isrc: '',
   copyright_owner: '', license_type: '',
   audio_file: null,
   duration: 0, file_size: 0, bitrate: 320, quality: 'high',
   cover_file: null, cover_url: '',
-  descriptions: '',lyrics:'',
+  lyrics: [] as LyricLine[],
   status: 'draft', partner_id: '',genre_id: '',
   is_premium: false, is_explicit: false, is_featured: false, allow_download: false,
 })
+
+
 
 // Current audio URL from the existing song record
 const currentAudioUrl    = ref<string>('')
@@ -658,8 +664,18 @@ async function loadSong(): Promise<void> {
     form.bitrate         = song.bitrate         ?? 320
     form.quality         = song.quality         ?? 'high'
     form.cover_url       = song.cover_url       ?? ''
-    form.lyrics          = song.lyrics          ?? ''
-
+    try {
+      const raw = song.lyrics
+      if (Array.isArray(raw)) {
+        form.lyrics = raw
+      } else if (typeof raw === 'string' && raw.trim().startsWith('[')) {
+        form.lyrics = JSON.parse(raw)
+      } else {
+        form.lyrics = []
+      }
+    } catch {
+      form.lyrics = []
+    }
 
     const editableStatuses = ['draft', 'published', 'blocked'] as const
     form.status = editableStatuses.includes(song.status as any)
@@ -683,7 +699,6 @@ async function loadSong(): Promise<void> {
   }
 }
 
-console.log(form.genre_id);
 
 
 // ── Mock data ──
@@ -909,11 +924,10 @@ async function copyPayload(): Promise<void> {
 async function submitForm(): Promise<void> {
   try {
     loading.value = true
-
     // Build payload — omit audio_file if no new file chosen
     const payload: UpdateSongPayload = { ...form }
     if (!payload.audio_file) delete (payload as any).audio_file
-
+    ;(payload as any).lyrics = JSON.stringify(form.lyrics)
     await useSong.fetchUpdateSong(songId.value, payload)
 
     notificationStore.notify('Song updated successfully!', 'success')

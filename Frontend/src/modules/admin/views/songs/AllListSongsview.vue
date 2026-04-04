@@ -223,8 +223,8 @@
                     </span>
                   </th>
                   <th>Artist</th>
-                  <th>Album</th>
-                  <th>Quality</th>
+                  <!-- <th>Album</th> -->
+                  <!-- <th>Quality</th> -->
                   <th class="th-sortable" @click="setSortBy('duration')">
                     <span class="th-inner">
                       Duration
@@ -295,10 +295,10 @@
                       </div>
                     </td>
                     <td class="td-text">{{ song.artist?.name ?? '—' }}</td>
-                    <td class="td-text td-muted">{{ song.album?.title ?? '—' }}</td>
-                    <td>
+                    <!-- <td class="td-text td-muted">{{ song.album?.title ?? '—' }}</td> -->
+                    <!-- <td>
                       <span class="quality-badge" :class="'quality--' + song.quality">{{ song.quality }}</span>
-                    </td>
+                    </td> -->
                     <td class="td-text td-mono">{{ song.duration_format }}</td>
                     <td>
                       <div class="plays-cell">

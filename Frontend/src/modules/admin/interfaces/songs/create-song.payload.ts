@@ -1,3 +1,5 @@
+import type { LyricLine } from '@/components/common/VcLyrics/LyricsEditor.vue'
+
 export interface Album   { id: number; name: string }
 export interface Partner { id: number; name: string }
 
@@ -32,7 +34,7 @@ export interface CreateSongPayload {
   cover_file: File | null  
   cover_url: string        
  
-  descriptions: string
+  lyrics: LyricLine[] 
  
   status: 'draft' | 'published' | 'blocked'
   partner_id: number | ''
