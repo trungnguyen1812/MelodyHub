@@ -79,14 +79,15 @@ Route::prefix('client')->group(function () {
     );
     // artists Client 
     Route::prefix('artists')->group(function () {
-        Route::get('/allArtists', [ClientArtistsController::class,'getAllArtist']);
-        // Route::post('/add', [ArtistsManagerController::class, 'add']);
+        Route::get('/Artists', [ClientArtistsController::class,'getArtist']);
+        Route::get('/allArtists', [ClientArtistsController::class,'getAllArtists']);
+        Route::post('/add', [ClientArtistsController::class, 'add']);
         Route::post('/search', [ClientArtistsController::class, 'search']);
         Route::get('/statistics', [ClientArtistsController::class, 'statistics']);
+        Route::get('/by-partner', [ClientArtistsController::class, 'getArtistByPartnerId']);
         Route::get('/{artist}', [ClientArtistsController::class, 'show']);
-
-        // Route::delete('/delete/{artist}', [ArtistsManagerController::class, 'delete']);
-        // Route::post('/update/{artist}', [ArtistsManagerController::class, 'update']);
+        Route::delete('/delete/{artist}', [ClientArtistsController::class, 'delete']);
+        Route::post('/update/{artist}', [ClientArtistsController::class, 'update']);
     });
     
     // Router songs manager

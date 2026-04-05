@@ -19,6 +19,11 @@ import PartnerAdvertisingdView from '@/modules/client/views/partner/partner.dash
 import SongAddView from '@/modules/client/views/music/SongAddView.vue';
 import SongDetailView from '@/modules/client/views/music/SongDetail.view.vue';
 import SongUpdateView from '@/modules/client/views/music/SongUpdate.view.vue';
+// artist manager
+import PartnerArtistsView from '@/modules/client/views/partner/PartnerMusic/Partner.artist.view.vue';
+import PartnerAddArtistsView from '@/modules/client/views/artists/ArtistsAdd.view.vue';
+import PartnerDetailArtistsView from '@/modules/client/views/artists/ArtistsDetail.view.vue';
+import PartnerUpdateArtistsView from '@/modules/client/views/artists/ArtistsUpdate.view.vue';
 // user
 import UserUpgradeView from '@/modules/client/views/user/UserUpgrade.view.vue';
 
@@ -101,12 +106,35 @@ export const CLIENT_ROUTES = [
         name: 'client.song.detail',
         component: SongDetailView
       },
+      // partner manager artists
+      {
+        path: 'partner/artists',
+        name: 'client.partner.artists',
+        component: PartnerArtistsView
+      },
+      {
+        path: 'partner/artist/add',
+        name: 'client.partner.artists.add',
+        component: PartnerAddArtistsView
+      },
+      {
+        path: 'partner/artist/:id',
+        name: 'client.partner.artists.detail',
+        component: PartnerDetailArtistsView
+      },
+      {
+        path: 'partner/artist/update/:id',
+        name: 'client.partner.artists.update',
+        component: PartnerUpdateArtistsView
+      },
+
       // partner Advertising partners
       {
         path: 'partner/Advertisingd',
         name: 'client.partner.Advertisingd',
         component: PartnerAdvertisingdView
       },
+      
      
     ]
   }

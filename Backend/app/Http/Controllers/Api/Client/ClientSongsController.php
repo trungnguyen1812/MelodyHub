@@ -523,7 +523,7 @@ class ClientSongsController extends Controller
                 $lyricsSource = null;
             }
         }
-    
+        log::info($lyricsJson);
         DB::beginTransaction();
     
         try {

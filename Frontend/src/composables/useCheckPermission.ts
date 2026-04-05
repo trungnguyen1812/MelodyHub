@@ -14,7 +14,7 @@ export function useCheckPermission() {
     try {
       const res  = await clientApi.get('/check-permission')
       const data = res.data
-    
+      
       if (!data.is_partner) {
         router.push({ name: 'client.partner.index' })
       } else if (data.is_music_distribution) {
@@ -24,6 +24,7 @@ export function useCheckPermission() {
       } else {
         router.push({ name: 'client.partner.index' })
       }
+      
     } catch (err: any ) {
         notificationStore.notify(err.response?.data?.message || 'Failed to  Collaborations view', 'error')
     }

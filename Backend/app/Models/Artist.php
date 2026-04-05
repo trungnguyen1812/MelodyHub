@@ -103,7 +103,8 @@ class Artist extends Model
 	
 	public function songs()
 	{
-		return $this->hasMany(Song::class);
+		return $this->hasMany(Song::class, 'artist_id', 'id');
+
 	}
 
 	public function scopeSearch($query , $q) {
@@ -163,5 +164,10 @@ class Artist extends Model
             'growth_percentage' => $growthPercentage,
             'status' => $growthPercentage >= 0 ? 'increase' : 'decrease'
         ];
+    }
+
+	public function partner()
+    {
+        return $this->belongsTo(Partner::class, 'partner_id', 'id');
     }
 }

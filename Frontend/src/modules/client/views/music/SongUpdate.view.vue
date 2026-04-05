@@ -102,7 +102,7 @@
                 <label class="field-label">Artist <span class="required">*</span></label>
                 <select v-model="form.artist_id" class="field-select" @change="clearError(0, 'artist_id')">
                   <option value="">-- Select Artist --</option>
-                  <option v-for="a in useArtist.artists" :key="a.id" :value="a.id">{{ a.name }}</option>
+                  <option v-for="a in artistList" :key="a.id" :value="a.id">{{ a.name }}</option>
                 </select>
                 <p v-if="stepErrors[0].artist_id" class="field-error">{{ stepErrors[0].artist_id }}</p>
               </div>
@@ -943,11 +943,27 @@ async function submitForm(): Promise<void> {
   }
 }
 
+const artistList = computed(() => useArtist.artists || [])
+
+const loadInfoPartner = async () => { 
+  await usePartner.fetchPartnerInfo()
+  const idPartner = usePartner.partner?.id  
+   if (idPartner) {
+    form.partner_id = idPartner
+    await loadArtists(idPartner)
+  }
+}
+
+const loadArtists = async (id: number) => { 
+  await useArtist.fetchGetAritistByIdPartner(id)
+}
+
 // ── Lifecycle ──
 onMounted(async () => {
   try {
     await Promise.all([
-      useArtist.fetchArtists(),
+      loadInfoPartner(),
+      useArtist.fetchAllArtists(),
       usePartner.fetchPartners(),
       useGenre.fetchGenres(),
     ])

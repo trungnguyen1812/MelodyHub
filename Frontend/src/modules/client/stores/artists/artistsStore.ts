@@ -1,7 +1,7 @@
 import { defineStore } from "pinia";
 import ArtistService from "@/modules/client/services/artists/artists.service";
 import {ArtistInterface} from '@/interfaces/artists.interface';
-// import type { CreateArtistPayload } from '@/modules/admin/interfaces/artists/create-artist.payload';
+import type { CreateArtistPayload } from '@/modules/client/interfaces/artists/create-artist.payload';
 import type { ArtistStatistics, FormattedArtistStatistics } from '@/modules/client/interfaces/artists/artist.statistic.interface';
 import clientApi from '@/plugins/axios';
 
@@ -117,21 +117,21 @@ export const useArtistStore = defineStore("client_artist", {
             }
         },
 
-        // async fetchAddArtist(payload: CreateArtistPayload){
-        //     this.loading = true;
-        //     this.error = null;
-        //     try {
-        //         const res = await artistsService.addArtist(payload);
-        //         const newArtist = res.data.data;
-        //         this.artists.unshift(newArtist);
-        //         return newArtist;
-        //     } catch (err: any) {
-        //         this.error =err?.response?.data?.message || "Add user false";
-        //         throw err;
-        //     } finally {
-        //         this.loading = false;
-        //     }
-        // },
+        async fetchAddArtist(payload: CreateArtistPayload){
+            this.loading = true;
+            this.error = null;
+            try {
+                const res = await ArtistService.addArtist(payload);
+                const newArtist = res.data.data;
+                this.artists.unshift(newArtist);
+                return newArtist;
+            } catch (err: any) {
+                this.error =err?.response?.data?.message || "Add user false";
+                throw err;
+            } finally {
+                this.loading = false;
+            }
+        },
         async fetchSearchArtitst(keyword: string) {
             this.loading = true;
             this.error = null;
@@ -153,52 +153,52 @@ export const useArtistStore = defineStore("client_artist", {
                 this.loading = false;
             }
         },
-        // async fetchDelete(id: number) {
-        //     try {
-        //         this.loading = true;
-        //         this.error = null;
-        //         const response = await artistsService.deleteArtist(id);
-        //         return response;
-        //     } catch (error) {
-        //         if (error instanceof Error) {
-        //             this.error = error.message;
-        //         } else if (typeof error === 'string') {
-        //             this.error = error;
-        //         } else {
-        //             this.error = 'An unknown error occurred';
-        //         }
-        //         throw error;
-        //     } finally {
-        //         this.loading = false;
-        //     }
-        // },
+        async fetchDelete(id: number) {
+            try {
+                this.loading = true;
+                this.error = null;
+                const response = await ArtistService.deleteArtist(id);
+                return response;
+            } catch (error) {
+                if (error instanceof Error) {
+                    this.error = error.message;
+                } else if (typeof error === 'string') {
+                    this.error = error;
+                } else {
+                    this.error = 'An unknown error occurred';
+                }
+                throw error;
+            } finally {
+                this.loading = false;
+            }
+        },
         async fetchShow(id :number){
             return await ArtistService.detailArtist(id);
         },
-        // async fetchUpdate(id: number, payload: CreateArtistPayload) {
-        //     try {
-        //         this.loading = true;
-        //         this.error = null;
+        async fetchUpdate(id: number, payload: CreateArtistPayload) {
+            try {
+                this.loading = true;
+                this.error = null;
                 
-        //         const res = await ArtistService.updateArtist(id, payload);
+                const res = await ArtistService.updateArtist(id, payload);
                 
                 
-        //         const index = this.artists.findIndex(u => u.id === id);
-        //         if (index !== -1) {
-        //             this.artists[index] = {
-        //                 ...this.artists[index],
-        //                 ...res.data.data
-        //             };
-        //         }
+                const index = this.artists.findIndex(u => u.id === id);
+                if (index !== -1) {
+                    this.artists[index] = {
+                        ...this.artists[index],
+                        ...res.data.data
+                    };
+                }
                 
-        //         return res.data;
-        //     } catch (err: any) {
-        //         this.error = err?.response?.data?.message || "Update user failed";
-        //         throw err;
-        //     } finally {
-        //         this.loading = false;
-        //     }
-        // },
+                return res.data;
+            } catch (err: any) {
+                this.error = err?.response?.data?.message || "Update user failed";
+                throw err;
+            } finally {
+                this.loading = false;
+            }
+        },
         
         // Chỉ sửa phần này
         async fetchShowStatistic() {
@@ -223,7 +223,31 @@ export const useArtistStore = defineStore("client_artist", {
                 this.loading = false;
             }
         },
-            
+        async fetchGetAritistByIdPartner(id: number){
+            this.loading = true
+            try {
+                const response = await ArtistService.getAritstByIdPartner(id)
+                if (response && response.data) {
+                    this.artists = response.data
+                } else if (Array.isArray(response)) {
+                    this.artists = response;        
+                } else {
+                    this.artists = [];               
+                }
+                
+                console.log(`Loaded ${this.artists.length} artists for partner ${id}`)
+                return response
+                
+            } catch (err: any) {
+                this.error = err.response?.data?.message || 'Failed to fetch artists'
+                console.error('Error fetching artists:', this.error)
+                this.artists = []
+                throw err
+            } finally {
+            this.loading = false
+            }
+             return await ArtistService.getAritstByIdPartner(id);
+        },   
         resetStatistics() {
             this.statistics = null;
         }

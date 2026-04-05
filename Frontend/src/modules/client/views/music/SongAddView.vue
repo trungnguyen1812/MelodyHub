@@ -99,7 +99,9 @@
               <label class="field-label">Artist <span class="required">*</span></label>
               <select v-model="form.artist_id" class="field-select" @change="clearError(0, 'artist_id')">
                 <option value="">-- Select Artist --</option>
-                <option v-for="a in useArtist.artists" :key="a.id" :value="a.id">{{ a.name }}</option>
+                <option v-for="artist in artistList" :key="artist.id" :value="artist.id">
+                  {{ artist.name }}
+                </option>
               </select>
               <p v-if="stepErrors[0].artist_id" class="field-error">{{ stepErrors[0].artist_id }}</p>
             </div>
@@ -370,10 +372,12 @@
           <!-- Partner -->
           <div class="field">
             <label class="field-label">Partner</label>
-            <select v-model="form.partner_id" class="field-select">
-              <option value="">-- No Partner --</option>
-              <option v-for="p in usePartner.partners" :key="p.id" :value="p.id">{{ p.company_name }}</option>
-            </select>
+            <input 
+              type="text" 
+              class="field-input" 
+              :value="usePartner.partner?.company_name || 'No partner selected'"
+              disabled
+            />
           </div>
 
           <!-- Toggles -->
@@ -546,7 +550,6 @@ import { useNotificationStore } from '@/store/notificationStore'
 import { useCloudinaryUpload } from '@/composables/Usecloudinaryupload'
 import { storeToRefs } from 'pinia'
 import LyricsEditor from '@/components/common/VcLyrics/LyricsEditor.vue'
-import type { LyricLine } from '@/components/common/VcLyrics/LyricsEditor.vue'
 import router from "@/modules/router"
 
 const emit = defineEmits<{ (e: 'back'): void }>()
@@ -557,7 +560,6 @@ const usePartner = usePartnerStore()
 const useGenre = useGenrestore()
 const useSong = useSongStore()
 const notificationStore = useNotificationStore()
-
 // ── Steps ──
 const steps = ['Basic Info', 'Audio Files', 'Artwork & Lyrics', 'Settings'] as const
 const currentStep = ref<number>(0)
@@ -904,10 +906,27 @@ function pollSongStatus(songId: number) {
   setTimeout(() => clearInterval(interval), 600_000)
 }
 
+const artistList = computed(() => useArtist.artists || [])
+
+const loadInfoPartner = async () => { 
+  await usePartner.fetchPartnerInfo()
+  const idPartner = usePartner.partner?.id  
+   if (idPartner) {
+    form.partner_id = idPartner
+    await loadArtists(idPartner)
+  }
+}
+
+const loadArtists = async (id: number) => { 
+  await useArtist.fetchGetAritistByIdPartner(id)
+}
+
+
+
 // ── Lifecycle ──
 onMounted(async () => {
   try {
-    await useArtist.fetchArtists()
+    loadInfoPartner()
     await usePartner.fetchPartners()
     await useGenre.fetchGenres()
   } catch {

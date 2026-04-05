@@ -12,7 +12,6 @@
           <div class="disc-hole"></div>
           <div v-if="player.isPlaying" class="disc-pulse"></div>
           <div class="disc-hint">
-            <!-- icon expand khi collapsed -->
             <svg v-if="isCollapsed" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor"
               stroke-width="2.5">
               <polyline points="15 3 21 3 21 9" />
@@ -20,7 +19,6 @@
               <line x1="21" y1="3" x2="14" y2="10" />
               <line x1="3" y1="21" x2="10" y2="14" />
             </svg>
-            <!-- icon collapse khi mở -->
             <svg v-else width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
               <polyline points="4 14 10 14 10 20" />
               <polyline points="20 10 14 10 14 4" />
@@ -30,7 +28,6 @@
           </div>
         </div>
 
-        <!-- PHẦN MỞ RỘNG -->
         <div class="player-expandable">
           <div class="player-info" @click="goToDetail">
             <p class="player-title">{{ player.currentSong.title }}</p>
@@ -76,7 +73,6 @@
                 <rect x="17" y="4" width="3" height="16" rx="1" />
               </svg>
             </button>
-            <!-- Thêm nút lyrics -->
             <button class="player-btn player-btn--lyrics" @click="toggleLyrics" :class="{ active: showLyrics }">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M4 4h16v2H4V4zm0 4h10v2H4V8zm0 4h16v2H4v-2zm0 4h10v2H4v-2z" />
@@ -126,11 +122,15 @@
           <h3>Lyrics</h3>
           <button @click="showLyrics = false" class="close-lyrics">×</button>
         </div>
-        <div v-if="!currentLyrics" class="lyrics-loading">
+
+        <!-- Loading state: chỉ khi đang fetch -->
+        <div v-if="isLoadingLyrics" class="lyrics-loading">
           <div class="lyrics-loading-spinner"></div>
           <p>loading lyrics...</p>
         </div>
-        <div v-else class="lyrics-content">
+
+        <!-- Content: hiển thị sau khi fetch xong (dù có hay không có lyrics) -->
+        <div v-else class="lyrics-content" :class="{ 'no-lyrics': !hasLyrics }">
           <div class="div1">
             <!-- TikTok Style Card -->
             <div class="tiktok-card">
@@ -151,12 +151,11 @@
 
               <!-- Disc/Cover Art -->
               <div class="card-media">
-                <div class="player-disc_lyrics" :style="getCoverStyle(player.currentSong!)">
+                <div class="player-disc_lyrics" :class="{ spinning: player.isPlaying }" :style="getCoverStyle(player.currentSong!)">
                   <div class="disc-grooves"></div>
                   <div class="disc-hole"></div>
                   <div v-if="player.isPlaying" class="disc-pulse-card"></div>
 
-                  <!-- Play/Pause Overlay -->
                   <div class="play-overlay-card" @click.stop="player.toggle()">
                     <svg v-if="!player.isPlaying" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
                       <polygon points="5 3 19 12 5 21 5 3" />
@@ -218,19 +217,31 @@
                   <span>Share</span>
                 </button>
               </div>
+
+              <!-- No lyrics notice -->
+              <div v-if="!hasLyrics" class="no-lyrics-notice">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                  <circle cx="12" cy="12" r="10"/>
+                  <line x1="12" y1="8" x2="12" y2="12"/>
+                  <line x1="12" y1="16" x2="12.01" y2="16"/>
+                </svg>
+                <span>No lyrics available for this song</span>
+              </div>
             </div>
           </div>
-          <div class="div2">
+
+          <!-- div2 chỉ render khi có lyrics -->
+          <div v-if="hasLyrics" class="div2">
             <div class="lyrics-lines">
               <div
                 v-for="(line, i) in currentLyrics"
                 :key="i"
                 class="lyric-line"
-                :class="{ 
+                :class="{
                   'lyric-line--active': activeLyricIdx === i,
                   'lyric-line--past': activeLyricIdx > i
                 }"
-                @click="player.seek(line.start > 0 ? line.start : (i / currentLyrics!.length) * player.duration)"
+                @click="player.seek(line.start > 0 ? line.start : (i / currentLyrics.length) * player.duration)"
               >
                 {{ line.text }}
               </div>
@@ -238,32 +249,55 @@
           </div>
         </div>
       </div>
-      
     </Transition>
   </Teleport>
 </template>
 
 <script setup lang="ts">
-import { ref, watch, onUnmounted, computed ,nextTick } from 'vue'
+import { ref, watch, onUnmounted, computed, nextTick } from 'vue'
 import { usePlayerStore } from '@/store/playerStore'
 import type { Song } from '@/interfaces/songs.interface'
 import { useRouter } from 'vue-router'
 import { useSongStore } from '@/modules/client/stores/songs/songsStore'
-import { getFullImageUrl } from '@/modules/client/stores/artists/artistsStore';
-import songsService from '@/modules/client/services/songs/songs.service';
+import { getFullImageUrl } from '@/modules/client/stores/artists/artistsStore'
+import songsService from '@/modules/client/services/songs/songs.service'
 
+// ─── Types ───────────────────────────────────────────────────────────────────
+interface LyricLine {
+  start: number
+  end: number
+  text: string
+}
+
+// ─── Stores & Router ─────────────────────────────────────────────────────────
 const router = useRouter()
 const player = usePlayerStore()
 const songStore = useSongStore()
+
+// ─── State ───────────────────────────────────────────────────────────────────
 const isCollapsed = ref(false)
 const showLyrics = ref(false)
-const currentLyrics = ref<Array<{start: number, end: number, text: string}> | null>(null)
 
+// currentLyrics luôn là LyricLine[] — không bao giờ null/false
+// [] = chưa có / không có lyrics
+// [...] = có lyrics
+const currentLyrics = ref<LyricLine[]>([])
+
+// Tách riêng loading state để template không cần check null
+const isLoadingLyrics = ref(false)
+
+// ─── Computed ─────────────────────────────────────────────────────────────────
+const hasLyrics = computed(() => currentLyrics.value.length > 0)
+
+const lyricGradient = ref('linear-gradient(135deg, rgba(16, 16, 21, 0.95), rgba(10, 10, 15, 0.98))')
+
+// ─── Navigation ──────────────────────────────────────────────────────────────
 const goToDetail = () => {
   if (!player.currentSong) return
   router.push({ name: 'client.song.detail', params: { id: player.currentSong.id } })
 }
 
+// ─── Helpers ─────────────────────────────────────────────────────────────────
 const gradients = [
   'linear-gradient(135deg,#1a1a2e,#16213e,#0f3460)',
   'linear-gradient(135deg,#2d1b69,#11998e)',
@@ -287,6 +321,30 @@ const formatTime = (secs: number) => {
   return `${m}:${String(s).padStart(2, '0')}`
 }
 
+const getLyricGradient = (song: Song) => {
+  if (!song) return 'linear-gradient(135deg, rgba(16, 16, 21, 0.95), rgba(10, 10, 15, 0.98))'
+  const list = [
+    'linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(139, 92, 246, 0.08), rgba(10, 10, 15, 0.95))',
+    'linear-gradient(135deg, rgba(236, 72, 153, 0.15), rgba(244, 114, 182, 0.08), rgba(10, 10, 15, 0.95))',
+    'linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(52, 211, 153, 0.08), rgba(10, 10, 15, 0.95))',
+    'linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(251, 191, 36, 0.08), rgba(10, 10, 15, 0.95))',
+    'linear-gradient(135deg, rgba(239, 68, 68, 0.15), rgba(248, 113, 113, 0.08), rgba(10, 10, 15, 0.95))',
+    'linear-gradient(135deg, rgba(139, 92, 246, 0.15), rgba(167, 139, 250, 0.08), rgba(10, 10, 15, 0.95))',
+  ]
+  return list[song.id % list.length]
+}
+
+const getArtistAvatarUrl = (artist: any) => {
+  if (!artist?.avatar_url) return '/images/default-avatar.png'
+  return getFullImageUrl(artist.avatar_url)
+}
+
+const handleImageError = (event: Event) => {
+  const img = event.target as HTMLImageElement
+  img.src = '/images/default-avatar.png'
+}
+
+// ─── Seek / Volume ────────────────────────────────────────────────────────────
 const onSeek = (e: Event) => player.seek(parseFloat((e.target as HTMLInputElement).value))
 const onSeekClick = (e: MouseEvent) => {
   if (player.duration === 0) return
@@ -295,78 +353,48 @@ const onSeekClick = (e: MouseEvent) => {
 }
 const onVolumeChange = (e: Event) => player.setVolume(parseFloat((e.target as HTMLInputElement).value))
 
-// Thêm logic lyrics
-const extractLyrics = (lyrics: any): Array<{start: number, end: number, text: string}> | null => {
-  if (!lyrics) return null
+// ─── Lyrics: extract ─────────────────────────────────────────────────────────
+// Luôn trả về LyricLine[] — [] nếu không parse được
+const extractLyrics = (lyrics: any): LyricLine[] => {
+  if (!lyrics) return []
 
   // Unwrap Vue Proxy
-  const raw = lyrics?.__v_raw ?? lyrics
+  const raw = (lyrics as any)?.__v_raw ?? lyrics
 
-  // String → parse JSON
-  let parsed = raw
+  let parsed: any = raw
   if (typeof raw === 'string') {
     const trimmed = raw.trim()
-    if (!trimmed || trimmed === '[object Object]') return null
-    try { parsed = JSON.parse(trimmed) } catch { return null }
+    if (!trimmed || trimmed === '[object Object]') return []
+    try { parsed = JSON.parse(trimmed) } catch { return [] }
   }
 
-  // ── Format: { type: "timed", segments: [{start, end, text}] } ──
+  // Format: { type: "timed", segments: [{start, end, text}] }
   if (parsed?.type === 'timed' && Array.isArray(parsed.segments)) {
-    const lines = parsed.segments.filter((s: any) => s?.text?.trim())
+    const lines: LyricLine[] = parsed.segments.filter((s: any) => s?.text?.trim())
     if (lines.length > 0) return lines
   }
 
-  // ── Format: { plain_text: "line1\nline2\n..." } ──
+  // Format: { plain_text: "line1\nline2\n..." }
   if (parsed?.plain_text?.trim()) {
     return parsed.plain_text
       .split('\n')
       .map((text: string) => text.trim())
       .filter(Boolean)
-      .map((text: string) => ({ start: 0, end: 0, text }))
+      .map((text: string): LyricLine => ({ start: 0, end: 0, text }))
   }
 
-  // ── Format: Array [{start, end, text}] ──
+  // Format: Array [{start, end, text}]
   if (Array.isArray(parsed)) {
-    const lines = parsed.filter((s: any) => s?.text?.trim())
-    return lines.length > 0 ? lines : null
+    const lines: LyricLine[] = parsed.filter((s: any) => s?.text?.trim())
+    return lines
   }
 
-  return null
+  return []
 }
 
-const toggleLyrics = async () => {
-  showLyrics.value = !showLyrics.value
-  
-  // Nếu mở panel mà chưa có lyrics → thử fetch
-  if (showLyrics.value && !currentLyrics.value && player.currentSong?.id) {
-    const song = await songStore.fetchSong(player.currentSong.id).catch(() => null)
-    if (song?.lyrics) {
-      currentLyrics.value = extractLyrics(song.lyrics)
-    }
-  }
-}
-
-const lyricGradient = ref('linear-gradient(135deg, rgba(16, 16, 21, 0.95), rgba(10, 10, 15, 0.98))')
-
-
-
-const getLyricGradient = (song: Song) => {
-  if (!song) return 'linear-gradient(135deg, rgba(16, 16, 21, 0.95), rgba(10, 10, 15, 0.98))'
-
-  const gradients = [
-    'linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(139, 92, 246, 0.08), rgba(10, 10, 15, 0.95))',
-    'linear-gradient(135deg, rgba(236, 72, 153, 0.15), rgba(244, 114, 182, 0.08), rgba(10, 10, 15, 0.95))',
-    'linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(52, 211, 153, 0.08), rgba(10, 10, 15, 0.95))',
-    'linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(251, 191, 36, 0.08), rgba(10, 10, 15, 0.95))',
-    'linear-gradient(135deg, rgba(239, 68, 68, 0.15), rgba(248, 113, 113, 0.08), rgba(10, 10, 15, 0.95))',
-    'linear-gradient(135deg, rgba(139, 92, 246, 0.15), rgba(167, 139, 250, 0.08), rgba(10, 10, 15, 0.95))',
-  ]
-
-  return gradients[song.id % gradients.length]
-}
-
+// ─── Lyrics: active line ─────────────────────────────────────────────────────
 const activeLyricIdx = computed(() => {
-  if (!currentLyrics.value) return -1
+  if (!hasLyrics.value) return -1
   const lines = currentLyrics.value
   const t = player.currentTime
   const dur = player.duration
@@ -383,33 +411,23 @@ const activeLyricIdx = computed(() => {
   return 0
 })
 
+// ─── Lyrics: toggle panel ────────────────────────────────────────────────────
+const toggleLyrics = async () => {
+  showLyrics.value = !showLyrics.value
 
-watch(
-  () => player.currentSong,
-  async (newSong) => {
-    if (!newSong?.id) {
-      currentLyrics.value = null
-      lyricGradient.value = 'linear-gradient(135deg, rgba(16, 16, 21, 0.95), rgba(10, 10, 15, 0.98))'
-      return
-    }
-
-    lyricGradient.value = getLyricGradient(newSong)
-
-    if (newSong.lyrics) {
-      currentLyrics.value = extractLyrics(newSong.lyrics)
-      return
-    }
-
+  // Chỉ fetch nếu mở panel VÀ chưa có lyrics VÀ không đang loading
+  if (showLyrics.value && !hasLyrics.value && !isLoadingLyrics.value && player.currentSong?.id) {
+    isLoadingLyrics.value = true
     try {
-      const { data } = await songsService.getLyrics(newSong.id)
-      currentLyrics.value = extractLyrics(data.lyrics)
-    } catch {
-      currentLyrics.value = null
+      const song = await songStore.fetchSong(player.currentSong.id).catch(() => null)
+      currentLyrics.value = song?.lyrics ? extractLyrics(song.lyrics) : []
+    } finally {
+      isLoadingLyrics.value = false
     }
-  },
-  { immediate: true }
-)
+  }
+}
 
+// ─── Scroll active lyric into view ───────────────────────────────────────────
 watch(activeLyricIdx, async (idx) => {
   if (idx < 0) return
   await nextTick()
@@ -423,6 +441,49 @@ watch(activeLyricIdx, async (idx) => {
   }
 })
 
+// ─── Watch: đổi bài → reset lyrics ──────────────────────────────────────────
+watch(
+  () => player.currentSong,
+  async (newSong) => {
+    // Reset khi stop hoặc không có bài
+    if (!newSong?.id) {
+      currentLyrics.value = []
+      isLoadingLyrics.value = false
+      lyricGradient.value = 'linear-gradient(135deg, rgba(16, 16, 21, 0.95), rgba(10, 10, 15, 0.98))'
+      showLyrics.value = false   // đóng panel khi stop
+      return
+    }
+
+    lyricGradient.value = getLyricGradient(newSong)
+    currentLyrics.value = []     // reset lyrics khi đổi bài
+    isLoadingLyrics.value = true // bắt đầu loading
+
+    // Thử lấy lyrics từ object bài nhạc trước
+    if (newSong.lyrics) {
+      currentLyrics.value = extractLyrics(newSong.lyrics)
+      isLoadingLyrics.value = false
+      return
+    }
+
+    // Nếu không có → fetch từ API
+    try {
+      const { data } = await songsService.getLyrics(newSong.id)
+      currentLyrics.value = extractLyrics(data.lyrics)
+    } catch {
+      currentLyrics.value = []   // fetch lỗi → không có lyrics
+    } finally {
+      isLoadingLyrics.value = false
+    }
+  },
+  { immediate: true }
+)
+
+// ─── Watch: collapse → đóng lyrics panel ─────────────────────────────────────
+watch(isCollapsed, (collapsed) => {
+  if (collapsed) showLyrics.value = false
+})
+
+// ─── Body scroll lock ─────────────────────────────────────────────────────────
 const lockScroll = (isLocked: boolean) => {
   if (isLocked) {
     const scrollY = window.scrollY
@@ -442,23 +503,8 @@ const lockScroll = (isLocked: boolean) => {
   }
 }
 
-watch(showLyrics, (isOpen) => {
-  lockScroll(isOpen)
-})
-
-onUnmounted(() => {
-  lockScroll(false)
-})
-
-const getArtistAvatarUrl = (artist: any) => {
-  if (!artist?.avatar_url) return '/images/default-avatar.png'
-  return getFullImageUrl(artist.avatar_url)
-}
-
-const handleImageError = (event: Event) => {
-  const img = event.target as HTMLImageElement
-  img.src = '/images/default-avatar.png'
-}
+watch(showLyrics, (isOpen) => lockScroll(isOpen))
+onUnmounted(() => lockScroll(false))
 </script>
 
 <style scoped>
@@ -469,7 +515,6 @@ const handleImageError = (event: Event) => {
   left: 0;
   width: 100%;
   z-index: 9999;
-  /* Quan trọng: đặt height để collapsed không chiếm space */
   pointer-events: none;
 }
 
@@ -485,8 +530,6 @@ const handleImageError = (event: Event) => {
   backdrop-filter: blur(24px);
   box-shadow: 0 -6px 30px rgba(0, 0, 0, 0.35);
   pointer-events: all;
-
-  /* Transition: xuất hiện / biến mất */
   opacity: 1;
   transform: translateY(0);
   transition: opacity 0.35s ease, transform 0.35s ease;
@@ -510,10 +553,7 @@ const handleImageError = (event: Event) => {
   padding: 10px 24px;
   max-width: 1400px;
   margin: 0 auto;
-
-  /* Khi collapsed: đẩy đĩa về phải */
   transition: justify-content 0s 0.35s;
-  /* delay để chờ bar ẩn xong */
 }
 
 /* ====================== ĐĨA ====================== */
@@ -533,8 +573,6 @@ const handleImageError = (event: Event) => {
     0 0 0 4px rgba(255, 255, 255, 0.08),
     0 4px 16px rgba(0, 0, 0, 0.5),
     0 0 16px rgba(59, 130, 246, 0.35);
-
-  /* Transition vị trí + kích thước */
   transition:
     transform 0.45s cubic-bezier(0.4, 0, 0.2, 1),
     width 0.45s cubic-bezier(0.4, 0, 0.2, 1),
@@ -543,11 +581,9 @@ const handleImageError = (event: Event) => {
     margin-left 0.45s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* Khi collapsed: đĩa to hơn, dịch sang phải */
 .player-wrapper.collapsed .player-disc {
   width: 62px;
   height: 62px;
-  /* Tính toán để đĩa nằm ở góc phải, cách mép 28px */
   margin-left: calc(100vw - 62px - 80px);
   margin-bottom: 10px;
   box-shadow:
@@ -561,7 +597,6 @@ const handleImageError = (event: Event) => {
   animation: disc-spin 4s linear infinite;
 }
 
-/* Vinyl grooves */
 .disc-grooves {
   position: absolute;
   inset: 0;
@@ -572,7 +607,6 @@ const handleImageError = (event: Event) => {
   pointer-events: none;
 }
 
-/* Lỗ giữa */
 .disc-hole {
   position: absolute;
   top: 50%;
@@ -587,7 +621,6 @@ const handleImageError = (event: Event) => {
   z-index: 3;
 }
 
-/* Pulse khi đang phát + collapsed */
 .disc-pulse {
   position: absolute;
   top: 50%;
@@ -606,7 +639,6 @@ const handleImageError = (event: Event) => {
   top: 0;
   bottom: 0;
   right: 0;
-
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -616,7 +648,6 @@ const handleImageError = (event: Event) => {
   opacity: 0;
   transition: opacity 0.2s ease, transform 0.2s ease;
   z-index: 4;
-
   transform: translateX(30px);
 }
 
@@ -631,7 +662,6 @@ const handleImageError = (event: Event) => {
   gap: 16px;
   flex: 1;
   overflow: hidden;
-
   opacity: 1;
   transform: translateX(0);
   transition:
@@ -642,7 +672,6 @@ const handleImageError = (event: Event) => {
   pointer-events: all;
 }
 
-/* Khi collapsed: ẩn toàn bộ phần mở rộng */
 .player-wrapper.collapsed .player-expandable {
   opacity: 0;
   transform: translateX(60px);
@@ -795,7 +824,6 @@ const handleImageError = (event: Event) => {
   transform: scale(1.05);
 }
 
-/* Thêm style cho nút lyrics */
 .player-btn--lyrics {
   width: 36px;
   height: 36px;
@@ -870,26 +898,12 @@ const handleImageError = (event: Event) => {
 
 /* ====================== LYRICS PANEL ====================== */
 .lyrics-panel {
-  --primary: #3b82f6;
-  --primary-dark: #4f46e5;
-  --secondary: #8b5cf6;
-  --bg-dark: #0a0a0f;
-  --bg-surface: #111115;
-  --bg-elevated: #1a1a22;
-  --text-primary: #ffffff;
-  --text-secondary: #a1a1aa;
-  --text-muted: #52525b;
-  --border: rgba(255, 255, 255, 0.08);
-  --radius: 24px;
-  --transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-
   position: fixed;
   bottom: 65px;
   right: 0px;
   width: 100%;
   height: 91vh;
   max-height: 700px;
-
   backdrop-filter: blur(40px) saturate(180%);
   border: 1px solid rgba(255, 255, 255, 0.1);
   box-shadow:
@@ -898,12 +912,9 @@ const handleImageError = (event: Event) => {
   overflow: hidden;
   z-index: 10000;
   pointer-events: all;
-
-  /* Thêm transition cho gradient mượt mà */
   transition: background 0.5s ease;
 }
 
-/* Lớp phủ để tăng độ đọc cho text */
 .lyrics-panel::before {
   content: "";
   position: absolute;
@@ -916,7 +927,6 @@ const handleImageError = (event: Event) => {
   z-index: 0;
 }
 
-/* Hiệu ứng shimmer */
 .lyrics-panel::after {
   content: "";
   position: absolute;
@@ -934,16 +944,10 @@ const handleImageError = (event: Event) => {
 }
 
 @keyframes shimmer {
-  0% {
-    transform: translateX(-30%) translateY(-30%);
-  }
-
-  100% {
-    transform: translateX(30%) translateY(30%);
-  }
+  0% { transform: translateX(-30%) translateY(-30%); }
+  100% { transform: translateX(30%) translateY(30%); }
 }
 
-/* Header lyrics */
 .lyrics-header {
   position: relative;
   z-index: 2;
@@ -978,7 +982,34 @@ const handleImageError = (event: Event) => {
   color: #f87171;
 }
 
-/* Content lyrics */
+/* ── Loading ── */
+.lyrics-loading {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: calc(100% - 50px);
+  gap: 12px;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 14px;
+}
+
+.lyrics-loading-spinner {
+  width: 28px;
+  height: 28px;
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  border-top-color: #3b82f6;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ── Content grid ── */
 .lyrics-content {
   position: relative;
   z-index: 2;
@@ -991,18 +1022,28 @@ const handleImageError = (event: Event) => {
   align-items: start;
 }
 
+/* Khi không có lyrics → 1 cột, card căn giữa */
+.lyrics-content.no-lyrics {
+  grid-template-columns: 1fr;
+  justify-items: center;
+}
+
+.lyrics-content.no-lyrics .div1 {
+  grid-area: unset;
+  width: 100%;
+  max-width: 360px;
+}
+
 .div1 {
   grid-area: 1 / 1 / 2 / 2;
   height: fit-content;
   position: sticky;
   top: 30px;
-
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   text-align: center;
-
   gap: 12px;
   width: 100%;
 }
@@ -1012,161 +1053,13 @@ const handleImageError = (event: Event) => {
   height: auto;
 }
 
-/* Scrollbar đẹp */
-.lyrics-content::-webkit-scrollbar {
-  width: 4px;
-}
+/* Scrollbar */
+.lyrics-content::-webkit-scrollbar { width: 4px; }
+.lyrics-content::-webkit-scrollbar-track { background: rgba(255, 255, 255, 0.05); border-radius: 4px; }
+.lyrics-content::-webkit-scrollbar-thumb { background: rgba(59, 130, 246, 0.5); border-radius: 4px; }
+.lyrics-content::-webkit-scrollbar-thumb:hover { background: rgba(59, 130, 246, 0.7); }
 
-.lyrics-content::-webkit-scrollbar-track {
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: 4px;
-}
-
-.lyrics-content::-webkit-scrollbar-thumb {
-  background: rgba(59, 130, 246, 0.5);
-  border-radius: 4px;
-}
-
-.lyrics-content::-webkit-scrollbar-thumb:hover {
-  background: rgba(59, 130, 246, 0.7);
-}
-
-/* Text lyrics */
-.lyrics-text {
-  margin: 0;
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  font-size: 15px;
-  line-height: 1.8;
-  color: #e0e0ff;
-  white-space: pre-wrap;
-  word-wrap: break-word;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
-}
-
-/* Responsive */
-@media (max-width: 768px) {
-  .lyrics-panel {
-    bottom: 65px;
-    right: 0;
-    left: 0;
-    width: 100%;
-    height: 85vh;
-    border-radius: 16px 16px 0 0;
-  }
-
-  .lyrics-text {
-    font-size: 14px;
-    line-height: 1.7;
-  }
-}
-
-@media (max-width: 640px) {
-  .lyrics-panel {
-    height: 80vh;
-  }
-
-  .lyrics-text {
-    font-size: 13px;
-    line-height: 1.6;
-  }
-}
-
-/* Transitions */
-.lyrics-slide-enter-active,
-.lyrics-slide-leave-active {
-  transition: all 0.3s ease;
-}
-
-.lyrics-slide-enter-from,
-.lyrics-slide-leave-to {
-  opacity: 0;
-  transform: translateY(20px);
-}
-
-/* ====================== ANIMATIONS ====================== */
-@keyframes disc-spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-@keyframes pulse-ring {
-  0% {
-    transform: translate(-50%, -50%) scale(1);
-    opacity: 0.7;
-  }
-
-  100% {
-    transform: translate(-50%, -50%) scale(1.65);
-    opacity: 0;
-  }
-}
-
-/* ====================== RESPONSIVE ====================== */
-@media (max-width: 768px) {
-  .player-content {
-    padding: 10px 16px;
-    gap: 12px;
-  }
-
-  .player-wrapper.collapsed .player-disc {
-    margin-left: calc(100vw - 62px - 40px);
-  }
-
-  .lyrics-panel {
-    width: calc(100% - 32px);
-    right: 16px;
-    left: 16px;
-    bottom: 72px;
-  }
-}
-
-@media (max-width: 640px) {
-  .player-volume {
-    display: none;
-  }
-}
-
-@media (max-width: 480px) {
-  .player-btn--play {
-    width: 36px;
-    height: 36px;
-  }
-
-  .player-btn--skip,
-  .player-btn--lyrics,
-  .player-btn--close {
-    width: 28px;
-    height: 28px;
-  }
-}
-
-.player-disc_lyrics {
-  pointer-events: all;
-  position: relative;
-  width: 260px;
-  height: 260px;
-  border-radius: 10%;
-  flex-shrink: 0;
-  background-size: cover;
-  background-position: center;
-  cursor: pointer;
-  overflow: hidden;
-  box-shadow:
-    0 0 0 2px rgba(0, 0, 0, 0.6),
-    0 0 0 4px rgba(255, 255, 255, 0.08),
-    0 4px 16px rgba(0, 0, 0, 0.5),
-    0 0 16px rgba(59, 130, 246, 0.35);
-
-  /* Transition vị trí + kích thước */
-  transition:
-    transform 0.45s cubic-bezier(0.4, 0, 0.2, 1),
-    width 0.45s cubic-bezier(0.4, 0, 0.2, 1),
-    height 0.45s cubic-bezier(0.4, 0, 0.2, 1),
-    box-shadow 0.3s ease,
-    margin-left 0.45s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
+/* ── Lyric lines ── */
 .lyrics-lines {
   display: flex;
   flex-direction: column;
@@ -1202,6 +1095,22 @@ const handleImageError = (event: Event) => {
   background: rgba(255, 255, 255, 0.05);
 }
 
+/* ── No lyrics notice ── */
+.no-lyrics-notice {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 16px;
+  padding: 10px 16px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 13px;
+}
+
+/* ── TikTok Card ── */
 .tiktok-card {
   background: linear-gradient(135deg, rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.2));
   backdrop-filter: blur(20px);
@@ -1209,13 +1118,13 @@ const handleImageError = (event: Event) => {
   padding: 16px;
   border: 1px solid rgba(255, 255, 255, 0.1);
   transition: all 0.3s ease;
+  width: 100%;
 }
 
 .tiktok-card:hover {
   transform: translateY(-4px);
 }
 
-/* Header */
 .card-header {
   display: flex;
   justify-content: space-between;
@@ -1278,7 +1187,6 @@ const handleImageError = (event: Event) => {
   transform: scale(1.05);
 }
 
-/* Media */
 .card-media {
   display: flex;
   justify-content: center;
@@ -1297,6 +1205,7 @@ const handleImageError = (event: Event) => {
     0 0 0 6px rgba(255, 255, 255, 0.05),
     0 10px 30px rgba(0, 0, 0, 0.5);
   cursor: pointer;
+  overflow: hidden;
   transition: transform 0.3s ease;
 }
 
@@ -1308,7 +1217,6 @@ const handleImageError = (event: Event) => {
   animation: disc-spin 4s linear infinite;
 }
 
-/* Play Overlay */
 .play-overlay-card {
   position: absolute;
   top: 50%;
@@ -1338,28 +1246,6 @@ const handleImageError = (event: Event) => {
   transform: translate(-50%, -50%) scale(1.1);
 }
 
-/* Disc details */
-.disc-grooves {
-  position: absolute;
-  inset: 0;
-  border-radius: 50%;
-  background: repeating-radial-gradient(circle at 50% 50%, transparent 0px, transparent 3px, rgba(0, 0, 0, 0.13) 3px, rgba(0, 0, 0, 0.13) 4px);
-  pointer-events: none;
-}
-
-.disc-hole {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  background: #0a0e16;
-  border: 2px solid rgba(59, 130, 246, 0.65);
-  z-index: 3;
-}
-
 .disc-pulse-card {
   position: absolute;
   top: 50%;
@@ -1373,7 +1259,6 @@ const handleImageError = (event: Event) => {
   pointer-events: none;
 }
 
-/* Card Info */
 .card-info {
   text-align: center;
   margin: 16px 0;
@@ -1396,7 +1281,6 @@ const handleImageError = (event: Event) => {
   overflow: hidden;
 }
 
-/* Card Footer */
 .card-footer {
   display: flex;
   justify-content: space-between;
@@ -1416,7 +1300,6 @@ const handleImageError = (event: Event) => {
   color: rgba(255, 255, 255, 0.6);
 }
 
-/* Action Row */
 .action-row {
   display: flex;
   justify-content: space-around;
@@ -1464,8 +1347,65 @@ const handleImageError = (event: Event) => {
   color: #10b981;
 }
 
-/* Responsive */
+/* ====================== TRANSITIONS ====================== */
+.lyrics-slide-enter-active,
+.lyrics-slide-leave-active {
+  transition: all 0.3s ease;
+}
+
+.lyrics-slide-enter-from,
+.lyrics-slide-leave-to {
+  opacity: 0;
+  transform: translateY(20px);
+}
+
+/* ====================== ANIMATIONS ====================== */
+@keyframes disc-spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes pulse-ring {
+  0% { transform: translate(-50%, -50%) scale(1); opacity: 0.7; }
+  100% { transform: translate(-50%, -50%) scale(1.65); opacity: 0; }
+}
+
+/* ====================== RESPONSIVE ====================== */
 @media (max-width: 768px) {
+  .player-content {
+    padding: 10px 16px;
+    gap: 12px;
+  }
+
+  .player-wrapper.collapsed .player-disc {
+    margin-left: calc(100vw - 62px - 40px);
+  }
+
+  .lyrics-panel {
+    width: 100%;
+    right: 0;
+    left: 0;
+    bottom: 65px;
+    height: 85vh;
+    border-radius: 16px 16px 0 0;
+  }
+
+  .lyrics-content {
+    grid-template-columns: 1fr;
+  }
+
+  .div1 {
+    grid-area: unset;
+    position: static;
+  }
+
+  .div2 {
+    grid-area: unset;
+  }
+
+  .lyrics-content.no-lyrics .div1 {
+    max-width: 100%;
+  }
+
   .player-disc_lyrics {
     width: 160px;
     height: 160px;
@@ -1474,57 +1414,34 @@ const handleImageError = (event: Event) => {
   .song-name {
     font-size: 16px;
   }
+}
+
+@media (max-width: 640px) {
+  .player-volume {
+    display: none;
+  }
+
+  .lyrics-panel {
+    height: 80vh;
+  }
+}
+
+@media (max-width: 480px) {
+  .player-btn--play {
+    width: 36px;
+    height: 36px;
+  }
+
+  .player-btn--skip,
+  .player-btn--lyrics,
+  .player-btn--close {
+    width: 28px;
+    height: 28px;
+  }
 
   .action-btn {
     font-size: 11px;
     padding: 8px;
   }
-
-  .action-btn svg {
-    width: 16px;
-    height: 16px;
-  }
-}
-
-@keyframes disc-spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-@keyframes pulse-ring {
-  0% {
-    transform: translate(-50%, -50%) scale(1);
-    opacity: 0.7;
-  }
-
-  100% {
-    transform: translate(-50%, -50%) scale(1.5);
-    opacity: 0;
-  }
-}
-
-.lyrics-loading {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  height: 60%;
-  gap: 12px;
-  color: rgba(255,255,255,0.5);
-  font-size: 14px;
-}
-
-.lyrics-loading-spinner {
-  width: 28px;
-  height: 28px;
-  border: 2px solid rgba(255,255,255,0.1);
-  border-top-color: #3b82f6;
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
 }
 </style>
