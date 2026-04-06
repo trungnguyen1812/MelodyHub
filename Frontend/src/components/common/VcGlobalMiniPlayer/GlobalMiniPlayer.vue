@@ -180,7 +180,8 @@
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z" />
                   </svg>
-                  <span>Original Sound</span>
+                  <span>{{ formatNumber(player.currentSong?.stats.total_plays ?? 0) }}</span>
+                  <span class="play-count-label">listens</span>
                 </div>
                 <div class="duration">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -193,29 +194,19 @@
 
               <!-- Action Buttons Row -->
               <div class="action-row">
-                <button class="action-btn like-btn">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path
-                      d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
-                  </svg>
-                  <span>12.3K</span>
-                </button>
-                <button class="action-btn comment-btn">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-                  </svg>
-                  <span>2.5K</span>
-                </button>
-                <button class="action-btn share-btn">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <circle cx="18" cy="5" r="3" />
-                    <circle cx="6" cy="12" r="3" />
-                    <circle cx="18" cy="19" r="3" />
-                    <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
-                    <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
-                  </svg>
-                  <span>Share</span>
-                </button>
+                <ActionButton 
+                  type="like" 
+                  :item="{ id: player.currentSong!.id }" 
+                />
+                <ActionButton 
+                  type="comment_like" 
+                  :item="{ id: player.currentSong!.id }" 
+                />
+                <ActionButton 
+                  type="share" 
+                  aria-label
+                  :item="{ id: player.currentSong!.id }" 
+                />
               </div>
 
               <!-- No lyrics notice -->
@@ -261,6 +252,7 @@ import { useRouter } from 'vue-router'
 import { useSongStore } from '@/modules/client/stores/songs/songsStore'
 import { getFullImageUrl } from '@/modules/client/stores/artists/artistsStore'
 import songsService from '@/modules/client/services/songs/songs.service'
+import ActionButton  from '@/components/common/VcBtnAction/ActionButton.vue';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 interface LyricLine {
@@ -343,6 +335,15 @@ const handleImageError = (event: Event) => {
   const img = event.target as HTMLImageElement
   img.src = '/images/default-avatar.png'
 }
+
+
+const formatNumber = (n: number) =>
+  n >= 1_000_000 ? (n / 1_000_000).toFixed(1) + 'M'
+  : n >= 1_000   ? (n / 1_000).toFixed(1) + 'K'
+  : String(n)
+const formatDate = (iso: string) =>
+  new Date(iso).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
+
 
 // ─── Seek / Volume ────────────────────────────────────────────────────────────
 const onSeek = (e: Event) => player.seek(parseFloat((e.target as HTMLInputElement).value))
@@ -1443,5 +1444,43 @@ onUnmounted(() => lockScroll(false))
     font-size: 11px;
     padding: 8px;
   }
+}
+
+/* Card info container */
+.card-info {
+    /* Giữ nguyên style cũ của bạn */
+}
+
+/* Wrapper cho play count */
+.play-count-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 8px;
+    padding: 6px 12px;
+    background: rgba(0, 0, 0, 0.05);
+    border-radius: 20px;
+    width: fit-content;
+}
+
+/* Icon headphones */
+.play-count-wrapper i {
+    font-size: 14px;
+    color: #4a9eff;
+}
+
+/* Số lượt nghe */
+.play-count {
+    font-size: 16px;
+    font-weight: 600;
+    color: #333;
+    margin-right: 2px;
+}
+
+/* Chữ "lượt nghe" */
+.play-count-label {
+    font-size: 12px;
+    color: #666;
+    font-weight: normal;
 }
 </style>

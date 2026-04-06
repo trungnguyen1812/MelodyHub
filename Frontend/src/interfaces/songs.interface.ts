@@ -71,6 +71,7 @@ export interface Song {
   stats:           SongStats
   created_at:      string
   updated_at:      string
+  total_plays:      number | null
 }
  
 export interface SongMeta {

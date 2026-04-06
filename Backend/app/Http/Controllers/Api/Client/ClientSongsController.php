@@ -145,17 +145,11 @@ class ClientSongsController extends Controller
     public function getPopularSongs(Request $request): JsonResponse
     {
         $limit = min((int) $request->get('limit', 10), 100);
-        $since = now()->subDays(30);
 
         $songs = Song::query()
             ->with(['artist', 'album', 'genre'])
             ->where('status', 'published')
-            ->withCount([
-                'song_plays as play_count' => function ($q) use ($since) {
-                    $q->where('played_at', '>=', $since);
-                }
-            ])
-            ->orderBy('play_count', 'desc')
+            ->orderBy('total_plays', 'desc') 
             ->limit($limit)
             ->get();
 

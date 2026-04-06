@@ -58,6 +58,15 @@ class SongService {
     async getLyrics(songId: number) {
         return clientApi.get(`/songs/${songId}/lyrics`)
     }
+
+    async recordPlay(songId: number, payload: {
+        played_duration: number
+        play_percentage: number
+        is_completed: boolean
+        playlist_id?: number  
+    }) {
+        return clientApi.post(`/songs/${songId}/play`, payload)
+    }
 }
 
 export default new SongService();

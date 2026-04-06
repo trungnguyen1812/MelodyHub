@@ -13,6 +13,7 @@
     "@coreui/coreui": "^5.4.0",
     "@coreui/vue": "^5.5.0",
     "@heroicons/vue": "^2.2.0",
+    "@pinia/colada": "^1.1.0",
     "@pinia/nuxt": "^0.11.3",
     "@tanstack/react-query": "^5.90.16",
     "apexcharts": "^4.7.0",

@@ -1,5 +1,6 @@
 import { createApp } from 'vue';
 import { createPinia } from 'pinia';
+import { PiniaColada } from '@pinia/colada'
 import VueApexCharts from 'vue3-apexcharts';
 import router from './modules/router';
 import Notification from '@/components/common/VcNotification/Notification.vue';
@@ -15,6 +16,9 @@ app.use(pinia);
 
 // ─── 3.  Router ───────────────────────────────────────────────────────────
 app.use(router);
+
+// ─── 3.  colada ───────────────────────────────────────────────────────────
+app.use(PiniaColada);
 
 // ─── 4. Global properties ────────────────────────────────────────────────────
 app.config.globalProperties.$api = api;

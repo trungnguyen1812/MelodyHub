@@ -18,6 +18,8 @@ use App\Http\Controllers\Api\Client\ClientGenresController;
 use App\Http\Controllers\Api\Client\ClientPartnersController;
 use App\Http\Controllers\Api\Client\ClientSongsController;
 use App\Http\Controllers\Api\Client\ClientTypePartnerController;
+use App\Http\Controllers\Api\Client\SongPlayController as ClientSongPlayController;
+use App\Http\Controllers\Api\SongPlayController;
 use App\Models\Partner;
 use App\Models\Song;
 
@@ -92,21 +94,30 @@ Route::prefix('client')->group(function () {
     
     // Router songs manager
     Route::prefix('songs')->group(function () {
-
         Route::get('/{song}/lyrics', [ClientSongsController::class, 'getLyricsSong']);
         Route::get('/allSongs', [ClientSongsController::class, 'index']);
-        Route::get('/new', [ClientSongsController::class, 'getNewSongs']);      
-        Route::get('/popular', [ClientSongsController::class, 'getPopularSongs']);  
+        Route::get('/new', [ClientSongsController::class, 'getNewSongs']);
+        Route::get('/popular', [ClientSongsController::class, 'getPopularSongs']);
         Route::post('/add', [ClientSongsController::class, 'add']);
-        
-        // QUAN TRỌNG: Đặt route cụ thể trước route wildcard
+
         Route::get('/by-slug/{slug}', [ClientSongsController::class, 'showBySlug']);
         Route::get('/{id}', [ClientSongsController::class, 'show'])->where('id', '[0-9]+');
-        
+
         Route::delete('/delete/{song}', [ClientSongsController::class, 'delete']);
         Route::delete('/delete-multiple', [ClientSongsController::class, 'deleteMultiple']);
         Route::post('/update/{song}', [ClientSongsController::class, 'update']);
+
+        // ─── Song Plays ───────────────────────────────────────────────────────
+        Route::post('/{song}/play', [ClientSongPlayController::class, 'record']);
+
+        // Route::middleware('auth:sanctum')->group(function () {
+        //     Route::get('/{song}/plays/stats', [SongPlayController::class, 'stats']);
+        // });
     });
+
+    // Lịch sử nghe — đặt ngoài prefix songs vì không liên quan đến 1 bài cụ thể
+    Route::middleware('auth:sanctum')->get('/me/history', [ClientSongPlayController::class, 'history']);
+
     // Router partners type manager
     Route::prefix('partnerTypes')->group(function () {
         Route::get('/',         [ClientTypePartnerController::class, 'getAllTypePartnar']);
@@ -137,6 +148,7 @@ Route::prefix('client')->group(function () {
         // Route::post('/{song}',     [GenresManagerController::class, 'update']);
         // Route::post('/{song}',  [GenresManagerController::class, 'destroy']);
     });
+
 
 
 });
