@@ -196,16 +196,28 @@
               <div class="action-row">
                 <ActionButton 
                   type="like" 
-                  :item="{ id: player.currentSong!.id }" 
+                  :item="{ 
+                    id: player.currentSong!.id,
+                    isActive: player.currentSong!.is_liked,   
+                    count:    player.currentSong!.like_count  
+                  }" 
                 />
                 <ActionButton 
                   type="comment_like" 
-                  :item="{ id: player.currentSong!.id }" 
+                  :item="{ 
+                    id: player.currentSong!.id,
+                    // isActive: player.currentSong!.is_liked,   
+                    // count:    player.currentSong!.like_count  
+                  }" 
                 />
                 <ActionButton 
                   type="share" 
                   aria-label
-                  :item="{ id: player.currentSong!.id }" 
+                  :item="{ 
+                    id: player.currentSong!.id,
+                    // isActive: player.currentSong!.is_liked,   
+                    // count:    player.currentSong!.like_count  
+                  }" 
                 />
               </div>
 

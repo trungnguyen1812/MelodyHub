@@ -96,7 +96,8 @@ class SongResource extends JsonResource
                 'total_shares'    => $this->total_shares,
                 'total_downloads' => $this->total_downloads,
             ],
-
+            'like_count' => $this->song_likes_count ?? 0, 
+            'is_liked'   => (bool) ($this->is_liked ?? false),
             'created_at' => $this->created_at?->toISOString(),
             'updated_at' => $this->updated_at?->toISOString(),
         ];

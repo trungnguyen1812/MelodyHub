@@ -72,6 +72,8 @@ export interface Song {
   created_at:      string
   updated_at:      string
   total_plays:      number | null
+  is_liked:         boolean
+  like_count  :     number
 }
  
 export interface SongMeta {

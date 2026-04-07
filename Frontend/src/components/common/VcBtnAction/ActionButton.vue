@@ -52,7 +52,7 @@
         <span class="action-btn__icon" :class="{ 'action-btn__icon--spin': isLoading }">
           <component :is="currentIcon" />
         </span>
-         <span class="action-btn__label">
+        <span class="action-btn__label">
           {{ typeConfig.label }}
         </span>
         <span v-if="optimisticCount > 0" class="action-btn__count">
@@ -60,13 +60,13 @@
         </span>
       </span>
     </slot>
-    
   </button>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, watch, onUnmounted, h } from 'vue'
-import { useQuery, useMutation, useQueryCache } from '@pinia/colada'
+import { useMutation, useQueryCache } from '@pinia/colada'
+import SongActionService from '@/services/songAction.Service'
 import { debounce, throttle } from 'lodash-es'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -87,8 +87,8 @@ interface ExtraProps {
 
 interface TypeConfig {
   label: string
-  endpoint: (id: number | string) => string
-  buildBody: (newValue: boolean, extra?: ExtraProps) => Record<string, any>
+  // Thay buildBody + endpoint bằng serviceFn gọi thẳng vào SongActionService
+  serviceFn: (id: number | string, newValue: boolean, extra?: ExtraProps) => Promise<any>
   invalidateKeys: string[][]
   // 'toggle' = like/bookmark, 'once' = download/share (không rollback)
   behavior: 'toggle' | 'once'
@@ -125,21 +125,27 @@ const emit = defineEmits<{
 const TYPE_CONFIG: Record<ActionType, TypeConfig> = {
   like: {
     label: 'Like',
-    endpoint: (id) => `/api/songs/${id}/like`,
-    buildBody: (newValue) => ({ is_liked: newValue }),
+    serviceFn: (id, newValue) => SongActionService.likeSong(Number(id), newValue),
     invalidateKeys: [['songs'], ['song_likes']],
     behavior: 'toggle',
     spamStrategy: 'debounce',    // gộp nhiều click nhanh → chỉ gửi 1 request cuối
     delay: 600,
   },
 
+  share: {
+    label: 'Share',
+    serviceFn: (id) => SongActionService.shareSong(Number(id)),
+    invalidateKeys: [['songs']],
+    behavior: 'once',
+    spamStrategy: 'throttle',    // tránh spam share
+    delay: 2000,
+  },
+
   download: {
     label: 'Download',
-    endpoint: (id) => `/api/songs/${id}/download`,
     // song_downloads cần thêm quality + ghi nhận device
-    buildBody: (_newValue, extra) => ({
-      quality: extra?.quality ?? 'standard',
-    }),
+    serviceFn: (id, _newValue, extra) =>
+      SongActionService.downloadSong(Number(id), extra?.quality ?? 'standard'),
     invalidateKeys: [['songs'], ['song_downloads']],
     behavior: 'once',            // không toggle được, chỉ trigger 1 lần
     spamStrategy: 'throttle',    // cho phép tải lại nhưng giới hạn tần suất
@@ -148,22 +154,11 @@ const TYPE_CONFIG: Record<ActionType, TypeConfig> = {
 
   comment_like: {
     label: 'Like comment',
-    endpoint: (id) => `/api/comments/${id}/like`,
-    buildBody: (newValue) => ({ is_liked: newValue }),
+    serviceFn: (id, newValue) => SongActionService.likeComment(Number(id), newValue),
     invalidateKeys: [['comments']],
     behavior: 'toggle',
     spamStrategy: 'debounce',
     delay: 400,
-  },
-
-  share: {
-    label: 'Share',
-    endpoint: (id) => `/api/songs/${id}/share`,
-    buildBody: () => ({ shared: true }),
-    invalidateKeys: [['songs']],
-    behavior: 'once',
-    spamStrategy: 'throttle',    // tránh spam share
-    delay: 2000,
   },
 }
 
@@ -186,17 +181,8 @@ let rollbackSnapshot = {
 
 const { mutate, isLoading, error } = useMutation({
   mutation: async ({ id, newValue, extra }: { id: number | string; newValue: boolean; extra?: ExtraProps }) => {
-    const config = typeConfig.value
-    const response = await fetch(config.endpoint(id), {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(config.buildBody(newValue, extra)),
-    })
-    if (!response.ok) {
-      const errBody = await response.json().catch(() => ({}))
-      throw new Error(errBody?.message ?? `${props.type} request failed (${response.status})`)
-    }
-    return response.json()
+    // Gọi qua service thay vì fetch trực tiếp
+    return typeConfig.value.serviceFn(id, newValue, extra)
   },
 
   onSuccess(result) {

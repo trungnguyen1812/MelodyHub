@@ -24,7 +24,11 @@ return Application::configure(basePath: dirname(__DIR__))
                 'admin.token' => AdminTokenMiddleware::class,
             ]);
     })
-
+    ->withMiddleware(function (Middleware $middleware) {
+        $middleware->alias([
+            'optional.auth' => \App\Http\Middleware\OptionalAuth::class,
+        ]);
+    })
     ->withExceptions(function (Exceptions $exceptions) {
         //
     })

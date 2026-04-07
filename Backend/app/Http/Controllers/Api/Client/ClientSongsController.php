@@ -5,12 +5,14 @@ namespace App\Http\Controllers\Api\Client;
 use App\Helpers\ParseLrcFile;
 use App\Http\Controllers\Controller;
 use App\Models\Song;
+use App\Models\SongLike;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use App\Jobs\ProcessSongAudio;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Http\JsonResponse;
 use App\Http\Resources\SongResource;
+use Illuminate\Support\Facades\Auth;
 
 use App\Jobs\GenerateLyricsJob;
 use App\Services\LyricsService;
@@ -117,25 +119,44 @@ class ClientSongsController extends Controller
 
     public function getNewSongs(Request $request): JsonResponse
     {
-        $limit = min((int) $request->get('limit', 10), 100);
-
-        $songs = Song::query()
+        $limit  = min((int) $request->get('limit', 10), 100);
+       /** @var \App\Models\User $user */
+        $user = Auth::user();
+        $userId = $user?->id;
+        
+        $query = Song::query()
             ->with(['artist', 'album', 'genre'])
-            ->where('status', 'published')
-            ->where('created_at', '>=', now()->subDays(90)) 
+            ->withCount('song_likes')
+            ->where('status', 'published');
+
+        $songs = (clone $query)
+            ->where('created_at', '>=', now()->subDays(90))
             ->orderBy('created_at', 'desc')
             ->limit($limit)
             ->get();
 
         if ($songs->isEmpty()) {
-            $songs = Song::query()
-                ->with(['artist', 'album', 'genre'])
-                ->where('status', 'published')
+            $songs = $query
                 ->orderBy('created_at', 'desc')
                 ->limit($limit)
                 ->get();
         }
-
+        log::info($userId);
+        if ($userId) {
+            $likedSongIds = SongLike::where('user_id', $userId)
+                ->pluck('song_id')
+                ->toArray();
+                
+            foreach ($songs as $song) {
+                $song->is_liked = in_array($song->id, $likedSongIds);
+            }
+            Log::info('After assigning is_liked', [
+                'song_id' => $songs->first()?->id,
+                'is_liked_value' => $songs->first()?->is_liked,
+                'liked_song_ids' => $likedSongIds
+            ]);
+        }
+        
         return response()->json([
             'success' => true,
             'data'    => SongResource::collection($songs),
@@ -144,15 +165,36 @@ class ClientSongsController extends Controller
 
     public function getPopularSongs(Request $request): JsonResponse
     {
-        $limit = min((int) $request->get('limit', 10), 100);
+        $limit  = min((int) $request->get('limit', 10), 100);
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+        $userId = $user?->id;
 
         $songs = Song::query()
             ->with(['artist', 'album', 'genre'])
+            ->withCount('song_likes')
+            ->when($userId, function ($q) use ($userId) {
+                $q->withExists([
+                    'song_likes as is_liked' => fn($q) => $q->where('user_id', $userId)
+                ]);
+            })
             ->where('status', 'published')
-            ->orderBy('total_plays', 'desc') 
+            ->orderBy('total_plays', 'desc')
             ->limit($limit)
             ->get();
-
+        log::info($userId);
+        if ($userId && $songs->isNotEmpty()) {
+            $songIds = $songs->pluck('id')->toArray();
+            $likedSongIds = SongLike::where('user_id', $userId)
+                ->whereIn('song_id', $songIds)
+                ->pluck('song_id')
+                ->toArray();
+                
+            foreach ($songs as $song) {
+                $song->is_liked = in_array($song->id, $likedSongIds);
+            }
+        }
+        
         return response()->json([
             'success' => true,
             'data'    => SongResource::collection($songs),

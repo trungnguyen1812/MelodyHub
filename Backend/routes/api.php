@@ -18,6 +18,8 @@ use App\Http\Controllers\Api\Client\ClientGenresController;
 use App\Http\Controllers\Api\Client\ClientPartnersController;
 use App\Http\Controllers\Api\Client\ClientSongsController;
 use App\Http\Controllers\Api\Client\ClientTypePartnerController;
+use App\Http\Controllers\Api\Client\CommentInteractionController;
+use App\Http\Controllers\Api\Client\Songinteractioncontroller;
 use App\Http\Controllers\Api\Client\SongPlayController as ClientSongPlayController;
 use App\Http\Controllers\Api\SongPlayController;
 use App\Models\Partner;
@@ -96,8 +98,13 @@ Route::prefix('client')->group(function () {
     Route::prefix('songs')->group(function () {
         Route::get('/{song}/lyrics', [ClientSongsController::class, 'getLyricsSong']);
         Route::get('/allSongs', [ClientSongsController::class, 'index']);
-        Route::get('/new', [ClientSongsController::class, 'getNewSongs']);
-        Route::get('/popular', [ClientSongsController::class, 'getPopularSongs']);
+
+        Route::get('/new', [ClientSongsController::class, 'getNewSongs'])
+             ->middleware('optional.auth');
+             
+        Route::get('/popular', [ClientSongsController::class, 'getPopularSongs'])
+            ->middleware('optional.auth');
+        
         Route::post('/add', [ClientSongsController::class, 'add']);
 
         Route::get('/by-slug/{slug}', [ClientSongsController::class, 'showBySlug']);
@@ -109,7 +116,7 @@ Route::prefix('client')->group(function () {
 
         // ─── Song Plays ───────────────────────────────────────────────────────
         Route::post('/{song}/play', [ClientSongPlayController::class, 'record']);
-
+        
         // Route::middleware('auth:sanctum')->group(function () {
         //     Route::get('/{song}/plays/stats', [SongPlayController::class, 'stats']);
         // });
@@ -149,7 +156,17 @@ Route::prefix('client')->group(function () {
         // Route::post('/{song}',  [GenresManagerController::class, 'destroy']);
     });
 
+    Route::middleware('auth:sanctum')->group(function () {
+    Route::prefix('songLike')->group(function () {
+        Route::post('/{song}/like',  [Songinteractioncontroller::class, 'like'])
+             ->where('song', '[0-9]+');
+        Route::post('/{song}/share', [SongInteractionController::class, 'share'])
+             ->where('song', '[0-9]+');
+    });
 
+    // Comments
+    Route::post('/comments/{comment}/like', [CommentInteractionController::class, 'like']);
+});
 
 });
 
