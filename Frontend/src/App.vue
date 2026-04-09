@@ -4,6 +4,7 @@
     <router-view />
   </component>
   <GlobalMiniPlayer/>
+  <ShareModal /> 
 </template>
 
 <script setup lang="ts">
@@ -16,6 +17,7 @@ import AdminLayout from "@/layouts/AdminLayout.vue";
 import Notification from '@/components/common/VcNotification/Notification.vue'; 
 import GlobalMiniPlayer from '@/components/common/VcGlobalMiniPlayer/GlobalMiniPlayer.vue'
 import { useUserStore } from '@/modules/client/stores/users/UserStore';
+import ShareModal  from '@/components/common/VcBtnAction/ShareModal.vue';
 
 const route = useRoute();
 const authStore = useAuthStore();

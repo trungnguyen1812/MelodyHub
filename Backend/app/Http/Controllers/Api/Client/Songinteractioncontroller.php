@@ -55,10 +55,10 @@ class Songinteractioncontroller  extends Controller
     // =========================================================================
     public function share(Request $request, Song $song): JsonResponse
     {
-        $song->increment('share_count');
+        $song->increment('total_shares');
  
         return response()->json([
-            'share_count' => $song->share_count,
+            'total_shares' => $song->total_shares,
         ]);
     }
 }
