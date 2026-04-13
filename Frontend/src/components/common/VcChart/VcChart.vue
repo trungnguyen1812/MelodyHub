@@ -6,7 +6,7 @@
         <h2 class="chart-title">Top Charts</h2>
         <p class="chart-subtitle">Most played this week</p>
       </div>
-      <button class="see-all-btn" @click="$router.push({ name: 'client.charts' })">See all</button>
+      <button class="see-all-btn" @click="$router.push({ name: 'client.charts' })">SEE ALL</button>
     </div>
 
     <!-- Two column layout -->
@@ -93,11 +93,6 @@
               <div class="podium-plays">{{ song.totalPlaysStr }}</div>
             </div>
           </div>
-        </div>
-
-        <!-- Mini wave visualizer decoration -->
-        <div class="wave-deco">
-          <span v-for="n in 28" :key="n" :style="{ animationDelay: (n * 0.07) + 's', height: (Math.random() * 24 + 8) + 'px' }"></span>
         </div>
       </div>
     </div>
@@ -193,6 +188,7 @@ const handleImageError = (e: Event) => {
   padding: 32px 24px 40px;
   color: #fff;
   background-color: black;
+  border-radius:10px ;
 }
 
 /* ─── Header ──────────────────────────────────────────── */

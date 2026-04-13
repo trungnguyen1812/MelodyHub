@@ -1,6 +1,7 @@
 <template>
   <div class="all-genres-page">
     <div class="header-section">
+      
       <h1 class="page-title">Discover Music Genres</h1>
       <p class="page-subtitle">Explore our diverse collection of music categories</p>
       

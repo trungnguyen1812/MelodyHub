@@ -1,5 +1,5 @@
 <template>
-  <section class="px-6 py-8 bg-black">
+  <section class="px-6 py-8 bg-black rounded-[10px]">
     <!-- Header with title and navigation -->
     <div class="flex items-center justify-between mb-8">
       <div>

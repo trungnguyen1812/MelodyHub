@@ -217,11 +217,10 @@ onMounted(async () => {
 
 <style scoped>
 .genre-detail-page {
-  min-height: 100vh;
+  min-height: 80vh;
   color: #fff;
   position: relative;
   overflow-x: hidden;
-  background: #080e14;
 }
 
 .bg-blur-container {
