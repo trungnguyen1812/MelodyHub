@@ -1,3 +1,5 @@
+import { Song } from "./songs.interface";
+
 export interface ArtistInterface {
     id: number;
     name: string;
@@ -26,4 +28,5 @@ export interface ArtistInterface {
     created_at: string | null; // ISO date string
     updated_at: string | null; // ISO date string
     deleted_at: string | null; // ISO date string
+    songs?: Song[];
 }

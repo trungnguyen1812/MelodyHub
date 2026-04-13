@@ -1,722 +1,832 @@
 <template>
-    <div class="user-add-view">
-        <!-- Header -->
-        <div class="page-header">
-            <div class="header-left">
-                <h1 class="page-header-title">User Management</h1>
-                <span class="header-badge">Add New</span>
+  <div class="user-shell">
+    <div class="bg-grid" aria-hidden="true"></div>
+
+    <!-- Header -->
+    <header class="topbar">
+      <button class="back-btn" @click="$router.back()">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" width="16" height="16">
+          <path fill-rule="evenodd" d="M7.793 2.232a.75.75 0 0 1-.025 1.06L3.622 7.25h10.003a5.375 5.375 0 0 1 0 10.75H10.75a.75.75 0 0 1 0-1.5h2.875a3.875 3.875 0 0 0 0-7.75H3.622l4.146 3.957a.75.75 0 0 1-1.036 1.085l-5.5-5.25a.75.75 0 0 1 0-1.085l5.5-5.25a.75.75 0 0 1 1.06.025Z" clip-rule="evenodd" />
+        </svg>
+        Users
+      </button>
+      <div class="topbar-center">
+        <span class="topbar-label">New User</span>
+      </div>
+      <div style="width:90px"></div>
+    </header>
+
+    <div class="page-body">
+      <!-- Left: form -->
+      <div class="form-col">
+
+        <!-- Basic info -->
+        <div class="card">
+          <div class="card-head">
+            <div class="card-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="22" height="22" style="color:#00aaff">
+                <path fill-rule="evenodd" d="M7.5 6a4.5 4.5 0 1 1 9 0 4.5 4.5 0 0 1-9 0ZM3.751 20.105a8.25 8.25 0 0 1 16.498 0 .75.75 0 0 1-.437.695A18.683 18.683 0 0 1 12 22.5c-2.786 0-5.433-.608-7.812-1.7a.75.75 0 0 1-.437-.695Z" clip-rule="evenodd" />
+              </svg>
             </div>
-            <div class="header-actions">
-                <button class="btn btn-secondary" @click="$router.back()">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" width="18" height="18">
-                        <path fill-rule="evenodd" d="M7.793 2.232a.75.75 0 0 1-.025 1.06L3.622 7.25h10.003a5.375 5.375 0 0 1 0 10.75H10.75a.75.75 0 0 1 0-1.5h2.875a3.875 3.875 0 0 0 0-7.75H3.622l4.146 3.957a.75.75 0 0 1-1.036 1.085l-5.5-5.25a.75.75 0 0 1 0-1.085l5.5-5.25a.75.75 0 0 1 1.06.025Z" clip-rule="evenodd" />
+            <div>
+              <h2 class="card-title">Basic information</h2>
+              <p class="card-sub">Account credentials and personal details</p>
+            </div>
+          </div>
+
+          <div class="fields">
+            <div class="field-row two-col">
+              <div class="field">
+                <label class="flabel required">Full name</label>
+                <input v-model="form.name" type="text" placeholder="John Doe" class="fcontrol" />
+              </div>
+              <div class="field">
+                <label class="flabel required">Username</label>
+                <input v-model="form.username" type="text" placeholder="johndoe" class="fcontrol" />
+                <span class="fhint">Unique identifier for login</span>
+              </div>
+            </div>
+
+            <div class="field-row two-col">
+              <div class="field">
+                <label class="flabel required">Email address</label>
+                <input v-model="form.email" type="email" placeholder="user@example.com" class="fcontrol" />
+              </div>
+              <div class="field">
+                <label class="flabel">Phone number</label>
+                <input v-model="form.phone" type="tel" placeholder="+1 234 567 890" class="fcontrol" />
+              </div>
+            </div>
+
+            <div class="field-row two-col">
+              <div class="field">
+                <label class="flabel required">Password</label>
+                <div class="pass-row">
+                  <input
+                    v-model="form.password"
+                    :type="showPass ? 'text' : 'password'"
+                    placeholder="Min 8 characters"
+                    class="fcontrol"
+                  />
+                  <button type="button" class="pass-toggle" @click="showPass = !showPass">
+                    <svg v-if="!showPass" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" width="15" height="15">
+                      <path d="M10 12.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Z" />
+                      <path fill-rule="evenodd" d="M.664 10.59a1.651 1.651 0 0 1 0-1.186A10.004 10.004 0 0 1 10 3c4.257 0 7.893 2.66 9.336 6.41.147.381.146.804 0 1.186A10.004 10.004 0 0 1 10 17c-4.257 0-7.893-2.66-9.336-6.41ZM14 10a4 4 0 1 1-8 0 4 4 0 0 1 8 0Z" clip-rule="evenodd" />
                     </svg>
-                    Back to Users
-                </button>
+                    <svg v-else xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" width="15" height="15">
+                      <path fill-rule="evenodd" d="M3.28 2.22a.75.75 0 0 0-1.06 1.06l14.5 14.5a.75.75 0 1 0 1.06-1.06l-1.745-1.745a10.029 10.029 0 0 0 3.3-4.38 1.651 1.651 0 0 0 0-1.185A10.004 10.004 0 0 0 9.999 3a9.956 9.956 0 0 0-4.744 1.194L3.28 2.22ZM7.752 6.69l1.092 1.092a2.5 2.5 0 0 1 3.374 3.373l1.091 1.092a4 4 0 0 0-5.557-5.557Z" clip-rule="evenodd" />
+                      <path d="M10.748 13.93l2.523 2.523a10.055 10.055 0 0 1-3.27.547c-4.258 0-7.894-2.66-9.337-6.41a1.651 1.651 0 0 1 0-1.186A10.007 10.007 0 0 1 2.839 6.02L6.07 9.252a4 4 0 0 0 4.678 4.678Z" />
+                    </svg>
+                  </button>
+                </div>
+                <span class="fhint">Minimum 8 characters</span>
+              </div>
+
+              <div class="field">
+                <label class="flabel">Date of birth</label>
+                <input v-model="form.date_of_birth" type="date" class="fcontrol" />
+              </div>
             </div>
+
+            <div class="field">
+              <label class="flabel">Gender</label>
+              <div class="gender-pills">
+                <button
+                  v-for="g in genderOptions"
+                  :key="g.value"
+                  type="button"
+                  class="gender-pill"
+                  :class="{ active: form.gender === g.value }"
+                  @click="form.gender = g.value"
+                >{{ g.label }}</button>
+              </div>
+            </div>
+          </div>
         </div>
 
-        <!-- Main Content -->
-        <div class="content-card">
-            <div class="card-header">
-                <div class="header-icon">👤</div>
-                <div class="header-text">
-                    <h2>Add New User</h2>
-                    <p class="subtitle">Create a new user account in the system</p>
+        <!-- Profile -->
+        <div class="card">
+          <div class="card-head">
+            <div class="card-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="22" height="22" style="color:#00aaff">
+                <path fill-rule="evenodd" d="M1.5 6a2.25 2.25 0 0 1 2.25-2.25h16.5A2.25 2.25 0 0 1 22.5 6v12a2.25 2.25 0 0 1-2.25 2.25H3.75A2.25 2.25 0 0 1 1.5 18V6ZM3 16.06V18c0 .414.336.75.75.75h16.5A.75.75 0 0 0 21 18v-1.94l-2.69-2.689a1.5 1.5 0 0 0-2.12 0l-.88.879.81.81a.75.75 0 1 1-1.06 1.06l-5.16-5.159a1.5 1.5 0 0 0-2.12 0L3 16.061Zm10.125-7.81a1.125 1.125 0 1 1 2.25 0 1.125 1.125 0 0 1-2.25 0Z" clip-rule="evenodd" />
+              </svg>
+            </div>
+            <div>
+              <h2 class="card-title">Profile details</h2>
+              <p class="card-sub">Avatar and biography</p>
+            </div>
+          </div>
+
+          <div class="profile-layout">
+            <!-- Avatar -->
+            <div class="avatar-col">
+              <div class="avatar-uploader" @click="fileInput?.click()">
+                <img v-if="avatarPreview" :src="avatarPreview" alt="avatar" class="avatar-img" />
+                <div v-else class="avatar-placeholder">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="32" height="32" style="color:rgba(255,255,255,0.15)">
+                    <path fill-rule="evenodd" d="M7.5 6a4.5 4.5 0 1 1 9 0 4.5 4.5 0 0 1-9 0ZM3.751 20.105a8.25 8.25 0 0 1 16.498 0 .75.75 0 0 1-.437.695A18.683 18.683 0 0 1 12 22.5c-2.786 0-5.433-.608-7.812-1.7a.75.75 0 0 1-.437-.695Z" clip-rule="evenodd" />
+                  </svg>
                 </div>
+                <div class="avatar-overlay">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" width="20" height="20">
+                    <path d="M5.433 13.917l1.262-3.155A4 4 0 0 1 7.58 9.42l6.92-6.918a2.121 2.121 0 0 1 3 3l-6.92 6.918c-.383.383-.84.685-1.343.886l-3.154 1.262a.5.5 0 0 1-.65-.65Z" />
+                    <path d="M3.5 5.75c0-.69.56-1.25 1.25-1.25H10A.75.75 0 0 0 10 3H4.75A2.75 2.75 0 0 0 2 5.75v9.5A2.75 2.75 0 0 0 4.75 18h9.5A2.75 2.75 0 0 0 17 15.25V10a.75.75 0 0 0-1.5 0v5.25c0 .69-.56 1.25-1.25 1.25h-9.5c-.69 0-1.25-.56-1.25-1.25v-9.5Z" />
+                  </svg>
+                  <span>{{ avatarPreview ? 'Change' : 'Upload' }}</span>
+                </div>
+              </div>
+              <input type="file" ref="fileInput" accept="image/jpeg,image/png,image/gif,image/webp" @change="handleAvatarChange" style="display:none" />
+              <p class="fhint" style="text-align:center;margin-top:8px">JPG, PNG, GIF · max 5MB</p>
             </div>
 
-            <form @submit.prevent="submitForm" class="user-form">
-                <!-- Basic Information -->
-                <div class="form-section">
-                    <h3 class="section-title">
-                        <span class="section-icon">📋</span>
-                        Basic Information
-                    </h3>
-                    <div class="form-grid">
-                        <div class="form-group required">
-                            <label for="name">Full Name</label>
-                            <input 
-                                type="text" 
-                                id="name" 
-                                v-model="form.name" 
-                                placeholder="Enter full name" 
-                                required 
-                            />
-                        </div>
-
-                        <div class="form-group required">
-                            <label for="username">Username</label>
-                            <input 
-                                type="text" 
-                                id="username" 
-                                v-model="form.username" 
-                                placeholder="Enter username" 
-                                required 
-                            />
-                            <small class="helper-text">Unique username for login</small>
-                        </div>
-
-                        <div class="form-group required">
-                            <label for="email">Email Address</label>
-                            <input 
-                                type="email" 
-                                id="email" 
-                                v-model="form.email" 
-                                placeholder="user@example.com" 
-                                required 
-                            />
-                        </div>
-
-                        <div class="form-group">
-                            <label for="phone">Phone Number</label>
-                            <input 
-                                type="tel" 
-                                id="phone" 
-                                v-model="form.phone" 
-                                placeholder="+1234567890" 
-                            />
-                        </div>
-
-                        <div class="form-group required">
-                            <label for="password">Password</label>
-                            <input 
-                                type="password" 
-                                id="password" 
-                                v-model="form.password" 
-                                placeholder="Enter password" 
-                                required 
-                            />
-                            <small class="helper-text">Min 8 characters</small>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="date_of_birth">Date of Birth</label>
-                            <input 
-                                type="date" 
-                                id="date_of_birth" 
-                                v-model="form.date_of_birth" 
-                            />
-                        </div>
-
-                        <div class="form-group">
-                            <label for="gender">Gender</label>
-                            <select id="gender" v-model="form.gender">
-                                <option value="" class="form-group_option">Select gender</option>
-                                <option value="male" class="form-group_option">♂️ Male</option>
-                                <option value="female" class="form-group_option">♀️ Female</option>
-                                <option value="other" class="form-group_option">⚧ Other</option>
-                                <option value="prefer_not_to_say" class="form-group_option">🤫 Prefer not to say</option>
-                            </select>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Profile Details -->
-                <div class="form-section">
-                    <h3 class="section-title">
-                        <span class="section-icon">🖼️</span>
-                        Profile Details
-                    </h3>
-                    <div class="profile-grid">
-                        <!-- Avatar Upload -->
-                        <div class="avatar-upload-section">
-                            <label>Profile Avatar</label>
-                            <div class="avatar-upload">
-                                <div class="avatar-preview" @click="fileInput?.click()">
-                                    <img 
-                                        :src="avatarPreview || defaultAvatar" 
-                                        alt="Avatar" 
-                                        class="preview-img"
-                                    />
-                                    <div class="upload-overlay">
-                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" width="24" height="24">
-                                            <path d="M5.433 13.917l1.262-3.155A4 4 0 017.58 9.42l6.92-6.918a2.121 2.121 0 013 3l-6.92 6.918c-.383.383-.84.685-1.343.886l-3.154 1.262a.5.5 0 01-.65-.65z" />
-                                            <path d="M3.5 5.75c0-.69.56-1.25 1.25-1.25H10A.75.75 0 0010 3H4.75A2.75 2.75 0 002 5.75v9.5A2.75 2.75 0 004.75 18h9.5A2.75 2.75 0 0017 15.25V10a.75.75 0 00-1.5 0v5.25c0 .69-.56 1.25-1.25 1.25h-9.5c-.69 0-1.25-.56-1.25-1.25v-9.5z" />
-                                        </svg>
-                                        <span>{{ avatarPreview ? 'Change' : 'Upload' }} Avatar</span>
-                                    </div>
-                                </div>
-                                <input 
-                                    type="file" 
-                                    ref="fileInput" 
-                                    accept="image/jpeg,image/png,image/gif,image/webp"
-                                    @change="handleAvatarChange" 
-                                    style="display: none" 
-                                />
-                                <small class="helper-text">JPG, PNG, GIF, WebP • Max 5MB</small>
-                            </div>
-                        </div>
-
-                        <!-- Bio -->
-                        <div class="bio-section">
-                            <div class="form-group full-width">
-                                <label for="bio">Biography</label>
-                                <textarea 
-                                    id="bio" 
-                                    v-model="form.bio" 
-                                    placeholder="Tell us about yourself..."
-                                    rows="4"
-                                ></textarea>
-                                <small class="helper-text">Max 500 characters</small>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Location & Preferences -->
-                <div class="form-section">
-                    <h3 class="section-title">
-                        <span class="section-icon">📍</span>
-                        Location & Preferences
-                    </h3>
-                    <div class="form-grid">
-                        <div class="form-group">
-                            <label for="country">Country</label>
-                            <select id="country" v-model="form.country">
-                                <option value="" class="form-group_option">Select country</option>
-                                <option value="US" class="form-group_option">🇺🇸 United States</option>
-                                <option value="UK" class="form-group_option">🇬🇧 United Kingdom</option>
-                                <option value="VN" class="form-group_option">🇻🇳 Vietnam</option>
-                                <option value="JP" class="form-group_option">🇯🇵 Japan</option>
-                                <option value="KR" class="form-group_option">🇰🇷 South Korea</option>
-                                <option value="FR" class="form-group_option">🇫🇷 France</option>
-                                <option value="DE" class="form-group_option">🇩🇪 Germany</option>
-                            </select>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="timezone">Timezone</label>
-                            <select id="timezone" v-model="form.timezone">
-                                <option value="" class="form-group_option">Select timezone</option>
-                                <option value="UTC" class="form-group_option">🌐 UTC</option>
-                                <option value="Asia/Ho_Chi_Minh" class="form-group_option">🇻🇳 UTC+7 (Vietnam)</option>
-                                <option value="America/New_York" class="form-group_option">🇺🇸 UTC-5 (EST)</option>
-                                <option value="Europe/London" class="form-group_option">🇬🇧 UTC+0 (London)</option>
-                                <option value="Asia/Tokyo" class="form-group_option">🇯🇵 UTC+9 (Tokyo)</option>
-                            </select>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Status & Settings -->
-                <div class="form-section">
-                    <h3 class="section-title">
-                        <span class="section-icon">⚙️</span>
-                        Status & Settings
-                    </h3>
-                    <div class="settings-grid">
-                        <div class="form-group">
-                            <label for="status">Account Status</label>
-                            <select id="status" v-model="form.status">
-                                <option value="active" class="form-group_option">🟢 Active</option>
-                                <option value="inactive" class="form-group_option">⚪ Inactive</option>
-                                <option value="pending" class="form-group_option">🟡 Pending</option>
-                                <option value="suspended" class="form-group_option">🔴 Suspended</option>
-                            </select>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="published_at">Publish Date</label>
-                            <input 
-                                type="datetime-local" 
-                                id="published_at" 
-                                v-model="form.published_at" 
-                            />
-                        </div>
-                    </div>
-                </div>
-
-                <!-- SEO Section -->
-                <div class="form-section">
-                    <h3 class="section-title">
-                        <span class="section-icon">🔍</span>
-                        SEO Information
-                    </h3>
-                    <div class="form-grid">
-                        <div class="form-group">
-                            <label for="seo_title">SEO Title</label>
-                            <input 
-                                type="text" 
-                                id="seo_title" 
-                                v-model="form.seo_title"
-                                placeholder="User Name | Platform" 
-                            />
-                            <small class="helper-text">Title for search engines (50-60 chars)</small>
-                        </div>
-
-                        <div class="form-group full-width">
-                            <label for="seo_description">SEO Description</label>
-                            <textarea 
-                                id="seo_description" 
-                                v-model="form.seo_description"
-                                placeholder="Brief description for search engines (150-160 chars)"
-                                rows="2"
-                            ></textarea>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Form Actions -->
-                <div class="form-actions">
-                    <button type="button" class="btn btn-secondary" @click="$router.back()">
-                        Cancel
-                    </button>
-                    <button type="submit" class="btn btn-primary" :disabled="loading">
-                        <span v-if="loading" class="spinner-small"></span>
-                        <span v-else>➕ Create User</span>
-                    </button>
-                </div>
-            </form>
+            <!-- Bio -->
+            <div class="field" style="flex:1">
+              <label class="flabel">Biography</label>
+              <textarea v-model="form.bio" rows="6" placeholder="Tell us about this user…" class="fcontrol"></textarea>
+              <span class="fhint">{{ form.bio?.length || 0 }}/500 characters</span>
+            </div>
+          </div>
         </div>
+
+        <!-- Location -->
+        <div class="card">
+          <div class="card-head">
+            <div class="card-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="22" height="22" style="color:#00aaff">
+                <path fill-rule="evenodd" d="m11.54 22.351.07.04.028.016a.76.76 0 0 0 .723 0l.028-.015.071-.041a16.975 16.975 0 0 0 1.144-.742 19.58 19.58 0 0 0 2.683-2.282c1.944-2.003 3.5-4.697 3.5-8.327a8 8 0 1 0-16 0c0 3.63 1.556 6.324 3.5 8.327a19.592 19.592 0 0 0 2.682 2.282 16.975 16.975 0 0 0 1.144.742ZM12 13.5a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z" clip-rule="evenodd" />
+              </svg>
+            </div>
+            <div>
+              <h2 class="card-title">Location & preferences</h2>
+              <p class="card-sub">Country and timezone settings</p>
+            </div>
+          </div>
+
+          <div class="field-row two-col">
+            <div class="field">
+              <label class="flabel">Country</label>
+              <select v-model="form.country" class="fcontrol">
+                <option value="">Select country</option>
+                <option value="US">United States</option>
+                <option value="UK">United Kingdom</option>
+                <option value="VN">Vietnam</option>
+                <option value="JP">Japan</option>
+                <option value="KR">South Korea</option>
+                <option value="FR">France</option>
+                <option value="DE">Germany</option>
+              </select>
+            </div>
+            <div class="field">
+              <label class="flabel">Timezone</label>
+              <select v-model="form.timezone" class="fcontrol">
+                <option value="">Select timezone</option>
+                <option value="UTC">UTC+0</option>
+                <option value="Asia/Ho_Chi_Minh">UTC+7 — Vietnam</option>
+                <option value="America/New_York">UTC-5 — New York</option>
+                <option value="Europe/London">UTC+0 — London</option>
+                <option value="Asia/Tokyo">UTC+9 — Tokyo</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Status & settings -->
+        <div class="card">
+          <div class="card-head">
+            <div class="card-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="22" height="22" style="color:#00aaff">
+                <path fill-rule="evenodd" d="M11.078 2.25c-.917 0-1.699.663-1.85 1.567L9.05 4.889c-.02.12-.115.26-.297.348a7.493 7.493 0 0 0-.986.57c-.166.115-.334.126-.45.083L6.3 5.508a1.875 1.875 0 0 0-2.282.819l-.922 1.597a1.875 1.875 0 0 0 .432 2.385l.84.692c.095.078.17.229.154.43a7.598 7.598 0 0 0 0 1.139c.015.2-.059.352-.153.43l-.841.692a1.875 1.875 0 0 0-.432 2.385l.922 1.597a1.875 1.875 0 0 0 2.282.818l1.019-.382c.115-.043.283-.031.45.082.312.214.641.405.985.57.182.088.277.228.297.35l.178 1.071c.151.904.933 1.567 1.85 1.567h1.844c.916 0 1.699-.663 1.85-1.567l.178-1.072c.02-.12.114-.26.297-.349.344-.165.673-.356.985-.57.167-.114.335-.125.45-.082l1.02.382a1.875 1.875 0 0 0 2.28-.819l.923-1.597a1.875 1.875 0 0 0-.432-2.385l-.84-.692c-.095-.078-.17-.229-.154-.43a7.614 7.614 0 0 0 0-1.139c-.016-.2.059-.352.153-.43l.84-.692c.708-.582.891-1.59.433-2.385l-.922-1.597a1.875 1.875 0 0 0-2.282-.818l-1.02.382c-.114.043-.282.031-.449-.083a7.49 7.49 0 0 0-.985-.57c-.183-.087-.277-.227-.297-.348l-.179-1.072a1.875 1.875 0 0 0-1.85-1.567h-1.843ZM12 15.75a3.75 3.75 0 1 0 0-7.5 3.75 3.75 0 0 0 0 7.5Z" clip-rule="evenodd" />
+              </svg>
+            </div>
+            <div>
+              <h2 class="card-title">Status & settings</h2>
+              <p class="card-sub">Account visibility and publish date</p>
+            </div>
+          </div>
+
+          <div class="fields">
+            <div class="field-row two-col">
+              <div class="field">
+                <label class="flabel">Account status</label>
+                <div class="status-pills">
+                  <button
+                    v-for="s in statusOptions"
+                    :key="s.value"
+                    type="button"
+                    class="status-pill"
+                    :class="[s.color, { active: form.status === s.value }]"
+                    @click="form.status = s.value"
+                  >
+                    <span class="spill-dot"></span>
+                    {{ s.label }}
+                  </button>
+                </div>
+              </div>
+              <div class="field">
+                <label class="flabel">Publish date</label>
+                <input v-model="form.published_at" type="datetime-local" class="fcontrol" />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- SEO -->
+        <div class="card">
+          <div class="card-head">
+            <div class="card-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="22" height="22" style="color:#00aaff">
+                <path fill-rule="evenodd" d="M10.5 3.75a6.75 6.75 0 1 0 0 13.5 6.75 6.75 0 0 0 0-13.5ZM2.25 10.5a8.25 8.25 0 1 1 14.59 5.28l4.69 4.69a.75.75 0 1 1-1.06 1.06l-4.69-4.69A8.25 8.25 0 0 1 2.25 10.5Z" clip-rule="evenodd" />
+              </svg>
+            </div>
+            <div>
+              <h2 class="card-title">SEO information</h2>
+              <p class="card-sub">How this profile appears in search engines</p>
+            </div>
+          </div>
+
+          <div class="fields">
+            <div class="field">
+              <label class="flabel">SEO title</label>
+              <input v-model="form.seo_title" type="text" placeholder="User Name | Platform" class="fcontrol" />
+              <span class="fhint">{{ form.seo_title?.length || 0 }}/60 chars</span>
+            </div>
+            <div class="field">
+              <label class="flabel">SEO description</label>
+              <textarea v-model="form.seo_description" rows="3" placeholder="Brief description for search engines…" class="fcontrol"></textarea>
+              <span class="fhint">{{ form.seo_description?.length || 0 }}/160 chars</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="form-actions">
+          <button type="button" class="btn ghost" @click="$router.back()">Cancel</button>
+          <button type="button" class="btn primary" @click="submitForm" :disabled="loading">
+            <span v-if="loading" class="btn-spinner"></span>
+            <template v-else>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" width="16" height="16">
+                <path d="M10.75 4.75a.75.75 0 0 0-1.5 0v4.5h-4.5a.75.75 0 0 0 0 1.5h4.5v4.5a.75.75 0 0 0 1.5 0v-4.5h4.5a.75.75 0 0 0 0-1.5h-4.5v-4.5Z" />
+              </svg>
+              Create user
+            </template>
+          </button>
+        </div>
+      </div>
+
+      <!-- Right: preview -->
+      <div class="preview-col">
+        <div class="preview-sticky">
+          <p class="preview-label">Live preview</p>
+
+          <!-- User card -->
+          <div class="user-card-preview">
+            <div class="ucp-avatar">
+              <img v-if="avatarPreview" :src="avatarPreview" alt="avatar" />
+              <div v-else class="ucp-avatar-fallback">
+                {{ form.name ? form.name.charAt(0).toUpperCase() : '?' }}
+              </div>
+            </div>
+            <div class="ucp-info">
+              <span class="ucp-name">{{ form.name || 'Full name' }}</span>
+              <span class="ucp-username">@{{ form.username || 'username' }}</span>
+              <span class="ucp-email">{{ form.email || 'email@example.com' }}</span>
+              <div class="ucp-tags">
+                <span class="ucp-status" :class="form.status">{{ form.status || 'active' }}</span>
+                <span v-if="form.country" class="ucp-country">{{ form.country }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Summary -->
+          <div class="field-summary">
+            <div class="fs-row">
+              <span class="fs-key">Status</span>
+              <span class="fs-val" :style="{ color: statusColor }">{{ form.status || '—' }}</span>
+            </div>
+            <div class="fs-row">
+              <span class="fs-key">Gender</span>
+              <span class="fs-val">{{ form.gender || '—' }}</span>
+            </div>
+            <div class="fs-row">
+              <span class="fs-key">Country</span>
+              <span class="fs-val">{{ form.country || '—' }}</span>
+            </div>
+            <div class="fs-row">
+              <span class="fs-key">Timezone</span>
+              <span class="fs-val">{{ form.timezone || '—' }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
-</template> 
+  </div>
+</template>
 
 <script setup lang="ts">
-import { reactive, ref } from 'vue'
-import router from "@/modules/router";
-import type { CreateUserPayload } from "@/modules/admin/interfaces/users/create-user.payload";
-import { useUserStore } from '@/modules/admin/stores/users/userStore';
-import { useNotificationStore } from "@/store/notificationStore";
+import { reactive, ref, computed } from 'vue'
+import router from '@/modules/router'
+import type { CreateUserPayload } from '@/modules/admin/interfaces/users/create-user.payload'
+import { useUserStore } from '@/modules/admin/stores/users/userStore'
+import { useNotificationStore } from '@/store/notificationStore'
 
-const notificationStore = useNotificationStore();
-const userStore = useUserStore();
-const loading = ref(false);
-
-// Avatar
+const notificationStore = useNotificationStore()
+const userStore = useUserStore()
+const loading = ref(false)
+const showPass = ref(false)
 const avatarPreview = ref<string>('')
 const fileInput = ref<HTMLInputElement | null>(null)
-const defaultAvatar = 'https://via.placeholder.com/500?text=User'
 
-// Form
+const genderOptions = [
+  { value: 'male', label: 'Male' },
+  { value: 'female', label: 'Female' },
+  { value: 'other', label: 'Other' },
+  { value: 'prefer_not_to_say', label: 'Prefer not to say' },
+]as const;
+
+const statusOptions = [
+  { value: 'active', label: 'Active', color: 'green' },
+  { value: 'inactive', label: 'Inactive', color: 'gray' },
+  { value: 'pending', label: 'Pending', color: 'amber' },
+  { value: 'suspended', label: 'Suspended', color: 'red' },
+]as const;
+
 const form = reactive<CreateUserPayload>({
-    name: "",
-    username: "",
-    email: "",
-    password: "",
-    phone: "",
-    date_of_birth: "",
-    gender: "",
-    bio: "",
-    avatar: null,
-    country: "",
-    timezone: "",
-    status: "active",
-    published_at: "",
-    seo_title: "",
-    seo_description: "",
-});
+  name: '',
+  username: '',
+  email: '',
+  password: '',
+  phone: '',
+  date_of_birth: '',
+  gender: '',
+  bio: '',
+  avatar: null,
+  country: '',
+  timezone: '',
+  status: 'active',
+  published_at: '',
+  seo_title: '',
+  seo_description: '',
+})
 
+const statusColor = computed(() => {
+  const map: Record<string, string> = {
+    active: '#00c87a',
+    inactive: 'rgba(255,255,255,0.4)',
+    pending: '#fac800',
+    suspended: '#e24b4a',
+  }
+  return map[form.status] || 'rgba(255,255,255,0.4)'
+})
 
-
-// Methods
 const handleAvatarChange = (event: Event) => {
-    const target = event.target as HTMLInputElement
-    const file = target.files?.[0]
-
-    if (!file) return
-
-    if (!file.type.startsWith('image/')) {
-        notificationStore.notify('Please select an image file!', 'error')
-        return
-    }
-
-    if (file.size > 10 * 1024 * 1024) {
-        console.log('code da den da');
-
-        notificationStore.notify('File too large! Max 5MB', 'error')
-        return
-    }
-
-    form.avatar = file
-
-    const reader = new FileReader()
-    reader.onload = (e) => {
-        avatarPreview.value = e.target?.result as string
-    }
-    reader.readAsDataURL(file)
-
-   
-};
+  const target = event.target as HTMLInputElement
+  const file = target.files?.[0]
+  if (!file) return
+  if (!file.type.startsWith('image/')) {
+    notificationStore.notify('Please select an image file!', 'error')
+    return
+  }
+  if (file.size > 5 * 1024 * 1024) {
+    notificationStore.notify('File too large! Max 5MB', 'error')
+    return
+  }
+  form.avatar = file
+  const reader = new FileReader()
+  reader.onload = e => { avatarPreview.value = e.target?.result as string }
+  reader.readAsDataURL(file)
+}
 
 const submitForm = async () => {
-    try {
-        loading.value = true;
-        
-        await userStore.fetchAddUser(form);
-        await userStore.fetchUsers();
-        notificationStore.notify("User created successfully!", "success");
-        router.push({ name: "admin.usermanager.all" });
-    } catch (err: any) {
-        notificationStore.notify(
-            err.response?.data?.message || "Failed to create user",
-            "error"
-        );
-    } finally {
-        loading.value = false;
-        setTimeout(() => notificationStore.clear(), 3000);
-    }
-};
+  if (!form.name || !form.email || !form.password) {
+    notificationStore.notify('Please fill in all required fields', 'error')
+    return
+  }
+  try {
+    loading.value = true
+    await userStore.fetchAddUser(form)
+    await userStore.fetchUsers()
+    notificationStore.notify('User created successfully!', 'success')
+    router.push({ name: 'admin.usermanager.all' })
+  } catch (err: any) {
+    notificationStore.notify(err.response?.data?.message || 'Failed to create user', 'error')
+  } finally {
+    loading.value = false
+    setTimeout(() => notificationStore.clear(), 3000)
+  }
+}
 </script>
 
 <style scoped>
-.user-add-view {
-    padding: 24px;
-    min-height: 100vh;
-    background: linear-gradient(135deg, #0a1219 0%, #1a2a35 100%);
-    font-family: 'Inter', sans-serif;
+/* ── Base ───────────────────────────────────────── */
+.user-shell {
+  min-height: 100vh;
+  background: #080e14;
+  font-family: 'DM Sans', 'Segoe UI', sans-serif;
+  color: #e8edf2;
+  position: relative;
 }
 
-/* Header */
-.page-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 24px;
+.bg-grid {
+  position: fixed;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(0,160,255,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,160,255,0.03) 1px, transparent 1px);
+  background-size: 40px 40px;
+  pointer-events: none;
+  z-index: 0;
 }
 
-.header-left {
-    display: flex;
-    align-items: center;
-    gap: 12px;
+/* ── Topbar ─────────────────────────────────────── */
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 28px;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  background: rgba(8,14,20,0.85);
+  backdrop-filter: blur(12px);
 }
 
-.page-header-title {
-    font-size: 28px;
-    font-weight: 700;
-    color: white;
-    margin: 0;
-    background: linear-gradient(135deg, #fff 0%, #00aaff 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
+.back-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.1);
+  color: rgba(255,255,255,0.7);
+  border-radius: 8px;
+  padding: 7px 14px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.15s;
+  font-family: inherit;
+}
+.back-btn:hover { background: rgba(255,255,255,0.1); color: #fff; }
+
+.topbar-center { flex: 1; }
+.topbar-label { font-size: 15px; font-weight: 600; color: rgba(255,255,255,0.5); }
+
+/* ── Page layout ────────────────────────────────── */
+.page-body {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: 1fr 300px;
+  gap: 24px;
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 28px 24px 60px;
 }
 
-.header-badge {
-    background: #1d455e;
-    color: #00aaff;
-    padding: 4px 12px;
-    border-radius: 100px;
-    font-size: 12px;
-    font-weight: 600;
-    border: 1px solid #00aaff;
+/* ── Cards ──────────────────────────────────────── */
+.card {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 16px;
+  padding: 24px;
+  margin-bottom: 16px;
 }
 
-/* Content Card */
-.content-card {
-    background: rgba(255, 255, 255, 0.05);
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(0, 170, 255, 0.2);
-    border-radius: 24px;
-    padding: 32px;
-    color: white;
-    max-height: 80vh;
-    overflow-y: auto;
+.card-head {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 22px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
 }
 
-.card-header {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-    margin-bottom: 32px;
-    padding-bottom: 24px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+.card-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: rgba(0,160,255,0.1);
+  border: 1px solid rgba(0,160,255,0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
 }
 
-.header-icon {
-    font-size: 48px;
-    background: rgba(0, 170, 255, 0.1);
-    width: 80px;
-    height: 80px;
-    border-radius: 20px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border: 1px solid #00aaff;
+.card-title { font-size: 16px; font-weight: 600; color: #fff; margin: 0 0 3px; }
+.card-sub { font-size: 13px; color: rgba(255,255,255,0.4); margin: 0; }
+
+/* ── Fields ─────────────────────────────────────── */
+.fields { display: flex; flex-direction: column; gap: 16px; }
+
+.field { display: flex; flex-direction: column; gap: 6px; }
+
+.field-row.two-col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
 }
 
-.header-text h2 {
-    font-size: 24px;
-    font-weight: 600;
-    margin: 0 0 8px 0;
-    color: white;
+.flabel { font-size: 13px; font-weight: 500; color: rgba(255,255,255,0.6); }
+.flabel.required::after { content: ' *'; color: #ff5555; }
+
+.fcontrol {
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 9px;
+  padding: 10px 13px;
+  color: #fff;
+  font-size: 14px;
+  font-family: inherit;
+  transition: border-color 0.2s;
+  width: 100%;
+  box-sizing: border-box;
+}
+.fcontrol:focus { outline: none; border-color: rgba(0,170,255,0.6); background: rgba(255,255,255,0.07); }
+.fcontrol::placeholder { color: rgba(255,255,255,0.2); }
+.fcontrol option { background: #1a2530; }
+textarea.fcontrol { resize: vertical; }
+
+.fhint { font-size: 11px; color: rgba(255,255,255,0.3); }
+
+/* Password field */
+.pass-row { position: relative; }
+.pass-row .fcontrol { padding-right: 42px; }
+.pass-toggle {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: rgba(255,255,255,0.3);
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  transition: color 0.15s;
+}
+.pass-toggle:hover { color: rgba(255,255,255,0.7); }
+
+/* Gender pills */
+.gender-pills { display: flex; flex-wrap: wrap; gap: 8px; }
+.gender-pill {
+  padding: 6px 14px;
+  border-radius: 100px;
+  border: 1px solid rgba(255,255,255,0.1);
+  background: rgba(255,255,255,0.04);
+  color: rgba(255,255,255,0.5);
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.15s;
+  font-family: inherit;
+}
+.gender-pill:hover { border-color: rgba(255,255,255,0.25); color: #fff; }
+.gender-pill.active {
+  background: rgba(0,160,255,0.15);
+  border-color: rgba(0,160,255,0.5);
+  color: #00aaff;
 }
 
-.subtitle {
-    color: rgba(255, 255, 255, 0.7);
-    margin: 0;
-    font-size: 14px;
+/* Status pills */
+.status-pills { display: flex; flex-wrap: wrap; gap: 8px; }
+.status-pill {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  border-radius: 100px;
+  border: 1px solid rgba(255,255,255,0.1);
+  background: rgba(255,255,255,0.04);
+  color: rgba(255,255,255,0.5);
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.15s;
+  font-family: inherit;
+}
+.spill-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0.5;
+}
+.status-pill.active .spill-dot { opacity: 1; }
+
+.status-pill.green.active  { background: rgba(0,200,120,0.12); border-color: rgba(0,200,120,0.4); color: #00c87a; }
+.status-pill.amber.active  { background: rgba(250,200,0,0.1);  border-color: rgba(250,200,0,0.35); color: #fac800; }
+.status-pill.red.active    { background: rgba(226,75,74,0.12); border-color: rgba(226,75,74,0.4); color: #e24b4a; }
+.status-pill.gray.active   { background: rgba(255,255,255,0.07); border-color: rgba(255,255,255,0.2); color: rgba(255,255,255,0.7); }
+
+/* ── Profile layout ─────────────────────────────── */
+.profile-layout {
+  display: flex;
+  gap: 24px;
+  align-items: flex-start;
 }
 
-/* Form Sections */
-.form-section {
-    margin-bottom: 32px;
-    padding: 24px;
-    background: rgba(0, 0, 0, 0.2);
-    border-radius: 16px;
-    border: 1px solid rgba(255, 255, 255, 0.05);
+.avatar-col { display: flex; flex-direction: column; align-items: center; }
+
+.avatar-uploader {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 2px dashed rgba(255,255,255,0.15);
+  position: relative;
+  cursor: pointer;
+  transition: border-color 0.2s;
+  flex-shrink: 0;
+}
+.avatar-uploader:hover { border-color: #00aaff; }
+.avatar-uploader:hover .avatar-overlay { opacity: 1; }
+
+.avatar-img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+.avatar-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255,255,255,0.04);
 }
 
-.section-title {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 18px;
-    font-weight: 600;
-    color: white;
-    margin-bottom: 24px;
+.avatar-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,0.65);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  color: #fff;
+  font-size: 12px;
+  opacity: 0;
+  transition: opacity 0.2s;
 }
 
-.section-icon {
-    font-size: 20px;
+/* ── Toggle card (shared) ───────────────────────── */
+.toggle-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.07);
+  background: rgba(255,255,255,0.03);
+  cursor: pointer;
+  transition: all 0.2s;
+  user-select: none;
 }
+.toggle-card.on { border-color: rgba(0,170,255,0.3); background: rgba(0,160,255,0.07); }
 
-/* Form Grids */
-.form-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 20px;
-}
-
-.profile-grid {
-    display: grid;
-    grid-template-columns: 200px 1fr;
-    gap: 24px;
-}
-
-.settings-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 20px;
-}
-
-/* Form Groups */
-.form-group {
-    display: flex;
-    flex-direction: column;
-}
-
-.form-group.required label::after {
-    content: '*';
-    color: #ff4444;
-    margin-left: 4px;
-}
-
-.form-group label {
-    font-size: 14px;
-    font-weight: 500;
-    color: rgba(255, 255, 255, 0.9);
-    margin-bottom: 8px;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-}
-
-.form-group input,
-.form-group select,
-.form-group textarea {
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 8px;
-    padding: 10px 12px;
-    color: white;
-    font-size: 14px;
-    transition: all 0.2s;
-}
-
-.form-group input:focus,
-.form-group select:focus,
-.form-group textarea:focus {
-    outline: none;
-    border-color: #00aaff;
-    background: rgba(255, 255, 255, 0.1);
-}
-
-.form-group input::placeholder,
-.form-group textarea::placeholder {
-    color: rgba(255, 255, 255, 0.3);
-}
-
-.form-group .form-group_option{
-    color: black;
-}
-
-.full-width {
-    grid-column: 1 / -1;
-}
-
-/* Avatar Upload */
-.avatar-upload-section {
-    display: flex;
-    flex-direction: column;
-}
-
-.avatar-upload-section label {
-    font-size: 14px;
-    font-weight: 500;
-    color: rgba(255, 255, 255, 0.9);
-    margin-bottom: 12px;
-}
-
-.avatar-preview {
-    position: relative;
-    width: 200px;
-    height: 200px;
-    border-radius: 50%;
-    overflow: hidden;
-    border: 2px dashed rgba(255, 255, 255, 0.2);
-    cursor: pointer;
-    transition: all 0.2s;
-}
-
-.avatar-preview:hover {
-    border-color: #00aaff;
-}
-
-.avatar-preview:hover .upload-overlay {
-    opacity: 1;
-}
-
-.preview-img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-}
-
-.upload-overlay {
-    position: absolute;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.7);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    color: white;
-    opacity: 0;
-    transition: opacity 0.2s;
-    backdrop-filter: blur(4px);
-}
-
-/* Bio Section */
-.bio-section {
-    display: flex;
-    flex-direction: column;
-}
-
-/* Helper Text */
-.helper-text {
-    color: rgba(255, 255, 255, 0.5);
-    font-size: 12px;
-    margin-top: 4px;
-}
-
-/* Form Actions */
+/* ── Form actions ───────────────────────────────── */
 .form-actions {
-    display: flex;
-    justify-content: flex-end;
-    gap: 16px;
-    margin-top: 32px;
-    padding-top: 24px;
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding-top: 4px;
 }
 
 .btn {
-    padding: 12px 24px;
-    border-radius: 100px;
-    font-size: 14px;
-    font-weight: 600;
-    cursor: pointer;
-    border: none;
-    transition: all 0.2s;
-    display: flex;
-    align-items: center;
-    gap: 8px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 10px 22px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s;
+  font-family: inherit;
+}
+.btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.btn.ghost {
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.1);
+  color: rgba(255,255,255,0.6);
+}
+.btn.ghost:hover { background: rgba(255,255,255,0.1); color: #fff; }
+
+.btn.primary { background: #00aaff; color: #000; }
+.btn.primary:hover:not(:disabled) {
+  background: #33bbff;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(0,170,255,0.35);
 }
 
-.btn-primary {
-    background: linear-gradient(135deg, #00aaff, #0088cc);
-    color: white;
+.btn-spinner {
+  width: 15px;
+  height: 15px;
+  border: 2px solid rgba(0,0,0,0.3);
+  border-top-color: #000;
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── Preview panel ──────────────────────────────── */
+.preview-col { position: relative; }
+
+.preview-sticky {
+  position: sticky;
+  top: 80px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
-.btn-primary:hover:not(:disabled) {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 20px rgba(0, 170, 255, 0.4);
+.preview-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: rgba(255,255,255,0.3);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin: 0;
 }
 
-.btn-secondary {
-    background: rgba(255, 255, 255, 0.1);
-    color: white;
-    border: 1px solid rgba(255, 255, 255, 0.2);
+/* User card preview */
+.user-card-preview {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 14px;
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
 }
 
-.btn-secondary:hover {
-    background: rgba(255, 255, 255, 0.15);
+.ucp-avatar {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  overflow: hidden;
+  flex-shrink: 0;
+  background: rgba(0,160,255,0.15);
+  border: 1px solid rgba(0,160,255,0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.ucp-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.ucp-avatar-fallback { font-size: 22px; font-weight: 700; color: #00aaff; }
+
+.ucp-info { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.ucp-name { font-size: 15px; font-weight: 600; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ucp-username { font-size: 12px; color: rgba(255,255,255,0.4); }
+.ucp-email { font-size: 11px; color: rgba(255,255,255,0.3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+.ucp-tags { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 4px; }
+.ucp-status {
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 100px;
+  text-transform: capitalize;
+}
+.ucp-status.active   { background: rgba(0,200,120,0.12);  border: 1px solid rgba(0,200,120,0.3);  color: #00c87a; }
+.ucp-status.inactive { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); color: rgba(255,255,255,0.5); }
+.ucp-status.pending  { background: rgba(250,200,0,0.1);    border: 1px solid rgba(250,200,0,0.3);  color: #fac800; }
+.ucp-status.suspended{ background: rgba(226,75,74,0.12);   border: 1px solid rgba(226,75,74,0.3);  color: #e24b4a; }
+
+.ucp-country {
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 100px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.1);
+  color: rgba(255,255,255,0.4);
 }
 
-.btn:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
+/* Field summary */
+.field-summary {
+  background: rgba(255,255,255,0.02);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 12px;
+  overflow: hidden;
 }
 
-/* Loading Spinner */
-.spinner-small {
-    width: 16px;
-    height: 16px;
-    border: 2px solid rgba(255, 255, 255, 0.3);
-    border-top-color: white;
-    border-radius: 50%;
-    animation: spin 0.6s linear infinite;
+.fs-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+  gap: 12px;
 }
+.fs-row:last-child { border-bottom: none; }
+.fs-key { font-size: 12px; color: rgba(255,255,255,0.35); }
+.fs-val { font-size: 12px; color: rgba(255,255,255,0.7); text-align: right; text-transform: capitalize; }
 
-@keyframes spin {
-    to { transform: rotate(360deg); }
-}
-
-/* Scrollbar */
-.content-card::-webkit-scrollbar {
-    width: 6px;
-}
-
-.content-card::-webkit-scrollbar-thumb {
-    background: rgba(0, 170, 255, 0.6);
-    border-radius: 3px;
-}
-
-.content-card::-webkit-scrollbar-track {
-    background: transparent;
-}
-
-/* Responsive */
-@media (max-width: 768px) {
-    .user-add-view {
-        padding: 16px;
-    }
-    
-    .profile-grid {
-        grid-template-columns: 1fr;
-        justify-items: center;
-    }
-    
-    .settings-grid {
-        grid-template-columns: 1fr;
-    }
-    
-    .card-header {
-        flex-direction: column;
-        text-align: center;
-    }
-    
-    .form-actions {
-        flex-direction: column;
-    }
-    
-    .btn {
-        width: 100%;
-        justify-content: center;
-    }
-    
-    .avatar-preview {
-        margin: 0 auto;
-    }
+/* ── Responsive ─────────────────────────────────── */
+@media (max-width: 860px) {
+  .page-body { grid-template-columns: 1fr; }
+  .preview-col { order: -1; }
+  .preview-sticky { position: static; }
+  .field-row.two-col { grid-template-columns: 1fr; }
+  .profile-layout { flex-direction: column; align-items: center; }
 }
 </style>

@@ -62,8 +62,7 @@ class Genre extends Model
 
 	public function songs()
 	{
-		return $this->belongsToMany(Song::class, 'song_genres')
-					->withPivot('id', 'is_primary');
+		return $this->hasMany(Song::class, 'genre_id');
 	}
 
 	public function trending_songs()

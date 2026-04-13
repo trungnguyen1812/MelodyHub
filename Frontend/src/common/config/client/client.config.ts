@@ -8,6 +8,7 @@ import ArtistSongsView from '@/modules/client/views/artists/ArtistSongsView.vue'
 // Music
 import AllNewMusicView from '@/modules/client/views/music/AllNewMusicView.vue';
 import AllPopularMusicView from '@/modules/client/views/music/AllPopularMusicView.vue';
+import TopChartsView from '@/modules/client/views/music/TopChartsView.vue';
 // partner
 import PartnerIndexView from '@/modules/client/views/partner/Partner.index.view.vue';
 import PartnerRegisterView from '@/modules/client/views/partner/Partner.register.view.vue';
@@ -24,6 +25,10 @@ import PartnerArtistsView from '@/modules/client/views/partner/PartnerMusic/Part
 import PartnerAddArtistsView from '@/modules/client/views/artists/ArtistsAdd.view.vue';
 import PartnerDetailArtistsView from '@/modules/client/views/artists/ArtistsDetail.view.vue';
 import PartnerUpdateArtistsView from '@/modules/client/views/artists/ArtistsUpdate.view.vue';
+// genres
+import AllGenresView from '@/modules/client/views/genres/AllGenresView.vue';
+import GenreSongsView from '@/modules/client/views/genres/GenreSongsView.vue';
+
 // user
 import UserUpgradeView from '@/modules/client/views/user/UserUpgrade.view.vue';
 
@@ -61,6 +66,23 @@ export const CLIENT_ROUTES = [
         path: 'music/popular',
         name: 'client.music.popular',
         component: AllPopularMusicView
+      },
+      {
+        path: 'music/charts',
+        name: 'client.charts',
+        component: TopChartsView
+      },
+
+      // 📂 Genres
+      {
+        path: 'genres',
+        name: 'genres.all',
+        component: AllGenresView
+      },
+      {
+        path: 'genres/:slug',
+        name: 'genre.detail',
+        component: GenreSongsView
       },
       
       // user

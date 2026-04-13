@@ -8,6 +8,16 @@ class GenreService {
         return res.data;
     }
 
+    async getGenreDetail(slug: string) {
+        const res = await clientApi.get(`/genres/${slug}`);
+        return res.data;
+    }
+
+    async getGenreDetail(slug: string) {
+        const res = await clientApi.get(`/genres/${slug}`);
+        return res.data;
+    }
+
     // async searchArtist(keyword: string) {
     //     const res = await clientApi.post("/artists/search", {
     //         q: keyword  

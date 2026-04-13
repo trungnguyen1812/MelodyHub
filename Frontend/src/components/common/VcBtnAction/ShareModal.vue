@@ -5,13 +5,13 @@
       <div class="share-modal">
 
         <div class="share-modal__header">
-          <span class="share-modal__title">Chia sẻ</span>
+          <span class="share-modal__title">Share</span>
           <button class="share-modal__close" @click="store.close()">✕</button>
         </div>
 
         <div class="share-modal__qr">
           <canvas ref="qrCanvas" />
-          <p class="share-modal__qr-hint">Scan để mở</p>
+          <p class="share-modal__qr-hint">Scan to open</p>
         </div>
 
         <div class="share-modal__link-row">

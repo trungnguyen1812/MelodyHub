@@ -43,6 +43,7 @@
         >
           <div
             class="artist-avatar relative w-40 h-40 rounded-full overflow-hidden mb-4 group"
+            @click="navigateToArtist(artist.slug)"
           >
             <img
               :src="getArtistAvatar(artist)"
@@ -98,7 +99,11 @@ const emit = defineEmits<{
 }>();
 
 const AllArtistsView = () => {
-  router.push({ name: "AllArtists" });
+  router.push({ name: "client.artists" });
+};
+
+const navigateToArtist = (slug: string) => {
+  router.push({ name: 'client.artist.songs', params: { slug } });
 };
 
 const carouselInner = ref<HTMLDivElement | null>(null);

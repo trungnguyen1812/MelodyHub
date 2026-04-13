@@ -14,6 +14,8 @@ export const useGenrestore = defineStore("client_Genres", {
     state: () => ({
         profile: null as GenreInterface | null,
         Genres: [] as GenreInterface[],
+        currentGenre: null as GenreInterface | null,
+        currentSongs: [] as any[],
         loading: false,
         error: null as string | null,
     }),

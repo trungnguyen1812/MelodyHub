@@ -59,14 +59,18 @@
                 <span>Artists</span>
               </li>
             </router-link>
-            <li @click.stop>
-              <span class="icon-wrap sub"><img src="@/assets/images/icon/album.svg" alt="" /></span>
-              <span>Albums</span>
-            </li>
-            <li @click.stop>
-              <span class="icon-wrap sub"><img src="@/assets/images/icon/Genres.png" alt="" /></span>
-              <span>Genres</span>
-            </li>
+            <router-link :to="{ name: 'admin.albumsmanager' }" custom v-slot="{ navigate, isActive }">
+              <li :class="{ active: isActive }" @click.stop="navigate" @keyup.enter="navigate" role="link" tabindex="0">
+                <span class="icon-wrap sub"><img src="@/assets/images/icon/album.svg" alt="" /></span>
+                <span>Albums</span>
+              </li>
+            </router-link>
+            <router-link :to="{ name: 'admin.genresmanager' }" custom v-slot="{ navigate, isActive }">
+              <li :class="{ active: isActive }" @click.stop="navigate" @keyup.enter="navigate" role="link" tabindex="0">
+                <span class="icon-wrap sub"><img src="@/assets/images/icon/Genres.png" alt="" /></span>
+                <span>Genres</span>
+              </li>
+            </router-link>
           </ul>
         </transition>
       </ul>

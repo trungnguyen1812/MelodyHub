@@ -1,18 +1,32 @@
 <template>
-  <div v-if="loading" class="flex justify-center items-center h-screen">
-    <span class="loading loading-spinner loading-lg text-black"></span>
+  <div v-if="loading" class="loading-screen">
+    <div class="loading-inner">
+      <div class="loading-bars">
+        <span></span><span></span><span></span><span></span><span></span>
+      </div>
+      <p class="loading-text">Loading your music...</p>
+    </div>
   </div>
 
-  <div v-else>
+  <div v-else class="space-y-8">
     <div class="relative w-full overflow-hidden h-[250px] mt-[20px]">
       <VcSlide :slides="slideList" />
     </div>
-    <VcCarouselArtists :artists="dataArtist" />
-    <VcNewMusic :songs="dataNewSong" />
-    <VcCarouselPopular :populars="PopularSong" />
-    <!-- <VcListPropose :songs="songs"/>
-    <VcChart :songs="songs"/> -->
-    <VcTypeMusic />
+
+    <!-- Main Sections -->
+    <div class="content-container pb-20">
+      <VcCarouselArtists :artists="dataArtist" />
+      <VcNewMusic :songs="dataNewSong" />
+      <VcCarouselPopular :populars="PopularSong" />
+      
+      <!-- Chart and Propose Section -->
+      <div class="grid grid-cols-1 xl:grid-cols-1 gap-8 mt-12">
+        <VcListPropose :songs="proposeSongs" @refresh="refreshPropose" />
+        <VcChart :songs="chartSongs" />
+      </div>
+
+      <VcTypeMusic />
+    </div>
   </div>
 </template>
 
@@ -46,12 +60,59 @@ const songStore = useSongStore()
 const dataNewSong = computed(() => songStore.newSongs)
 const PopularSong = computed(() => songStore.popularSongs)
 
-const loading = computed(() => artistStore.loading || songStore.loading)
+// Mapping for VcChart & VcListPropose - Standardizing metadata
+const formatDuration = (seconds: number) => {
+  const mins = Math.floor(seconds / 60)
+  const secs = seconds % 60
+  return `${mins}:${secs.toString().padStart(2, '0')}`
+}
 
-onMounted(() => {
-  artistStore.fetchArtists(10)
-  songStore.fetchNewSongs(10)
-  songStore.fetchPopularSongs(10)
+const formatNumber = (n: number) =>
+  n >= 1_000_000 ? (n / 1_000_000).toFixed(1) + 'M'
+  : n >= 1_000   ? (n / 1_000).toFixed(1) + 'K'
+  : String(n)
+
+const chartSongs = computed(() => {
+  return songStore.popularSongs.slice(0, 5).map(s => ({
+    ...s, // Preserve all original fields
+    artistName: s.artist?.name || 'Unknown Artist',
+    popularity: Math.floor(Math.random() * 20) + 80,
+    cover: getFullImageUrl(s.cover_url),
+    displayDuration: formatDuration(s.duration),
+    totalPlaysStr: formatNumber(s.stats?.total_plays || s.total_plays || 0)
+  }))
+})
+
+const proposeSongs = computed(() => {
+  return songStore.suggestedSongs.map(s => ({
+    ...s, // Preserve all original fields
+    artistName: s.artist?.name || 'Unknown Artist',
+    image: getFullImageUrl(s.cover_url),
+    displayDuration: formatDuration(s.duration),
+    playsStr: formatNumber(s.stats?.total_plays || s.total_plays || 0) + ' plays'
+  }))
+})
+
+// Only show full-page loading if initial essential data is missing
+const isInitialLoading = ref(true)
+const loading = computed(() => {
+  const isEssentialDataLoading = artistStore.loading && artistStore.artists.length === 0;
+  return isInitialLoading.value || isEssentialDataLoading;
+})
+
+const refreshPropose = () => {
+  songStore.fetchSuggestedSongs(9)
+}
+
+onMounted(async () => {
+  // Synchronous-looking but parallel fetches
+  await Promise.allSettled([
+    artistStore.fetchArtists(10),
+    songStore.fetchNewSongs(10),
+    songStore.fetchPopularSongs(10),
+    songStore.fetchSuggestedSongs(9)
+  ])
+  isInitialLoading.value = false
 })
 
 const slideList = [
@@ -132,5 +193,55 @@ const slideList = [
     width: 7rem;
     height: 7rem;
   }
+}
+.loading-screen {
+  position: fixed;
+  inset: 0;
+  background: #000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+.loading-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+}
+
+.loading-bars {
+  display: flex;
+  align-items: flex-end;
+  gap: 5px;
+  height: 48px;
+}
+
+.loading-bars span {
+  display: block;
+  width: 5px;
+  background: #00aaff;
+  border-radius: 3px;
+  animation: bar-bounce 1s ease-in-out infinite;
+}
+
+.loading-bars span:nth-child(1) { animation-delay: 0s;    height: 20px; }
+.loading-bars span:nth-child(2) { animation-delay: 0.15s; height: 32px; }
+.loading-bars span:nth-child(3) { animation-delay: 0.3s;  height: 48px; background: #22d3ee; }
+.loading-bars span:nth-child(4) { animation-delay: 0.45s; height: 32px; }
+.loading-bars span:nth-child(5) { animation-delay: 0.6s;  height: 20px; }
+
+@keyframes bar-bounce {
+  0%, 100% { transform: scaleY(0.4); opacity: 0.5; }
+  50%       { transform: scaleY(1);   opacity: 1;   }
+}
+
+.loading-text {
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.35);
 }
 </style>

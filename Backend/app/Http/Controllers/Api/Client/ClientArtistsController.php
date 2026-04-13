@@ -9,6 +9,8 @@ use Illuminate\Http\Request;
 use App\Helpers\FileUploadHelper;
 use App\Services\ArtistSlugService;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Auth;
+use App\Http\Resources\ArtistResource;
 
 
 class ClientArtistsController extends Controller
@@ -17,12 +19,12 @@ class ClientArtistsController extends Controller
     {
         $limit = $request->query('limit', 10);
         $artists = Artist::limit($limit)->get();
-        return response()->json(['data' => $artists]);
+        return ArtistResource::collection($artists);
     }
 
     public function getAllArtists()  {
         $artists = Artist::all();
-        return response()->json($artists);
+        return ArtistResource::collection($artists);
     }
 
     public function getArtistByPartnerId(Request $request)
@@ -47,18 +49,39 @@ class ClientArtistsController extends Controller
             ], 404);
         }
         
-        return response()->json([
-            'success' => true,
-            'message' => 'Get a list of successful artists',
-            'data' => $artists,
-            'total' => $artists->count()
-        ]);
+        return ArtistResource::collection($artists);
     }
 
-    public function show(Artist $artist)
+    public function show($idOrSlug)
     {
-        log::info($artist);
-        return response()->json($artist);
+        // Find artist by slug OR ID to handle both SEO and legacy links
+        $artist = Artist::where('slug', $idOrSlug)
+                        ->orWhere('id', $idOrSlug)
+                        ->first();
+
+        if (!$artist) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Artist not found'
+            ], 404);
+        }
+
+        $user = Auth::guard('sanctum')->user();
+        $userId = $user ? $user->id : null;
+
+        $artist->load(['songs' => function($query) use ($userId) {
+            $query->with(['genre', 'artist'])
+                ->withCount('song_likes as like_count')
+                ->when($userId, function ($q) use ($userId) {
+                    $q->withExists(['song_likes as is_liked' => function($q) use ($userId) {
+                        $q->where('user_id', $userId);
+                    }]);
+                })
+                ->where('status', 'published')
+                ->latest();
+        }]);
+
+        return new ArtistResource($artist);
     }
 
     public function search(Request $request)

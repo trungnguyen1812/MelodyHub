@@ -51,12 +51,15 @@ class ClientSongsController extends Controller
             $query->where('is_explicit', filter_var($request->is_explicit, FILTER_VALIDATE_BOOLEAN));
 
         // ── Sort ──
-        $allowedSorts = ['created_at', 'title', 'total_plays', 'total_likes', 'duration', 'year'];
-        $sortBy  = in_array($request->get('sort_by'), $allowedSorts)
-            ? $request->get('sort_by')
-            : 'created_at';
-        $sortDir = $request->get('sort_dir') === 'asc' ? 'asc' : 'desc';
-        $query->orderBy($sortBy, $sortDir);
+        $sortBy = $request->get('sort_by');
+        if ($sortBy === 'random') {
+            $query->inRandomOrder();
+        } else {
+            $allowedSorts = ['created_at', 'title', 'total_plays', 'total_likes', 'duration', 'year'];
+            $sortBy       = in_array($sortBy, $allowedSorts) ? $sortBy : 'created_at';
+            $sortDir      = $request->get('sort_dir') === 'asc' ? 'asc' : 'desc';
+            $query->orderBy($sortBy, $sortDir);
+        }
 
         // ── Limit (không phân trang) hoặc Phân trang ──
         if ($request->filled('limit')) {
@@ -141,7 +144,6 @@ class ClientSongsController extends Controller
                 ->limit($limit)
                 ->get();
         }
-        log::info($userId);
         if ($userId) {
             $likedSongIds = SongLike::where('user_id', $userId)
                 ->pluck('song_id')
@@ -195,6 +197,33 @@ class ClientSongsController extends Controller
             }
         }
         
+        return response()->json([
+            'success' => true,
+            'data'    => SongResource::collection($songs),
+        ]);
+    }
+
+    public function getTopLikedSongs(Request $request): JsonResponse
+    {
+        $limit = min((int) $request->get('limit', 20), 100);
+        /** @var \App\Models\User $user */
+        $user   = Auth::user();
+        $userId = $user?->id;
+
+        $songs = Song::query()
+            ->with(['artist', 'album', 'genre'])
+            ->withCount('song_likes')
+            ->when($userId, function ($q) use ($userId) {
+                $q->withExists([
+                    'song_likes as is_liked' => fn($q) => $q->where('user_id', $userId)
+                ]);
+            })
+            ->where('status', 'published')
+            ->orderBy('song_likes_count', 'desc')
+            ->orderBy('total_likes', 'desc')
+            ->limit($limit)
+            ->get();
+
         return response()->json([
             'success' => true,
             'data'    => SongResource::collection($songs),

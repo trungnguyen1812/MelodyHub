@@ -1,66 +1,71 @@
 import adminApi from '@/plugins/axios_admin';
-import type { CreateArtistPayload } from "@/modules/admin/interfaces/artists/create-artist.payload";
+import type { CreateGenrePayload } from "@/modules/admin/interfaces/genres/create-genre.payload";
 
 class GenreService {
 
-    async getAllGenres() {
+    async getAllGenre() {
         const res = await adminApi.get("/genres");
         return res.data;
     }
 
-    // async searchArtist(keyword: string) {
-    //     const res = await adminApi.post("/artists/search", {
-    //         q: keyword  
-    //     });
-    //     return res.data;
-    // }
+    async searchGenre(keyword: string) {
+        const res = await adminApi.post("/genres/search", {
+            q: keyword  
+        });
+        return res.data;
+    }
 
-    // async detailArtist(id: number) {
-    //     return await adminApi.get(`/artists/${id}`);
-    // } 
+    async detailGenre(id: number) {
+        return await adminApi.get(`/genres/${id}`);
+    } 
 
-    // async deleteArtist(id: number) {
-    //     return await adminApi.delete(`/artists/delete/${id}`);
-    // }
+    async deleteGenre(id: number) {
+        return await adminApi.delete(`/genres/delete/${id}`);
+    }
 
-    // async addArtist(payload: CreateArtistPayload) {
-    //     return adminApi.post('/artists/add', payload, {
-    //         headers: {
-    //             'Content-Type': 'multipart/form-data'
-    //         }
-    //     });
-    // }
+    async addGenre(payload: CreateGenrePayload) {
+        return adminApi.post('/genres/add', payload, {
+            headers: {
+                'Content-Type': 'multipart/form-data'
+            }
+        });
+    }
 
-    // async updateArtist(id: number, payload: CreateArtistPayload) {
-    //     const formData = new FormData();
+    async updateGenre(id: number, payload: CreateGenrePayload) {
+        const formData = new FormData();
         
-    //     Object.keys(payload).forEach(key => {
-    //         if (key !== 'avatar' && key !== 'banner'  && payload[key as keyof CreateArtistPayload]) {
-    //             formData.append(key, String(payload[key as keyof CreateArtistPayload]));
-    //         }
-    //     });
-        
-    //     if (payload.avatar instanceof File) {
-    //         formData.append('avatar', payload.avatar);
-    //     }
-    //     if (payload.banner instanceof File) {
-    //         formData.append('banner', payload.banner);
-    //     }
-    //     console.log(payload.avatar);
-    //     console.log(payload.banner);
-        
-        
-    //     return await adminApi.post(`/artists/update/${id}`, formData, {
-    //         headers: {
-    //             'Content-Type': undefined, 
-    //         },
-    //     });
-    // }
+        Object.keys(payload).forEach(key => {
+            const value = payload[key as keyof CreateGenrePayload];
+            if (value === undefined || value === null || value === '') return;
 
-    // async getArtistStatistics(){
-    //     const res = await adminApi.get("/artists/statistics");
-    //     return res.data;
-    // }
+            if (key === 'avatar' || key === 'banner' || key === 'cover_url') {
+                return;
+            }
+            
+            formData.append(key, String(value));
+        });
+        
+        if (payload.avatar instanceof File) {
+            formData.append('avatar', payload.avatar);
+        }
+        if (payload.banner instanceof File) {
+            formData.append('banner', payload.banner);
+        }
+        if (payload.cover_url instanceof File) {
+            formData.append('cover_url', payload.cover_url);
+        }
+        
+        return await adminApi.post(`/genres/update/${id}`, formData, {
+            headers: {
+                'Content-Type': undefined, 
+            },
+        });
+    }
+
+    async getGenreStatistics(){
+        const res = await adminApi.get("/genres/statistics");
+        return res.data;
+    }
 }
 
 export default new GenreService();

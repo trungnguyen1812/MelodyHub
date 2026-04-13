@@ -1,253 +1,224 @@
 <template>
-    <div class="dashboard-container">
-        <div class="header-section">
-            <div class="title-container">
-                <h1>Users Management</h1>
-                <p class="subtitle">Manage All User Accounts</p>
-            </div>
-            <div class="header-actions">
-                <button @click="CreateUser" class="btn-add-user">
-                    <span class="btn-icon">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
-                            stroke="currentColor" class="size-6">
-                            <path stroke-linecap="round" stroke-linejoin="round"
-                                d="M12 9v6m3-3H9m12 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
-                        </svg>
-                    </span>
-                    Add New User
-                </button>
+  <div class="users-management">
+    <!-- Header -->
+    <div class="header">
+      <div class="header-left">
+        <h1 class="title">Users Management</h1>
+        <p class="subtitle">Overview and statistics of all user accounts</p>
+      </div>
+      <div class="header-right">
+        <button class="btn-add" @click="CreateUser">
+          <span class="btn-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <circle cx="12" cy="12" r="10"/>
+              <line x1="12" y1="8" x2="12" y2="16"/>
+              <line x1="8" y1="12" x2="16" y2="12"/>
+            </svg>
+          </span>
+          Add New User
+        </button>
+      </div>
+    </div>
 
-                <div class="search-box">
-                    <input type="text" placeholder="Search users..." v-model="keyword" @input="onSearch">
-                    <span class="search-icon">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
-                            stroke="currentColor" class="size-6">
-                            <path stroke-linecap="round" stroke-linejoin="round"
-                                d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
-                        </svg>
-                    </span>
-                </div>
-            </div>
+    <!-- Stats Grid -->
+    <div class="stats-grid">
+      <!-- Total Users -->
+      <div class="stat-card stat-card--blue">
+        <div class="stat-icon">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+          </svg>
         </div>
-
-        <!-- Stats Cards -->
-        <div class="stats-grid">
-            <!-- Total Users Card -->
-            <div class="stat-card card-neon-blue">
-            <div class="stat-icon">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
-                stroke="currentColor" class="size-6">
-                <path stroke-linecap="round" stroke-linejoin="round"
-                    d="M15 19.128a9.38 9.38 0 0 0 2.625.372 9.337 9.337 0 0 0 4.121-.952 4.125 4.125 0 0 0-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 0 1 8.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0 1 11.964-3.07M12 6.375a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0Zm8.25 2.25a2.625 2.625 0 1 1-5.25 0 2.625 2.625 0 0 1 5.25 0Z" />
-                </svg>
-            </div>
-            <div class="stat-content">
-                <h3>Total Users</h3>
-                <CountUp 
-                :key="userStore.safeStatistics?.total_users|0"
-                :endVal="userStore.safeStatistics?.total_users|0" 
-                :duration="1" 
-                class="stat-number"
-                />
-                <p 
-                v-if="userStore.totalGrowthInfo"
-                :class="['stat-change', userStore.totalGrowthInfo.class]"
-                >
-                {{ userStore.totalGrowthInfo.text }}
-                </p>
-            </div>
-            </div>
-
-            <!-- User VIP Card -->
-            <div class="stat-card card-neon-green">
-            <div class="stat-icon">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
-                stroke="currentColor" class="size-6">
-                <path stroke-linecap="round" stroke-linejoin="round"
-                    d="M11.48 3.499a.562.562 0 0 1 1.04 0l2.125 5.111a.563.563 0 0 0 .475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 0 0-.182.557l1.285 5.385a.562.562 0 0 1-.84.61l-4.725-2.885a.562.562 0 0 0-.586 0L6.982 20.54a.562.562 0 0 1-.84-.61l1.285-5.386a.562.562 0 0 0-.182-.557l-4.204-3.602a.562.562 0 0 1 .321-.988l5.518-.442a.563.563 0 0 0 .475-.345L11.48 3.5Z" />
-                </svg>
-            </div>
-            <div class="stat-content">
-                <h3>User VIP</h3>
-                <CountUp 
-                :key="userStore.safeStatistics?.vip_users|0"
-                :endVal="userStore.safeStatistics?.vip_users|0" 
-                :duration="1" 
-                class="stat-number"
-                />
-                <p 
-                v-if="userStore.vipGrowthInfo"
-                :class="['stat-change', userStore.vipGrowthInfo.class]"
-                >
-                {{ userStore.vipGrowthInfo.text }}
-                </p>
-            </div>
-            </div>
-
-            <!-- Partner Card -->
-            <div class="stat-card card-neon-purple">
-            <div class="stat-icon">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
-                stroke="currentColor" class="size-6">
-                <path stroke-linecap="round" stroke-linejoin="round"
-                    d="M12 18.75a6 6 0 0 0 6-6v-1.5m-6 7.5a6 6 0 0 1-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 0 1-3-3V4.5a3 3 0 1 1 6 0v8.25a3 3 0 0 1-3 3Z" />
-                </svg>
-            </div>
-            <div class="stat-content">
-                <h3>Partner</h3>
-                <CountUp 
-                :key="userStore.safeStatistics?.partners|0"
-                :endVal="userStore.safeStatistics?.partners|0" 
-                :duration="1" 
-                class="stat-number"
-                />
-                <p 
-                v-if="userStore.partnerGrowthInfo"
-                :class="['stat-change', userStore.partnerGrowthInfo.class]"
-                >
-                {{ userStore.partnerGrowthInfo.text }}
-                </p>
-            </div>
-            </div>
-
-            <!-- Admins Card -->
-            <div class="stat-card card-neon-orange">
-            <div class="stat-icon">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
-                stroke="currentColor" class="size-6">
-                <path stroke-linecap="round" stroke-linejoin="round"
-                    d="M9 12.75 11.25 15 15 9.75m-3-7.036A11.959 11.959 0 0 1 3.598 6 11.99 11.99 0 0 0 3 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285Z" />
-                </svg>
-            </div>
-            <div class="stat-content">
-                <h3>Admins</h3>
-                <CountUp 
-                :key="userStore.safeStatistics?.admins|0"
-                :endVal="userStore.safeStatistics?.admins|0" 
-                :duration="1" 
-                class="stat-number"
-                />
-                <p 
-                v-if="userStore.adminGrowthInfo"
-                :class="['stat-change', userStore.adminGrowthInfo.class]"
-                >
-                {{ userStore.adminGrowthInfo.text }}
-                </p>
-            </div>
-            </div>
+        <div class="stat-info">
+          <span class="stat-label">Total Users</span>
+          <CountUp 
+            :key="userStore.safeStatistics?.total_users|0"
+            :endVal="userStore.safeStatistics?.total_users|0" 
+            :duration="1" 
+            class="stat-value"
+          />
+          <span v-if="userStore.totalGrowthInfo" :class="['stat-change', userStore.totalGrowthInfo.class]">
+            {{ userStore.totalGrowthInfo.text }}
+          </span>
         </div>
+      </div>
 
-        <!-- Recent Users Table -->
-        <div class="table-section">
-            <div class="section-header">
-                <h2>Recent Users</h2>
-                <button class="btn-view-all" @click="ViewAllUser">View All →</button>
-            </div>
+      <!-- User VIP -->
+      <div class="stat-card stat-card--green">
+        <div class="stat-icon">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+             <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+          </svg>
+        </div>
+        <div class="stat-info">
+          <span class="stat-label">User VIP</span>
+          <CountUp 
+            :key="userStore.safeStatistics?.vip_users|0"
+            :endVal="userStore.safeStatistics?.vip_users|0" 
+            :duration="1" 
+            class="stat-value"
+          />
+           <span v-if="userStore.vipGrowthInfo" :class="['stat-change', userStore.vipGrowthInfo.class]">
+            {{ userStore.vipGrowthInfo.text }}
+          </span>
+        </div>
+      </div>
 
-            <div class="table-container">
-                <table class="users-table">
-                    <thead>
-                        <tr>
-                            <th>User</th>
-                            <th>Email</th>
-                            <th>Role</th>
-                            <th>Status</th>
-                            <th>Join Date</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr v-for="user in paginatedUsers" :key="user.id">
-                            <td class="user-cell">
-                                <div class="user-avatar">
-                                    <img :src="getFullImageUrl(user.avatar_url)" :alt="user.name" class="avatar-img" />
-                                </div>
-                                <div class="user-info">
-                                    <p class="user-name">{{ user.name }}</p>
-                                    <p class="user-id">ID: {{ user.id }}</p>
-                                </div>
-                            </td>
-                            <td>{{ user.email }}</td>
-                            <td>
-                                <span
-                                    :class="`role-badge role-${(user.roles?.[0]?.name ?? 'user_free').toLowerCase()}`">
-                                    {{ user.role_display_name ?? "Free User" }}
-                                </span>
-                            </td>
-                            <td>
-                                <span :class="`status-badge status-${user.status}`">
-                                    {{ user.status }}
-                                </span>
-                            </td>
-                            <td>{{ formatDate(user.created_at ?? "") }}</td>
-                            <td>
-                                <div class="action-buttons">
-                                    <button class="btn-action btn-edit" @click="viewUpdateUser(user.id)">
-                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"
-                                            class="size-5">
-                                            <path
-                                                d="m5.433 13.917 1.262-3.155A4 4 0 0 1 7.58 9.42l6.92-6.918a2.121 2.121 0 0 1 3 3l-6.92 6.918c-.383.383-.84.685-1.343.886l-3.154 1.262a.5.5 0 0 1-.65-.65Z" />
-                                            <path
-                                                d="M3.5 5.75c0-.69.56-1.25 1.25-1.25H10A.75.75 0 0 0 10 3H4.75A2.75 2.75 0 0 0 2 5.75v9.5A2.75 2.75 0 0 0 4.75 18h9.5A2.75 2.75 0 0 0 17 15.25V10a.75.75 0 0 0-1.5 0v5.25c0 .69-.56 1.25-1.25 1.25h-9.5c-.69 0-1.25-.56-1.25-1.25v-9.5Z" />
-                                        </svg>
-                                    </button>
-                                    <button class="btn-action btn-delete" @click="deleteUser(user.id)">
-                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"
-                                            class="size-5">
-                                            <path fill-rule="evenodd"
-                                                d="M8.75 1A2.75 2.75 0 0 0 6 3.75v.443c-.795.077-1.584.176-2.365.298a.75.75 0 1 0 .23 1.482l.149-.022.841 10.518A2.75 2.75 0 0 0 7.596 19h4.807a2.75 2.75 0 0 0 2.742-2.53l.841-10.52.149.023a.75.75 0 0 0 .23-1.482A41.03 41.03 0 0 0 14 4.193V3.75A2.75 2.75 0 0 0 11.25 1h-2.5ZM10 4c.84 0 1.673.025 2.5.075V3.75c0-.69-.56-1.25-1.25-1.25h-2.5c-.69 0-1.25.56-1.25 1.25v.325C8.327 4.025 9.16 4 10 4ZM8.58 7.72a.75.75 0 0 0-1.5.06l.3 7.5a.75.75 0 1 0 1.5-.06l-.3-7.5Zm4.34.06a.75.75 0 1 0-1.5-.06l-.3 7.5a.75.75 0 1 0 1.5.06l.3-7.5Z"
-                                                clip-rule="evenodd" />
-                                        </svg>
-                                    </button>
-                                    <button class="btn-action btn-view" @click="viewDetailUser(user.id)">
-                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"
-                                            class="size-5">
-                                            <path d="M10 12.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Z" />
-                                            <path fill-rule="evenodd"
-                                                d="M.664 10.59a1.651 1.651 0 0 1 0-1.186A10.004 10.004 0 0 1 10 3c4.257 0 7.893 2.66 9.336 6.41.147.381.146.804 0 1.186A10.004 10.004 0 0 1 10 17c-4.257 0-7.893-2.66-9.336-6.41ZM14 10a4 4 0 1 1-8 0 4 4 0 0 1 8 0Z"
-                                                clip-rule="evenodd" />
-                                        </svg>
-                                    </button>
-                                </div>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-                <div v-if="loading" class="loading-overlay">
-                    <div class="spinner">
-                        <div class="dot"></div>
-                        <div class="dot"></div>
-                        <div class="dot"></div>
+      <!-- Partner -->
+      <div class="stat-card stat-card--purple">
+        <div class="stat-icon">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+          </svg>
+        </div>
+        <div class="stat-info">
+          <span class="stat-label">Partner</span>
+          <CountUp 
+            :key="userStore.safeStatistics?.partners|0"
+            :endVal="userStore.safeStatistics?.partners|0" 
+            :duration="1" 
+            class="stat-value"
+          />
+          <span v-if="userStore.partnerGrowthInfo" :class="['stat-change', userStore.partnerGrowthInfo.class]">
+            {{ userStore.partnerGrowthInfo.text }}
+          </span>
+        </div>
+      </div>
+
+      <!-- Admins -->
+      <div class="stat-card stat-card--orange">
+        <div class="stat-icon">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+          </svg>
+        </div>
+        <div class="stat-info">
+          <span class="stat-label">Admins</span>
+          <CountUp 
+            :key="userStore.safeStatistics?.admins|0"
+            :endVal="userStore.safeStatistics?.admins|0" 
+            :duration="1" 
+            class="stat-value"
+          />
+          <span v-if="userStore.adminGrowthInfo" :class="['stat-change', userStore.adminGrowthInfo.class]">
+            {{ userStore.adminGrowthInfo.text }}
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Users List Section -->
+    <div class="users-list-page">
+      <div class="toolbar">
+        <div class="toolbar__left">
+           <h2 class="section-title">Recent Users</h2>
+        </div>
+        <div class="toolbar__right">
+           <div class="search-box">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="search-icon">
+              <circle cx="11" cy="11" r="8"/>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+            <input v-model="keyword" type="text" placeholder="Search users..." @input="onSearch" />
+          </div>
+          <button class="btn-view-all" @click="ViewAllUser">View All Users →</button>
+        </div>
+      </div>
+
+      <!-- Table Section -->
+      <div class="table-section">
+        <div class="table-wrapper">
+          <table class="users-table">
+            <thead>
+              <tr>
+                <th>User</th>
+                <th>Email</th>
+                <th>Role</th>
+                <th>Status</th>
+                <th>Join Date</th>
+                <th class="th-actions">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="user in paginatedUsers" :key="user.id" class="table-row">
+                <td class="td-user">
+                  <div class="user-cell">
+                    <div class="user-avatar">
+                        <img :src="getFullImageUrl(user.avatar_url)" :alt="user.name" />
                     </div>
-                    <span>Loading data...</span>
-                </div>
-            </div>
-            <!-- Pagination -->
-            <div v-if="users.length > 0" class="pagination">
-                <div class="pagination-info">
-                    Showing {{ paginationStart }} to {{ paginationEnd }} of {{ users.length }} entries
-                </div>
-                <div class="pagination-controls">
-                    <button class="pagination-btn" :disabled="currentPage === 1" @click="currentPage--">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="size-4">
-                            <path fill-rule="evenodd" d="M11.78 5.22a.75.75 0 0 1 0 1.06L8.06 10l3.72 3.72a.75.75 0 1 1-1.06 1.06l-4.25-4.25a.75.75 0 0 1 0-1.06l4.25-4.25a.75.75 0 0 1 1.06 0Z" clip-rule="evenodd" />
-                        </svg>
+                    <div class="user-info">
+                      <p class="user-name">{{ user.name }}</p>
+                      <p class="user-id">ID: {{ user.id }}</p>
+                    </div>
+                  </div>
+                </td>
+                <td class="td-text">{{ user.email }}</td>
+                <td>
+                  <span :class="['role-badge', `role-${(user.roles?.[0]?.name ?? 'user_free').toLowerCase()}`]">
+                    {{ user.role_display_name ?? "Free User" }}
+                  </span>
+                </td>
+                <td>
+                  <span class="status-btn" :class="'status--' + user.status">
+                    <span class="status-dot"></span>
+                    {{ user.status }}
+                  </span>
+                </td>
+                <td class="td-text td-mono">{{ formatDate(user.created_at ?? "") }}</td>
+                <td class="td-actions">
+                  <div class="action-btns">
+                    <button class="act-btn act-btn--edit" title="Edit" @click="viewUpdateUser(user.id)">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                      </svg>
                     </button>
-                    <span class="pagination-current">{{ currentPage }} / {{ totalPages }}</span>
-                    <button class="pagination-btn" :disabled="currentPage === totalPages" @click="currentPage++">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="size-4">
-                            <path fill-rule="evenodd" d="M8.22 5.22a.75.75 0 0 1 1.06 0l4.25 4.25a.75.75 0 0 1 0 1.06l-4.25 4.25a.75.75 0 0 1-1.06-1.06L11.94 10 8.22 6.28a.75.75 0 0 1 0-1.06Z" clip-rule="evenodd" />
-                        </svg>
+                    <button class="act-btn act-btn--delete" title="Delete" @click="deleteUser(user.id)">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="3 6 5 6 21 6"/>
+                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
+                      </svg>
                     </button>
-                </div>
-            </div>
+                    <button class="act-btn act-btn--view" title="View Details" @click="viewDetailUser(user.id)">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+                      </svg>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
         </div>
+
+        <!-- Loading state inside table -->
+        <div v-if="loading" class="loading-overlay">
+            <div class="spinner">
+                <div class="dot"></div>
+                <div class="dot"></div>
+                <div class="dot"></div>
+            </div>
+            <span>Loading data...</span>
+        </div>
+      </div>
+
+      <!-- Pagination (Brief for Dashboard) -->
+      <div class="pagination" v-if="users.length > 0">
+        <div class="pagination-info">
+          Showing <strong>{{ paginationStart }}</strong> to <strong>{{ paginationEnd }}</strong> of <strong>{{ users.length }}</strong> users
+        </div>
+        <div class="pagination-controls">
+          <button class="page-btn" :disabled="currentPage === 1" @click="currentPage--">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+          </button>
+          <span class="page-current">{{ currentPage }} / {{ totalPages }}</span>
+          <button class="page-btn" :disabled="currentPage === totalPages" @click="currentPage++">
+             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+          </button>
+        </div>
+      </div>
     </div>
-    <div v-if="loading" class="loading-state">
-    </div>
-    <div v-else-if="!users || users.length === 0" class="empty-state">
-        
-    </div>
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -265,9 +236,8 @@ const keyword = ref("");
 let searchTimeout: number | null = null;
 const { loading } = storeToRefs(userStore);
 const users = computed(() => userStore.users ?? []);
-const userCount = ref(0);
 const currentPage = ref(1);
-const itemsPerPage = 10;
+const itemsPerPage = 8;
 
 const CreateUser = () => {
     router.push({ name: "admin.usermanager.add" });
@@ -294,22 +264,19 @@ function viewUpdateUser(id: number) {
 const onSearch = () => {
     if (searchTimeout) clearTimeout(searchTimeout);
     searchTimeout = window.setTimeout(async () => {
+        currentPage.value = 1;
         if (!keyword.value.trim()) {
             await userStore.fetchUsers();
             return;
         }
-        await userStore.fetchSearchUser(
-            keyword.value
-        );
+        await userStore.fetchSearchUser(keyword.value);
     }, 300);
 }
 
 function formatDate(date: string) {
-    if (!date) return "";
-    return new Date(date).toLocaleDateString("vi-VN");
+    if (!date) return "—";
+    return new Date(date).toLocaleDateString("en-GB", { day: '2-digit', month: 'short', year: 'numeric' });
 }
-
-
 
 async function deleteUser(id: number) {
     try {
@@ -320,46 +287,28 @@ async function deleteUser(id: number) {
             showCancelButton: true,
             confirmButtonText: 'Yes, delete it!',
             cancelButtonText: 'Cancel',
-            confirmButtonColor: '#d33',
-            cancelButtonColor: '#3085d6',
+            confirmButtonColor: '#ef4444',
+            cancelButtonColor: '#334155',
             reverseButtons: true,
-            customClass: {
-                confirmButton: 'btn btn-danger',
-                cancelButton: 'btn btn-secondary'
-            }
+            background: '#181c22',
+            color: '#f0f4f8'
         });
 
         if (!result.isConfirmed) return;
 
         loading.value = true;
-
         await userStore.fetchDelete(id);
         await userStore.fetchUsers();
-        notificationStore.notify("Delete user successful", "success");
-
-        router.push({ name: "admin.usermanager" });
-
+        notificationStore.notify("User deleted successfully", "success");
     } catch (error: any) {
-        const err = error as { response?: { status?: number } }
-
-        if (err.response?.status === 404) {
-            router.push('/404')
-        } else if (err.response?.status === 401) {
-            router.push('/login')
-        } else {
-            notificationStore.notify("Error delete user", "error");
-        }
-
+        notificationStore.notify("Error deleting user", "error");
     } finally {
         loading.value = false;
     }
 }
 
-const usersToShow = computed(() => (userStore.users ?? []).slice(0, 10));
-
-
-const totalPages = computed(() => Math.ceil(users.value.length / itemsPerPage));
-const paginationStart = computed(() => ((currentPage.value - 1) * itemsPerPage) + 1);
+const totalPages = computed(() => Math.max(1, Math.ceil(users.value.length / itemsPerPage)));
+const paginationStart = computed(() => users.value.length === 0 ? 0 : ((currentPage.value - 1) * itemsPerPage) + 1);
 const paginationEnd = computed(() => Math.min(currentPage.value * itemsPerPage, users.value.length));
 
 const paginatedUsers = computed(() => {
@@ -367,6 +316,7 @@ const paginatedUsers = computed(() => {
     const end = start + itemsPerPage;
     return users.value.slice(start, end);
 });
+
 onMounted(() => {
     userStore.fetchUsers();
     userStore.fetchShowStatistics();
@@ -374,734 +324,334 @@ onMounted(() => {
 </script>
 
 <style scoped>
-/* Base Styles */
-.dashboard-container {
-    height: auto;
-    width: 100%;
-    border-radius: 14px;
-    margin-top: 7px;
-    display: block;
-    background: rgba(255, 255, 255, 0.08);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    display: flex;
-    flex-direction: column;
-    padding: 25px;
-    position: relative;
-
-    font-family: 'Afacad', sans-serif;
-    color: white;
+.users-management {
+  background-color: #0f1216;
+  min-height: 100vh;
+  padding: 32px 36px;
+  font-family: 'DM Sans', system-ui, sans-serif;
+  color: #e2e8f0;
 }
 
-/* Header Section */
-.header-section {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 30px;
-    padding-bottom: 20px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+/* ── Header ── */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 32px;
 }
 
-.title-container h1 {
-    font-size: 28px;
-    font-weight: 600;
-    margin: 0;
-    background: linear-gradient(90deg, #00aaff, #00ffaa);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+.title {
+  font-size: 26px;
+  font-weight: 700;
+  margin: 0;
+  background: linear-gradient(90deg, #fff 30%, #00aaff);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 .subtitle {
-    font-size: 14px;
-    color: rgba(255, 255, 255, 0.7);
-    margin-top: 5px;
-    margin-bottom: 0;
+  font-size: 13px;
+  color: #64748b;
+  margin-top: 4px;
 }
 
-.user-avatar {
-    width: 45px;
-    height: 45px;
-    overflow: hidden;
-    border-radius: 50%;
-    background: #f0f0f0;
+.btn-add {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  background: linear-gradient(90deg, #3b82f6, #2563eb);
+  border: none;
+  border-radius: 10px;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
 }
 
-.avatar-img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
+.btn-add:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
 }
 
-.header-actions {
-    display: flex;
-    gap: 20px;
-    align-items: center;
-}
-
-.btn-add-user {
-    background: linear-gradient(135deg, #00aaff, #0088cc);
-    border: none;
-    color: white;
-    padding: 10px 20px;
-    border-radius: 8px;
-    font-weight: 500;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    transition: all 0.3s ease;
-    font-family: 'Afacad', sans-serif;
-}
-
-.btn-add-user:hover {
-    background: linear-gradient(135deg, #0088cc, #006699);
-    transform: translateY(-2px);
-    box-shadow: 0 5px 15px rgba(0, 170, 255, 0.4);
-}
-
-.btn-icon {
-    font-size: 18px;
-    font-weight: bold;
-}
-
-.search-box {
-    position: relative;
-}
-
-.search-box input {
-    background: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(0, 170, 255, 0.3);
-    border-radius: 8px;
-    padding: 10px 40px 10px 15px;
-    color: white;
-    width: 250px;
-    font-family: 'Afacad', sans-serif;
-    transition: all 0.3s ease;
-}
-
-.search-box input:focus {
-    outline: none;
-    border-color: #00aaff;
-    box-shadow: 0 0 10px rgba(0, 170, 255, 0.3);
-}
-
-.search-icon {
-    position: absolute;
-    right: 15px;
-    top: 50%;
-    transform: translateY(-50%);
-    color: rgba(255, 255, 255, 0.6);
-}
-
-/* Stats Grid */
+/* ── Stats Grid ── */
 .stats-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 20px;
-    margin-bottom: 30px;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+  margin-bottom: 30px;
 }
 
 .stat-card {
-    background: rgba(255, 255, 255, 0.05);
-    border-radius: 12px;
-    padding: 20px;
-    display: flex;
-    align-items: center;
-    gap: 15px;
-    border: 1px solid rgba(0, 170, 255, 0.2);
-    transition: all 0.3s ease;
-    position: relative;
-    overflow: hidden;
-}
-
-.stat-card::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 3px;
-    opacity: 0.8;
-}
-
-.card-neon-blue::before {
-    background: linear-gradient(90deg, #00aaff, #00ccff);
-}
-
-.card-neon-green::before {
-    background: linear-gradient(90deg, #00ffaa, #00cc88);
-}
-
-.card-neon-purple::before {
-    background: linear-gradient(90deg, #aa00ff, #cc00ff);
-}
-
-.card-neon-orange::before {
-    background: linear-gradient(90deg, #ffaa00, #ff8800);
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 14px;
+  padding: 24px 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  border-top: 3px solid transparent;
+  transition: transform 0.2s;
 }
 
 .stat-card:hover {
-    transform: translateY(-5px);
-    background: rgba(255, 255, 255, 0.08);
-    border-color: rgba(0, 170, 255, 0.4);
-    box-shadow: 0 10px 20px rgba(0, 170, 255, 0.1);
+  transform: translateY(-4px);
+  background: rgba(255, 255, 255, 0.05);
 }
+
+.stat-card--blue  { border-top-color: #3b82f6; }
+.stat-card--green { border-top-color: #10b981; }
+.stat-card--purple{ border-top-color: #8b5cf6; }
+.stat-card--orange{ border-top-color: #f59e0b; }
 
 .stat-icon {
-    font-size: 32px;
-    width: 60px;
-    height: 60px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: rgba(255, 255, 255, 0.1);
-    border-radius: 10px;
+  width: 52px;
+  height: 52px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.05);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #94a3b8;
 }
 
-.stat-content h3 {
-    font-size: 14px;
-    color: rgba(255, 255, 255, 0.7);
-    margin: 0 0 5px 0;
-    font-weight: 500;
+.stat-info { display: flex; flex-direction: column; gap: 4px; }
+.stat-label { font-size: 12px; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; }
+.stat-value { font-size: 28px; font-weight: 700; color: #f1f5f9; line-height: 1.1; }
+.stat-change { font-size: 12px; }
+.stat-change.positive { color: #10b981; }
+.stat-change.negative { color: #ef4444; }
+
+/* ── Main List Box ── */
+.users-list-page {
+  background: #111418;
+  border-radius: 16px;
+  border: 1px solid #1e2530;
+  padding: 24px;
 }
 
-.stat-number {
-    font-size: 28px;
-    font-weight: 600;
-    margin: 0 0 5px 0;
+.toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
 }
 
-.stat-change {
-    font-size: 12px;
-    margin: 0;
-    color: rgba(255, 255, 255, 0.6);
+.section-title { font-size: 18px; font-weight: 600; color: #f1f5f9; }
+
+.toolbar__right { display: flex; align-items: center; gap: 12px; }
+
+.search-box {
+  position: relative;
+  display: flex;
+  align-items: center;
 }
 
-.stat-change.positive {
-    color: #00ffaa;
+.search-icon {
+  position: absolute;
+  left: 12px;
+  color: #4a5568;
+  pointer-events: none;
 }
 
-.stat-change.neutral {
-    color: #aaaaff;
+.search-box input {
+  background: #181c22;
+  border: 1px solid #2d3748;
+  border-radius: 10px;
+  padding: 9px 12px 9px 36px;
+  color: #e2e8f0;
+  font-size: 13px;
+  width: 240px;
+  outline: none;
+  transition: all 0.2s;
 }
 
-/* Table Section */
-.table-section {
-    flex: 1;
-    background: rgba(0, 0, 0, 0.2);
-    border-radius: 12px;
-    padding: 20px;
-    border: 1px solid rgba(0, 170, 255, 0.2);
-    display: flex;
-    height: 20vh;
-    flex-direction: column;
-    overflow-y: auto;
-    overflow-x: hidden;
-}
-
-.table-section .section-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 20px;
-    padding-bottom: 15px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.table-section .section-header h2 {
-    font-size: 20px;
-    margin: 0;
-    color: rgba(255, 255, 255, 0.9);
-}
-
-.table-container {
-    flex: 1;
-    overflow-y: auto;
-}
-
-.users-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 10px;
-}
-
-.users-table thead {
-    background: rgb(29, 69, 94);
-    position: sticky;
-    top: 0;
-    z-index: 10;
-}
-
-.users-table th {
-    padding: 8px 12px;
-    text-align: left;
-    font-weight: 500;
-    color: rgba(255, 255, 255, 0.7);
-    border-bottom: 1px solid rgba(0, 170, 255, 0.3);
-    white-space: nowrap;
-    position: relative; 
-}
-
-.users-table td {
-    padding: 15px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    vertical-align: middle;
-}
-
-.table-checkbox {
-    width: 18px;
-    height: 18px;
-    cursor: pointer;
-    accent-color: #00aaff;
-}
-
-.user-cell {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-}
-
-.user-avatar {
-    width: 40px;
-    height: 40px;
-    background: linear-gradient(135deg, #00aaff, #00ffaa);
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: 600;
-    font-size: 14px;
-    color: white;
-}
-
-.user-info {
-    display: flex;
-    flex-direction: column;
-}
-
-.user-name {
-    margin: 0;
-    font-weight: 500;
-    color: white;
-}
-
-.user-id {
-    margin: 0;
-    font-size: 12px;
-    color: rgba(255, 255, 255, 0.6);
-}
-
-/* Badges */
-.role-badge,
-.status-badge {
-    padding: 5px 12px;
-    border-radius: 20px;
-    font-size: 12px;
-    font-weight: 500;
-    display: inline-block;
-    white-space: nowrap;
-}
-
-/* Role badges - fixed for your data structure */
-.role-badge.role-admin,
-.role-badge.role-administrator {
-    background: rgba(255, 0, 0, 0.2);
-    color: #ff6666;
-    border: 1px solid rgba(255, 0, 0, 0.3);
-}
-
-.role-badge.role-artist {
-    background: rgba(0, 170, 255, 0.2);
-    color: #66ccff;
-    border: 1px solid rgba(0, 170, 255, 0.3);
-}
-
-.role-badge.role-listener {
-    background: rgba(0, 255, 170, 0.2);
-    color: #66ffcc;
-    border: 1px solid rgba(0, 255, 170, 0.3);
-}
-
-.role-badge.role-guest {
-    background: rgba(153, 153, 153, 0.2);
-    color: #cccccc;
-    border: 1px solid rgba(153, 153, 153, 0.3);
-}
-
-/* Status badges - fixed for your data structure */
-.status-badge.status-active {
-    background: rgba(0, 255, 0, 0.2);
-    color: #66ff66;
-    border: 1px solid rgba(0, 255, 0, 0.3);
-}
-
-.status-badge.status-inactive {
-    background: rgba(255, 255, 0, 0.2);
-    color: #ffff66;
-    border: 1px solid rgba(255, 255, 0, 0.3);
-}
-
-.status-badge.status-pending {
-    background: rgba(255, 165, 0, 0.2);
-    color: #ffcc66;
-    border: 1px solid rgba(255, 165, 0, 0.3);
-}
-
-/* Default status badge if status is unknown */
-.status-badge {
-    background: rgba(153, 153, 153, 0.2);
-    color: #cccccc;
-    border: 1px solid rgba(153, 153, 153, 0.3);
-}
-
-/* Action Buttons */
-.action-buttons {
-    display: flex;
-    gap: 8px;
-}
-
-.btn-action {
-    background: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    color: white;
-    width: 32px;
-    height: 32px;
-    border-radius: 6px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.2s ease;
-    font-size: 14px;
-}
-
-.btn-action:hover {
-    background: rgba(255, 255, 255, 0.2);
-    transform: scale(1.1);
-}
-
-.btn-edit:hover {
-    background: rgba(0, 170, 255, 0.3);
-    border-color: #00aaff;
-}
-
-.btn-delete:hover {
-    background: rgba(255, 0, 0, 0.3);
-    border-color: #ff0000;
-}
-
-.btn-view:hover {
-    background: rgba(0, 255, 0, 0.3);
-    border-color: #00ff00;
+.search-box input:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
 .btn-view-all {
-    background: transparent;
-    border: 1px solid rgba(0, 170, 255, 0.5);
-    color: #00aaff;
-    padding: 8px 16px;
-    border-radius: 6px;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    font-family: 'Afacad', sans-serif;
-    font-size: 14px;
+  background: transparent;
+  border: 1px solid rgba(59, 130, 246, 0.3);
+  color: #3b82f6;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
 }
 
 .btn-view-all:hover {
-    background: rgba(0, 170, 255, 0.1);
-    transform: translateX(5px);
+  background: rgba(59, 130, 246, 0.05);
+  border-color: #3b82f6;
 }
 
-/* Loading State */
-.loading-state {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    min-height: 200px;
-    color: rgba(255, 255, 255, 0.7);
+/* ── Table ── */
+.table-section {
+  position: relative;
+  background: #181c22;
+  border-radius: 12px;
+  border: 1px solid #252d3a;
+  overflow: hidden;
 }
 
-/* Empty State */
-.empty-state {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    min-height: 200px;
-    color: rgba(255, 255, 255, 0.7);
-    text-align: center;
-    padding: 40px;
+.table-wrapper { overflow-x: auto; }
+
+.users-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
 }
 
-.empty-state .empty-icon {
-    font-size: 48px;
-    margin-bottom: 20px;
-    opacity: 0.5;
+.users-table thead tr {
+  background: #1e2530;
+  border-bottom: 1px solid #252d3a;
 }
 
-/* Scrollbar Styling */
-.dashboard-container::-webkit-scrollbar,
-.table-container::-webkit-scrollbar {
-    width: 6px;
+.users-table th {
+  padding: 12px 16px;
+  text-align: left;
+  font-size: 11px;
+  font-weight: 600;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
-.dashboard-container::-webkit-scrollbar-thumb,
-.table-container::-webkit-scrollbar-thumb {
-    background: rgba(0, 170, 255, 0.6);
-    border-radius: 3px;
+.users-table td {
+  padding: 12px 16px;
+  border-bottom: 1px solid #252d3a;
+  vertical-align: middle;
 }
 
-.dashboard-container::-webkit-scrollbar-track,
-.table-container::-webkit-scrollbar-track {
-    background: transparent;
+.table-row:hover { background: rgba(255, 255, 255, 0.02); }
+
+.user-cell { display: flex; align-items: center; gap: 12px; }
+.user-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  overflow: hidden;
+  background: #1e2530;
+}
+.user-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.user-name { font-weight: 600; color: #f1f5f9; margin: 0; }
+.user-id { font-size: 11px; color: #64748b; margin: 0; }
+
+.td-text { color: #94a3b8; }
+.td-mono { font-family: ui-monospace, monospace; }
+
+.role-badge {
+  display: inline-flex;
+  padding: 3px 10px;
+  border-radius: 6px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  background: rgba(255, 255, 255, 0.05);
+  color: #94a3b8;
 }
 
-/* Neon Pulse Animation */
-@keyframes neonPulse {
+.role-admin { background: rgba(239, 68, 68, 0.1); color: #f87171; }
+.role-partner { background: rgba(16, 185, 129, 0.1); color: #34d399; }
+.role-user_vip_yearly { background: rgba(245, 158, 11, 0.1); color: #fbbf24; }
 
-    0%,
-    100% {
-        box-shadow:
-            0 0 8px rgba(0, 170, 255, 0.7),
-            0 0 16px rgba(0, 170, 255, 0.55),
-            0 0 24px rgba(0, 170, 255, 0.35),
-            0 8px 25px rgba(0, 0, 0, 0.45);
-    }
-
-    50% {
-        box-shadow:
-            0 0 12px rgba(0, 170, 255, 0.8),
-            0 0 20px rgba(0, 170, 255, 0.65),
-            0 0 30px rgba(0, 170, 255, 0.45),
-            0 8px 30px rgba(0, 0, 0, 0.5);
-    }
+.status-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: capitalize;
 }
 
-/* Responsive Design */
-@media (max-width: 1400px) {
-    .stats-grid {
-        grid-template-columns: repeat(2, 1fr);
-    }
+.status--active { background: rgba(16, 185, 129, 0.1); color: #34d399; }
+.status--inactive { background: rgba(100, 116, 139, 0.1); color: #94a3b8; }
+.status-dot { width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
+
+.td-actions { width: 120px; }
+.action-btns { display: flex; gap: 6px; justify-content: flex-end; }
+
+.act-btn {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  background: #1e2530;
+  border: 1px solid #2d3748;
+  color: #64748b;
+  cursor: pointer;
+  transition: all 0.2s;
 }
 
-@media (max-width: 1200px) {
-    .dashboard-container {
-        padding: 20px;
-    }
+.act-btn:hover { color: #f1f5f9; border-color: #4a5568; transform: translateY(-1px); }
+.act-btn--edit:hover { color: #3b82f6; border-color: #3b82f6; background: rgba(59, 130, 246, 0.05); }
+.act-btn--delete:hover { color: #ef4444; border-color: #ef4444; background: rgba(239, 68, 68, 0.05); }
+.act-btn--view:hover { color: #10b981; border-color: #10b981; background: rgba(16, 185, 129, 0.05); }
 
-    .users-table th,
-    .users-table td {
-        padding: 12px;
-        font-size: 14px;
-    }
+/* ── Pagination ── */
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 16px;
+  font-size: 13px;
+  color: #64748b;
 }
+
+.pagination-controls { display: flex; align-items: center; gap: 12px; }
+
+.page-btn {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  background: #181c22;
+  border: 1px solid #2d3748;
+  color: #64748b;
+  cursor: pointer;
+}
+
+.page-btn:hover:not(:disabled) { border-color: #3b82f6; color: #3b82f6; }
+.page-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+.loading-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(15, 18, 22, 0.7);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  z-index: 10;
+}
+
+.spinner { display: flex; gap: 4px; }
+.dot { width: 8px; height: 8px; border-radius: 50%; background: #3b82f6; animation: bounce 1.4s infinite ease-in-out; }
+.dot:nth-child(1) { animation-delay: -0.32s; }
+.dot:nth-child(2) { animation-delay: -0.16s; }
+
+@keyframes bounce { 0%, 80%, 100% { transform: scale(0); } 40% { transform: scale(1.0); } }
 
 @media (max-width: 1024px) {
-    .header-section {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 20px;
-    }
-
-    .header-actions {
-        width: 100%;
-        justify-content: space-between;
-    }
-
-    .search-box input {
-        width: 200px;
-    }
+  .stats-grid { grid-template-columns: repeat(2, 1fr); }
 }
-
-@media (max-width: 768px) {
-    .dashboard-container {
-        padding: 15px;
-        height: auto;
-        min-height: 82vh;
-    }
-
-    .stats-grid {
-        grid-template-columns: 1fr;
-    }
-
-    .header-actions {
-        flex-direction: column;
-        gap: 15px;
-        align-items: flex-start;
-    }
-
-    .search-box input {
-        width: 100%;
-    }
-
-    .users-table {
-        display: block;
-        overflow-x: auto;
-    }
-
-    .action-buttons {
-        flex-wrap: wrap;
-        justify-content: center;
-    }
-
-    .table-section .section-header {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 15px;
-    }
-
-    .btn-view-all {
-        align-self: flex-end;
-    }
-}
-
-@media (max-width: 480px) {
-    .dashboard-container {
-        padding: 12px;
-    }
-
-    .title-container h1 {
-        font-size: 24px;
-    }
-
-    .stat-card {
-        flex-direction: column;
-        text-align: center;
-        padding: 15px;
-    }
-
-    .stat-icon {
-        width: 50px;
-        height: 50px;
-        font-size: 24px;
-        margin-bottom: 10px;
-    }
-
-    .users-table th,
-    .users-table td {
-        padding: 8px;
-        font-size: 13px;
-    }
-
-    .user-avatar {
-        width: 35px;
-        height: 35px;
-        font-size: 13px;
-    }
-
-    .role-badge,
-    .status-badge {
-        padding: 4px 8px;
-        font-size: 11px;
-    }
-
-    .btn-action {
-        width: 28px;
-        height: 28px;
-        font-size: 12px;
-    }
-
-    .loading-overlay {
-        margin: 0 auto;
-        background-color: #161d1f;
-        backdrop-filter: blur(3px);
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
-        z-index: 10;
-        border-radius: inherit;
-    }
-
-
-}
-
-
-.spinner {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 8px;
-}
-
-.dot {
-    width: 12px;
-    height: 12px;
-    border-radius: 50%;
-    background-color: #1d455e;
-    animation: bounce 1.4s infinite ease-in-out both;
-}
-
-.dot:nth-child(1) {
-    animation-delay: -0.32s;
-}
-
-.dot:nth-child(2) {
-    animation-delay: -0.16s;
-}
-
-@keyframes bounce {
-
-    0%,
-    80%,
-    100% {
-        transform: scale(0);
-    }
-
-    40% {
-        transform: scale(1.0);
-    }
-}
-
-
-/* Pagination - Thêm vào cuối table nếu chưa có */
-.pagination {
-    padding: 12px 16px; 
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.pagination-info {
-    color: rgba(255, 255, 255, 0.6);
-    font-size: 14px;
-}
-
-.pagination-controls {
-    display: flex;
-    gap: 12px;
-    align-items: center;
-}
-
-.pagination-btn {
-    width: 36px;
-    height: 36px;
-    border-radius: 8px;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    background: rgba(255, 255, 255, 0.05);
-    color: white;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.2s ease;
-}
-
-.pagination-btn:hover:not(:disabled) {
-    background: #00aaff;
-    border-color: #00aaff;
-}
-
-.pagination-btn:disabled {
-    opacity: 0.3;
-    cursor: not-allowed;
-}
-
-.pagination-current {
-    font-weight: 600;
-    color: #00aaff;
+@media (max-width: 640px) {
+  .users-management { padding: 20px 16px; }
+  .header { flex-direction: column; align-items: flex-start; gap: 16px; }
+  .stats-grid { grid-template-columns: 1fr; }
+  .toolbar { flex-direction: column; align-items: stretch; gap: 12px; }
+  .search-box input { width: 100%; }
 }
 </style>

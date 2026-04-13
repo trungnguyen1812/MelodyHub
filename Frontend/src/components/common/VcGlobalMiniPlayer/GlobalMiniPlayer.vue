@@ -29,9 +29,29 @@
         </div>
 
         <div class="player-expandable">
-          <div class="player-info" @click="goToDetail">
-            <p class="player-title">{{ player.currentSong.title }}</p>
-            <p class="player-artist">{{ player.currentSong.artist?.name ?? '—' }}</p>
+          <div class="player-info-wrap">
+            <div class="player-info" @click="goToDetail">
+              <p class="player-title">{{ player.currentSong.title }}</p>
+              <p class="player-artist">{{ player.currentSong.artist?.name ?? '—' }}</p>
+            </div>
+            <ActionButton 
+              type="like" 
+              class="player-bar-like"
+              :item="{ 
+                id: player.currentSong.id,
+                isActive: player.currentSong.is_liked,   
+                count:    player.currentSong.like_count  
+              }" 
+            >
+              <template #default="{ isActive, isLoading }">
+                <svg v-if="isActive" width="18" height="18" viewBox="0 0 24 24" fill="#ef4444">
+                   <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+                </svg>
+                <svg v-else width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                   <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+                </svg>
+              </template>
+            </ActionButton>
           </div>
 
           <div class="player-seek-area">
@@ -90,25 +110,26 @@
 
           <div class="player-volume">
             <button class="player-vol-icon" @click="player.toggleMute()">
-              <svg v-if="player.isMuted || player.volume === 0" width="14" height="14" viewBox="0 0 24 24" fill="none"
+              <svg v-if="player.isMuted || player.volume === 0" width="16" height="16" viewBox="0 0 24 24" fill="none"
                 stroke="currentColor" stroke-width="2">
-                <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+                <path d="M11 5L6 9H2V15H6L11 19V5Z" />
                 <line x1="23" y1="9" x2="17" y2="15" />
                 <line x1="17" y1="9" x2="23" y2="15" />
               </svg>
-              <svg v-else-if="player.volume <= 0.5" width="14" height="14" viewBox="0 0 24 24" fill="none"
+              <svg v-else width="16" height="16" viewBox="0 0 24 24" fill="none"
                 stroke="currentColor" stroke-width="2">
-                <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+                <path d="M11 5L6 9H2V15H6L11 19V5Z" />
                 <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
-              </svg>
-              <svg v-else width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
-                <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
-                <path d="M19.07 4.93a10 10 0 0 1 0 14.14" />
+                <path v-if="player.volume > 0.5" d="M19.07 4.93a10 10 0 0 1 0 14.14" />
               </svg>
             </button>
-            <input type="range" min="0" max="1" step="0.05" :value="player.isMuted ? 0 : player.volume"
-              class="player-vol-slider" @input="onVolumeChange" />
+            <div class="player-vol-wrap">
+              <div class="player-vol-track">
+                <div class="player-vol-fill" :style="{ width: (player.isMuted ? 0 : player.volume * 100) + '%' }"></div>
+              </div>
+              <input type="range" min="0" max="1" step="0.05" :value="player.isMuted ? 0 : player.volume"
+                class="player-vol-slider" @input="onVolumeChange" />
+            </div>
           </div>
         </div>
 
@@ -180,7 +201,7 @@
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z" />
                   </svg>
-                  <span>{{ formatNumber(player.currentSong?.stats.total_plays ?? 0) }}</span>
+                  <span>{{ formatNumber(player.currentSong?.stats?.total_plays || player.currentSong?.total_plays || 0) }}</span>
                   <span class="play-count-label">listens</span>
                 </div>
                 <div class="duration">
@@ -693,11 +714,34 @@ onUnmounted(() => lockScroll(false))
 }
 
 /* ====================== INFO ====================== */
-.player-info {
+.player-info-wrap {
+  display: flex;
+  align-items: center;
+  gap: 12px;
   flex-shrink: 0;
-  min-width: 120px;
-  max-width: 200px;
+  min-width: 154px;
+  max-width: 250px;
+}
+
+.player-info {
+  flex: 1;
   cursor: pointer;
+  overflow: hidden;
+}
+
+.player-bar-like {
+  background: transparent !important;
+  border: none !important;
+  padding: 4px !important;
+  color: #9ca3af;
+  opacity: 0.7;
+  transition: all 0.2s;
+}
+
+.player-bar-like:hover {
+  opacity: 1;
+  transform: scale(1.1);
+  color: #ef4444 !important;
 }
 
 .player-title {
@@ -712,7 +756,7 @@ onUnmounted(() => lockScroll(false))
 .player-artist {
   font-size: 12px;
   color: #9ca3af;
-  margin-top: 2px;
+  margin-top: 1px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -878,8 +922,32 @@ onUnmounted(() => lockScroll(false))
 .player-volume {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 10px;
   flex-shrink: 0;
+  margin-left: 8px;
+}
+
+.player-vol-wrap {
+  position: relative;
+  width: 80px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+}
+
+.player-vol-track {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+}
+
+.player-vol-fill {
+  height: 100%;
+  background: #3b82f6;
+  border-radius: 3px;
 }
 
 .player-vol-icon {

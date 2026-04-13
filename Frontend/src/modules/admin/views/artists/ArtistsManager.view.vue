@@ -516,7 +516,6 @@ onMounted(() => {
     flex-direction: column;
     padding: 25px;
     position: relative;
-    font-family: 'Afacad', sans-serif;
     color: white;
     overflow-y: auto;
 }
@@ -532,10 +531,10 @@ onMounted(() => {
 }
 
 .title-container h1 {
-    font-size: 28px;
-    font-weight: 600;
+    font-size: 26px;
+    font-weight: 700;
     margin: 0;
-    background: linear-gradient(90deg, #00aaff, #00ffaa);
+    background: linear-gradient(90deg, #fff 30%, #00aaff);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -560,7 +559,6 @@ onMounted(() => {
     align-items: center;
     gap: 8px;
     transition: all 0.3s ease;
-    font-family: 'Afacad', sans-serif;
 }
 
 .btn-add-user:hover {
@@ -629,7 +627,6 @@ onMounted(() => {
     color: white;
     padding: 6px 12px;
     border-radius: 6px;
-    font-family: 'Afacad', sans-serif;
     font-size: 14px;
     cursor: pointer;
 }
@@ -845,7 +842,6 @@ onMounted(() => {
     border-radius: 6px;
     cursor: pointer;
     transition: all 0.3s ease;
-    font-family: 'Afacad', sans-serif;
     font-size: 14px;
 }
 

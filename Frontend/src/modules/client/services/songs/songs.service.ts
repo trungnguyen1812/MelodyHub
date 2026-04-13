@@ -17,6 +17,10 @@ class SongService {
         return clientApi.get('/songs/popular', { params: { limit } });
     }
 
+    async getTopLikedSongs(limit: number = 20) {
+        return clientApi.get('/songs/top-liked', { params: { limit } });
+    }
+
     async getSong(idOrSlug: string | number) {
         return clientApi.get(`/songs/${idOrSlug}`)
     }

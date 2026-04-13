@@ -1,235 +1,282 @@
 <template>
-    <div class="user-detail-view">
-        <!-- Header -->
-        <div class="page-header">
-            <div class="header-left">
-                <h1 class="page-header-title">User Details</h1>
-                <span class="header-badge">Profile</span>
-            </div>
-            <div class="header-actions">
-                <button class="btn btn-secondary" @click="$router.back()">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" width="18" height="18">
-                        <path fill-rule="evenodd" d="M7.793 2.232a.75.75 0 0 1-.025 1.06L3.622 7.25h10.003a5.375 5.375 0 0 1 0 10.75H10.75a.75.75 0 0 1 0-1.5h2.875a3.875 3.875 0 0 0 0-7.75H3.622l4.146 3.957a.75.75 0 0 1-1.036 1.085l-5.5-5.25a.75.75 0 0 1 0-1.085l5.5-5.25a.75.75 0 0 1 1.06.025Z" clip-rule="evenodd" />
-                    </svg>
-                    Back to Users
-                </button>
-            </div>
-        </div>
+  <div class="user-shell">
+    <div class="bg-grid" aria-hidden="true"></div>
 
-        <!-- Loading State -->
-        <div v-if="loading" class="loading-state">
-            <div class="spinner-large"></div>
-            <p>Loading user data...</p>
-        </div>
+    <!-- Header -->
+    <header class="topbar">
+      <button class="back-btn" @click="$router.back()">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" width="16" height="16">
+          <path fill-rule="evenodd" d="M7.793 2.232a.75.75 0 0 1-.025 1.06L3.622 7.25h10.003a5.375 5.375 0 0 1 0 10.75H10.75a.75.75 0 0 1 0-1.5h2.875a3.875 3.875 0 0 0 0-7.75H3.622l4.146 3.957a.75.75 0 0 1-1.036 1.085l-5.5-5.25a.75.75 0 0 1 0-1.085l5.5-5.25a.75.75 0 0 1 1.06.025Z" clip-rule="evenodd" />
+        </svg>
+        Users
+      </button>
+      <div class="topbar-center">
+        <span class="topbar-label">User profile: {{ form.username }}</span>
+      </div>
+      <button class="edit-btn" @click="$router.push({ name: 'admin.usermanager.update', params: { id: form.id } })">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" width="16" height="16">
+          <path d="m5.433 13.917 1.262-3.155A4 4 0 0 1 7.58 9.42l6.92-6.918a2.121 2.121 0 0 1 3 3l-6.92 6.918c-.383.383-.84.685-1.343.886l-3.154 1.262a.5.5 0 0 1-.65-.65Z" />
+          <path d="M3.5 5.75c0-.69.56-1.25 1.25-1.25H10A.75.75 0 0 0 10 3H4.75A2.75 2.75 0 0 0 2 5.75v9.5A2.75 2.75 0 0 0 4.75 18h9.5A2.75 2.75 0 0 0 17 15.25V10a.75.75 0 0 0-1.5 0v5.25c0 .69-.56 1.25-1.25 1.25h-9.5c-.69 0-1.25-.56-1.25-1.25v-9.5Z" />
+        </svg>
+        Edit Profile
+      </button>
+    </header>
 
-        <!-- Error State -->
-        <div v-else-if="error" class="error-state">
-            <div class="error-icon">⚠️</div>
-            <h3>Failed to load artist</h3>
-            <p>{{ error }}</p>
-            <button class="btn btn-primary" @click="">Retry</button>
-        </div>
-
-        <!-- Main Content -->
-        <div v-else class="content-card">
-            <div class="card-header">
-                <div class="header-icon">👤</div>
-                <div class="header-text">
-                    <h2>User Profile: {{ form.username || 'N/A' }}</h2>
-                    <p class="subtitle">View user information and details</p>
-                </div>
-            </div>
-
-            <!-- User Information Display -->
-            <div class="user-detail-container">
-                <!-- Avatar and Basic Info Row -->
-                <div class="profile-summary">
-                    <div class="avatar-large">
-                        <img :src="displayAvatar" alt="User avatar" class="avatar-large-img" />
-                    </div>
-                    <div class="summary-info">
-                        <h3>{{ form.name || 'N/A' }}</h3>
-                        <p>@{{ form.username || 'N/A' }}</p>
-                        <span :class="['status-badge', `status-${form.status}`]">
-                            {{ formatStatus(form.status) }}
-                        </span>
-                    </div>
-                </div>
-
-                <!-- Basic Information Section -->
-                <div class="detail-section">
-                    <h3 class="section-title">
-                        <span class="section-icon">📋</span>
-                        Basic Information
-                    </h3>
-                    <div class="detail-grid">
-                        <div class="detail-item">
-                            <span class="detail-label">Full Name</span>
-                            <span class="detail-value">{{ form.name || 'N/A' }}</span>
-                        </div>
-                        <div class="detail-item">
-                            <span class="detail-label">Username</span>
-                            <span class="detail-value">{{ form.username || 'N/A' }}</span>
-                        </div>
-                        <div class="detail-item">
-                            <span class="detail-label">Email Address</span>
-                            <span class="detail-value">{{ form.email || 'N/A' }}</span>
-                        </div>
-                        <div class="detail-item">
-                            <span class="detail-label">Phone Number</span>
-                            <span class="detail-value">{{ form.phone || 'N/A' }}</span>
-                        </div>
-                        <div class="detail-item">
-                            <span class="detail-label">Date of Birth</span>
-                            <span class="detail-value">{{ formatDate(form.date_of_birth) }}</span>
-                        </div>
-                        <div class="detail-item">
-                            <span class="detail-label">Gender</span>
-                            <span class="detail-value">{{ formatGender(form.gender) }}</span>
-                        </div>
-                        <div class="detail-item">
-                            <span class="detail-label">User ID</span>
-                            <span class="detail-value">{{ form.id || 'N/A' }}</span>
-                        </div>
-                        <div class="detail-item">
-                            <span class="detail-label">Slug</span>
-                            <span class="detail-value">{{ form.slug || 'N/A' }}</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Profile Details Section -->
-                <div class="detail-section">
-                    <h3 class="section-title">
-                        <span class="section-icon">📝</span>
-                        Profile Details
-                    </h3>
-                    <div class="detail-grid">
-                        <div class="detail-item full-width">
-                            <span class="detail-label">Bio</span>
-                            <div class="bio-text">{{ form.bio || 'No bio available' }}</div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Location & Preferences -->
-                <div class="detail-section">
-                    <h3 class="section-title">
-                        <span class="section-icon">📍</span>
-                        Location & Preferences
-                    </h3>
-                    <div class="detail-grid">
-                        <div class="detail-item">
-                            <span class="detail-label">Country</span>
-                            <span class="detail-value">{{ formatCountry(form.country) }}</span>
-                        </div>
-                        <div class="detail-item">
-                            <span class="detail-label">Timezone</span>
-                            <span class="detail-value">{{ form.timezone || 'N/A' }}</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Play Statistics -->
-                <div class="detail-section">
-                    <h3 class="section-title">
-                        <span class="section-icon">📊</span>
-                        Play Statistics
-                    </h3>
-                    <div class="stats-grid">
-                        <div class="stat-card">
-                            <span class="stat-label">Last 24 Hours</span>
-                            <span class="stat-value">{{ form.play_count_last_24h || 0 }}</span>
-                        </div>
-                        <div class="stat-card">
-                            <span class="stat-label">Last 7 Days</span>
-                            <span class="stat-value">{{ form.play_count_last_7d || 0 }}</span>
-                        </div>
-                        <div class="stat-card">
-                            <span class="stat-label">Last 30 Days</span>
-                            <span class="stat-value">{{ form.play_count_last_30d || 0 }}</span>
-                        </div>
-                        <div class="stat-card">
-                            <span class="stat-label">Trending Score</span>
-                            <span class="stat-value">{{ form.trending_score || 0 }}</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Status & Settings -->
-                <div class="detail-section">
-                    <h3 class="section-title">
-                        <span class="section-icon">⚙️</span>
-                        Account Status
-                    </h3>
-                    <div class="detail-grid">
-                        <div class="detail-item">
-                            <span class="detail-label">Account Status</span>
-                            <span class="detail-value">
-                                <span :class="['status-badge', `status-${form.status}`]">
-                                    {{ formatStatus(form.status) }}
-                                </span>
-                            </span>
-                        </div>
-                        <div class="detail-item">
-                            <span class="detail-label">Publish Date</span>
-                            <span class="detail-value">{{ formatDateTime(form.published_at) }}</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- SEO Information -->
-                <div class="detail-section">
-                    <h3 class="section-title">
-                        <span class="section-icon">🔍</span>
-                        SEO Information
-                    </h3>
-                    <div class="detail-grid">
-                        <div class="detail-item">
-                            <span class="detail-label">SEO Title</span>
-                            <span class="detail-value">{{ form.seo_title || 'N/A' }}</span>
-                        </div>
-                        <div class="detail-item full-width">
-                            <span class="detail-label">SEO Description</span>
-                            <span class="detail-value">{{ form.seo_description || 'N/A' }}</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- System Information -->
-                <div class="detail-section">
-                    <h3 class="section-title">
-                        <span class="section-icon">🕒</span>
-                        System Information
-                    </h3>
-                    <div class="detail-grid">
-                        <div class="detail-item">
-                            <span class="detail-label">Created At</span>
-                            <span class="detail-value">{{ formatDateTime(form.created_at) }}</span>
-                        </div>
-                        <div class="detail-item">
-                            <span class="detail-label">Last Updated</span>
-                            <span class="detail-value">{{ formatDateTime(form.updated_at) }}</span>
-                        </div>
-                        <div class="detail-item">
-                            <span class="detail-label">Deleted At</span>
-                            <span class="detail-value">
-                                <span v-if="form.deleted_at" class="text-danger">{{ formatDateTime(form.deleted_at) }}</span>
-                                <span v-else class="text-success">Not deleted</span>
-                            </span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Action Buttons -->
-                <div class="detail-actions">
-                    <button type="button" class="btn btn-secondary" @click="$router.back()">
-                        Cancel
-                    </button>
-                </div>
-            </div>
-        </div>
+    <div v-if="loading" class="loading-overlay">
+      <div class="spinner-large"></div>
+      <p>Loading user data...</p>
     </div>
+
+    <div v-else class="page-body">
+      <!-- Left: form-like display -->
+      <div class="form-col">
+
+        <!-- Basic info -->
+        <div class="card">
+          <div class="card-head">
+            <div class="card-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="22" height="22" style="color:#00aaff">
+                <path fill-rule="evenodd" d="M7.5 6a4.5 4.5 0 1 1 9 0 4.5 4.5 0 0 1-9 0ZM3.751 20.105a8.25 8.25 0 0 1 16.498 0 .75.75 0 0 1-.437.695A18.683 18.683 0 0 1 12 22.5c-2.786 0-5.433-.608-7.812-1.7a.75.75 0 0 1-.437-.695Z" clip-rule="evenodd" />
+              </svg>
+            </div>
+            <div>
+              <h2 class="card-title">Basic information</h2>
+              <p class="card-sub">Core account details and identification</p>
+            </div>
+          </div>
+
+          <div class="fields">
+            <div class="field-row two-col">
+              <div class="field">
+                <label class="flabel">Full name</label>
+                <div class="fval">{{ form.name || '—' }}</div>
+              </div>
+              <div class="field">
+                <label class="flabel">Username</label>
+                <div class="fval text-accent">@{{ form.username || '—' }}</div>
+              </div>
+            </div>
+
+            <div class="field-row two-col">
+              <div class="field">
+                <label class="flabel">Email address</label>
+                <div class="fval">{{ form.email || '—' }}</div>
+              </div>
+              <div class="field">
+                <label class="flabel">Phone number</label>
+                <div class="fval">{{ form.phone || '—' }}</div>
+              </div>
+            </div>
+
+            <div class="field-row two-col">
+              <div class="field">
+                <label class="flabel">Date of birth</label>
+                <div class="fval">{{ formatDate(form.date_of_birth) }}</div>
+              </div>
+              <div class="field">
+                <label class="flabel">Gender</label>
+                <div class="fval">{{ formatGender(form.gender) }}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Profile -->
+        <div class="card">
+          <div class="card-head">
+            <div class="card-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="22" height="22" style="color:#00aaff">
+                <path fill-rule="evenodd" d="M1.5 6a2.25 2.25 0 0 1 2.25-2.25h16.5A2.25 2.25 0 0 1 22.5 6v12a2.25 2.25 0 0 1-2.25 2.25H3.75A2.25 2.25 0 0 1 1.5 18V6ZM3 16.06V18c0 .414.336.75.75.75h16.5A.75.75 0 0 0 21 18v-1.94l-2.69-2.689a1.5 1.5 0 0 0-2.12 0l-.88.879.81.81a.75.75 0 1 1-1.06 1.06l-5.16-5.159a1.5 1.5 0 0 0-2.12 0L3 16.061Zm10.125-7.81a1.125 1.125 0 1 1 2.25 0 1.125 1.125 0 0 1-2.25 0Z" clip-rule="evenodd" />
+              </svg>
+            </div>
+            <div>
+              <h2 class="card-title">Profile details</h2>
+              <p class="card-sub">Visuals and public biography</p>
+            </div>
+          </div>
+
+          <div class="profile-layout">
+            <div class="avatar-col">
+              <div class="avatar-view shadowed">
+                <img :src="displayAvatar" alt="avatar" class="avatar-img" />
+              </div>
+            </div>
+            <div class="field" style="flex:1">
+              <label class="flabel">Biography</label>
+              <div class="bio-box">{{ form.bio || 'This user hasn\'t added a biography yet.' }}</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Statistics -->
+        <div class="card">
+          <div class="card-head">
+            <div class="card-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="22" height="22" style="color:#00aaff">
+                 <path d="M18.375 2.25c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h.75c.621 0 1.125-.504 1.125-1.125V3.375c0-.621-.504-1.125-1.125-1.125h-.75ZM9.375 7.5c-.621 0-1.125.504-1.125 1.125v12c0 .621.504 1.125 1.125 1.125h.75c.621 0 1.125-.504 1.125-1.125v-12c0-.621-.504-1.125-1.125-1.125h-.75Zm-9 5.25c-.621 0-1.125.504-1.125 1.125v6.75c0 .621.504 1.125 1.125 1.125h.75c.621 0 1.125-.504 1.125-1.125v-6.75c0-.621-.504-1.125-1.125-1.125h-.75Z" />
+              </svg>
+            </div>
+            <div>
+              <h2 class="card-title">Engagement statistics</h2>
+              <p class="card-sub">Play activity and content reach</p>
+            </div>
+          </div>
+          <div class="stats-grid-modern">
+            <div class="stat-box">
+              <span class="sb-label">Last 24h</span>
+              <span class="sb-val">{{ form.play_count_last_24h || 0 }}</span>
+            </div>
+            <div class="stat-box">
+              <span class="sb-label">Last 7d</span>
+              <span class="sb-val">{{ form.play_count_last_7d || 0 }}</span>
+            </div>
+            <div class="stat-box">
+              <span class="sb-label">Last 30d</span>
+              <span class="sb-val">{{ form.play_count_last_30d || 0 }}</span>
+            </div>
+            <div class="stat-box trending">
+              <span class="sb-label">Trending Score</span>
+              <span class="sb-val">{{ (form.trending_score || 0).toFixed(1) }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Location -->
+        <div class="card">
+          <div class="card-head">
+            <div class="card-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="22" height="22" style="color:#00aaff">
+                <path fill-rule="evenodd" d="m11.54 22.351.07.04.028.016a.76.76 0 0 0 .723 0l.028-.015.071-.041a16.975 16.975 0 0 0 1.144-.742 19.58 19.58 0 0 0 2.683-2.282c1.944-2.003 3.5-4.697 3.5-8.327a8 8 0 1 0-16 0c0 3.63 1.556 6.324 3.5 8.327a19.592 19.592 0 0 0 2.682 2.282 16.975 16.975 0 0 0 1.144.742ZM12 13.5a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z" clip-rule="evenodd" />
+              </svg>
+            </div>
+            <div>
+              <h2 class="card-title">Location & preferences</h2>
+              <p class="card-sub">Regional and temporal settings</p>
+            </div>
+          </div>
+
+          <div class="field-row two-col">
+            <div class="field">
+              <label class="flabel">Country</label>
+              <div class="fval">{{ formatCountry(form.country) }}</div>
+            </div>
+            <div class="field">
+              <label class="flabel">Timezone</label>
+              <div class="fval">{{ form.timezone || '—' }}</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- System & Status -->
+        <div class="card">
+           <div class="card-head">
+            <div class="card-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="22" height="22" style="color:#00aaff">
+                <path fill-rule="evenodd" d="m11.54 22.351.07.04.028.016a.76.76 0 0 0 .723 0l.028-.015.071-.041a16.975 16.975 0 0 0 1.144-.742 19.58 19.58 0 0 0 2.683-2.282c1.944-2.003 3.5-4.697 3.5-8.327a8 8 0 1 0-16 0c0 3.63 1.556 6.324 3.5 8.327a19.592 19.592 0 0 0 2.682 2.282 16.975 16.975 0 0 0 1.144.742ZM12 13.5a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z" clip-rule="evenodd" />
+              </svg>
+            </div>
+            <div>
+              <h2 class="card-title">Account visibility</h2>
+              <p class="card-sub">Creation and maintenance history</p>
+            </div>
+          </div>
+          <div class="fields">
+             <div class="field-row two-col">
+               <div class="field">
+                <label class="flabel">Publish date</label>
+                <div class="fval">{{ formatDateTime(form.published_at) }}</div>
+              </div>
+               <div class="field">
+                <label class="flabel">Registration date</label>
+                <div class="fval">{{ formatDateTime(form.created_at) }}</div>
+              </div>
+            </div>
+             <div class="field-row two-col">
+               <div class="field">
+                <label class="flabel">Last modified</label>
+                <div class="fval">{{ formatDateTime(form.updated_at) }}</div>
+              </div>
+               <div class="field">
+                <label class="flabel">Deletion status</label>
+                <div class="fval" :class="{ 'text-danger': form.deleted_at }">
+                  {{ form.deleted_at ? `Deleted on ${formatDateTime(form.deleted_at)}` : 'Not deleted' }}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- SEO -->
+        <div class="card">
+          <div class="card-head">
+            <div class="card-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="22" height="22" style="color:#00aaff">
+                <path fill-rule="evenodd" d="M10.5 3.75a6.75 6.75 0 1 0 0 13.5 6.75 6.75 0 0 0 0-13.5ZM2.25 10.5a8.25 8.25 0 1 1 14.59 5.28l4.69 4.69a.75.75 0 1 1-1.06 1.06l-4.69-4.69A8.25 8.25 0 0 1 2.25 10.5Z" clip-rule="evenodd" />
+              </svg>
+            </div>
+            <div>
+              <h2 class="card-title">SEO information</h2>
+              <p class="card-sub">Search visibility and snippets</p>
+            </div>
+          </div>
+
+          <div class="fields">
+            <div class="field">
+              <label class="flabel">SEO title</label>
+              <div class="fval">{{ form.seo_title || '—' }}</div>
+            </div>
+            <div class="field">
+              <label class="flabel">SEO description</label>
+              <div class="fval seo-desc">{{ form.seo_description || '—' }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right: preview -->
+      <div class="preview-col">
+        <div class="preview-sticky">
+          <p class="preview-label">User profile card</p>
+
+          <!-- User card -->
+          <div class="user-card-preview">
+            <div class="ucp-avatar">
+              <img :src="displayAvatar" alt="avatar" />
+            </div>
+            <div class="ucp-info">
+              <span class="ucp-name">{{ form.name || 'Full name' }}</span>
+              <span class="ucp-username">@{{ form.username || 'username' }}</span>
+              <span class="ucp-email">{{ form.email || 'email@example.com' }}</span>
+              <div class="ucp-tags">
+                <span class="ucp-status" :class="form.status">{{ form.status || 'inactive' }}</span>
+                <span v-if="form.country" class="ucp-country">{{ form.country }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Summary -->
+          <div class="field-summary">
+            <div class="fs-row">
+              <span class="fs-key">ID</span>
+              <span class="fs-val">#{{ form.id }}</span>
+            </div>
+            <div class="fs-row">
+              <span class="fs-key">Status</span>
+              <span class="fs-val" :style="{ color: statusColor }">{{ formatStatus(form.status) }}</span>
+            </div>
+            <div class="fs-row">
+              <span class="fs-key">Gender</span>
+              <span class="fs-val">{{ formatGender(form.gender) }}</span>
+            </div>
+            <div class="fs-row">
+              <span class="fs-key">Country</span>
+              <span class="fs-val">{{ formatCountry(form.country) }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -238,12 +285,10 @@ import { useRoute } from "vue-router";
 import { useUserStore, getFullImageUrl } from "@/modules/admin/stores/users/userStore";
 import router from "@/modules/router";
 import defaultAvatar from '@/assets/images/DefaultImg/avatarDefault.png';
-const error = ref<string | null>(null)
 
 const route = useRoute();
 const userStore = useUserStore();
-
-const loading = ref(false);
+const loading = ref(true);
 
 const form = reactive<any>({
     id: "",
@@ -271,46 +316,56 @@ const form = reactive<any>({
     deleted_at: null
 });
 
-const formatDate = (date: string) => {
-    if (!date) return 'N/A';
+const loadUserData = async () => {
     try {
-        return new Date(date).toLocaleDateString('en-US', {
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric'
-        });
-    } catch {
-        return 'Invalid date';
+        loading.value = true;
+        const id = Number(route.params.id);
+        const res = await userStore.fetchShow(id);
+        if (res && res.data) {
+            Object.assign(form, res.data);
+            if (!form.avatar_url && res.data.avatar) {
+               form.avatar_url = res.data.avatar;
+            }
+        }
+    } catch (err: any) {
+        router.push({ name: 'admin.usermanager.all' });
+    } finally {
+        loading.value = false;
     }
+};
+
+const formatDate = (date: string) => {
+    if (!date) return '—';
+    return new Date(date).toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+    });
 };
 
 const formatDateTime = (datetime: string) => {
-    if (!datetime) return 'N/A';
-    try {
-        return new Date(datetime).toLocaleString('en-US', {
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
-        });
-    } catch {
-        return 'Invalid date';
-    }
+    if (!datetime) return '—';
+    return new Date(datetime).toLocaleString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+    });
 };
 
 const formatGender = (gender: string) => {
-    const genders: Record<string, string> = {
+    const map: Record<string, string> = {
         male: '♂️ Male',
         female: '♀️ Female',
         other: '⚧ Other',
-        prefer_not_to_say: '🤫 Prefer not to say'
+        prefer_not_to_say: '🤫 Not said'
     };
-    return genders[gender] || gender || 'N/A';
+    return map[gender] || gender || '—';
 };
 
-const formatCountry = (countryCode: string) => {
-    const countries: Record<string, string> = {
+const formatCountry = (cc: string) => {
+    const map: Record<string, string> = {
         US: '🇺🇸 United States',
         UK: '🇬🇧 United Kingdom',
         VN: '🇻🇳 Vietnam',
@@ -319,454 +374,178 @@ const formatCountry = (countryCode: string) => {
         FR: '🇫🇷 France',
         DE: '🇩🇪 Germany'
     };
-    return countries[countryCode] || countryCode || 'N/A';
+    return map[cc] || cc || '—';
 };
 
-const formatStatus = (status: string) => {
-    const statusMap: Record<string, string> = {
+const formatStatus = (s: string) => {
+    const map: Record<string, string> = {
         active: 'Active',
         inactive: 'Inactive',
         suspended: 'Suspended',
         pending: 'Pending'
     };
-    return statusMap[status] || status || 'N/A';
+    return map[s] || s || '—';
 };
 
+const statusColor = computed(() => {
+  const map: Record<string, string> = {
+    active: '#00c87a',
+    inactive: 'rgba(255,255,255,0.4)',
+    pending: '#fac800',
+    suspended: '#e24b4a',
+  }
+  return map[form.status] || 'rgba(255,255,255,0.4)'
+})
+
 const displayAvatar = computed(() => {
-    if (form.avatar_url) {
-        return getFullImageUrl(form.avatar_url);
-    }
+    if (form.avatar_url) return getFullImageUrl(form.avatar_url);
     return defaultAvatar;
 });
 
-
-
-onMounted(async () => {
-    try {
-        loading.value = true;
-        const id = Number(route.params.id);
-        
-        const res = await userStore.fetchShow(id);
-        
-        if (res && res.data) {
-            // Clear form first
-            Object.keys(form).forEach(key => {
-                delete form[key];
-            });
-            
-            // Assign new data
-            Object.assign(form, res.data);
-        }
-    } catch (error: any) {
-        const err = error as { response?: { status?: number } };
-        
-        if (err.response?.status === 404) {
-            router.push('/404');
-        } else if (err.response?.status === 401) {
-            router.push('/login');
-        } else {
-            console.error('Error loading user:', error);
-        }
-    } finally {
-        loading.value = false;
-    }
-});
+onMounted(loadUserData);
 </script>
 
 <style scoped>
-.user-detail-view {
-    padding: 24px;
-    min-height: 100vh;
-    background: linear-gradient(135deg, #0a1219 0%, #1a2a35 100%);
-    font-family: 'Inter', sans-serif;
+/* ── Base ───────────────────────────────────────── */
+.user-shell {
+  min-height: 100vh;
+  background: #080e14;
+  font-family: 'DM Sans', 'Segoe UI', sans-serif;
+  color: #e8edf2;
+  position: relative;
 }
 
-/* Header */
-.page-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 24px;
+.bg-grid {
+  position: fixed; inset: 0;
+  background-image:
+    linear-gradient(rgba(0,160,255,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,160,255,0.03) 1px, transparent 1px);
+  background-size: 40px 40px;
+  pointer-events: none; z-index: 0;
 }
 
-.header-left {
-    display: flex;
-    align-items: center;
-    gap: 12px;
+/* ── Topbar ─────────────────────────────────────── */
+.topbar {
+  position: sticky; top: 0; z-index: 20;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 16px 28px; border-bottom: 1px solid rgba(255,255,255,0.06);
+  background: rgba(8,14,20,0.85); backdrop-filter: blur(12px);
 }
 
-.page-header-title {
-    font-size: 28px;
-    font-weight: 700;
-    color: white;
-    margin: 0;
-    background: linear-gradient(135deg, #fff 0%, #00aaff 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
+.back-btn {
+  display: flex; align-items: center; gap: 6px; padding: 7px 14px;
+  background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+  color: rgba(255,255,255,0.7); border-radius: 8px; font-size: 13px; cursor: pointer;
 }
 
-.header-badge {
-    background: #1d455e;
-    color: #00aaff;
-    padding: 4px 12px;
-    border-radius: 100px;
-    font-size: 12px;
-    font-weight: 600;
-    border: 1px solid #00aaff;
+.edit-btn {
+  display: flex; align-items: center; gap: 7px; padding: 8px 16px;
+  background: #00aaff; color: #000; border: none; border-radius: 8px;
+  font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s;
+}
+.edit-btn:hover { background: #33bbff; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,170,255,0.3); }
+
+.topbar-center { flex: 1; }
+.topbar-label { font-size: 15px; font-weight: 600; color: rgba(255,255,255,0.5); }
+
+/* ── Page layout ────────────────────────────────── */
+.page-body {
+  position: relative; z-index: 1; display: grid;
+  grid-template-columns: 1fr 300px; gap: 24px;
+  max-width: 1100px; margin: 0 auto; padding: 28px 24px 60px;
 }
 
-
-/* Loading & Error States */
-.loading-state,
-.error-state {
-    background: rgba(255, 255, 255, 0.05);
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(0, 170, 255, 0.2);
-    border-radius: 24px;
-    padding: 60px 32px;
-    text-align: center;
-    color: white;
+/* ── Cards ──────────────────────────────────────── */
+.card {
+  background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 16px; padding: 24px; margin-bottom: 16px;
 }
 
-.spinner-large {
-    width: 48px;
-    height: 48px;
-    border: 4px solid rgba(255, 255, 255, 0.1);
-    border-top-color: #00aaff;
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
-    margin: 0 auto 16px;
+.card-head {
+  display: flex; align-items: center; gap: 14px; margin-bottom: 22px;
+  padding-bottom: 18px; border-bottom: 1px solid rgba(255,255,255,0.06);
 }
 
-.error-icon {
-    font-size: 48px;
-    margin-bottom: 16px;
+.card-icon {
+  width: 44px; height: 44px; border-radius: 12px; background: rgba(0,160,255,0.1);
+  border: 1px solid rgba(0,160,255,0.2); display: flex; align-items: center; justify-content: center;
 }
 
-.error-state h3 {
-    font-size: 20px;
-    margin-bottom: 8px;
+.card-title { font-size: 16px; font-weight: 600; color: #fff; margin: 0 0 3px; }
+.card-sub { font-size: 13px; color: rgba(255,255,255,0.4); margin: 0; }
+
+/* ── Fields ─────────────────────────────────────── */
+.fields { display: flex; flex-direction: column; gap: 16px; }
+.field { display: flex; flex-direction: column; gap: 6px; }
+.field-row.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.flabel { font-size: 12px; font-weight: 500; color: rgba(255,255,255,0.3); text-transform: uppercase; letter-spacing: 0.05em; }
+
+.fval {
+  background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 9px; padding: 10px 14px; color: #fff; font-size: 14px; min-height: 40px; display: flex; align-items: center;
+}
+.text-accent { color: #00aaff; font-weight: 600; }
+.text-danger { color: #ff5555; }
+.seo-desc { line-height: 1.5; align-items: flex-start; padding-top: 10px; padding-bottom: 10px; }
+
+/* ── Profile layout ─────────────────────────────── */
+.profile-layout { display: flex; gap: 24px; align-items: flex-start; }
+.avatar-col { display: flex; flex-direction: column; align-items: center; }
+.avatar-view { width: 120px; height: 120px; border-radius: 50%; overflow: hidden; border: 4px solid rgba(255,255,255,0.05); }
+.shadowed { box-shadow: 0 8px 24px rgba(0,0,0,0.5); }
+.avatar-img { width: 100%; height: 100%; object-fit: cover; }
+.bio-box {
+  background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 12px; padding: 16px; color: rgba(255,255,255,0.8); font-size: 14px; line-height: 1.6; min-height: 120px;
 }
 
-.error-state p {
-    color: rgba(255, 255, 255, 0.7);
-    margin-bottom: 24px;
+/* ── Stats Grid ─────────────────────────────── */
+.stats-grid-modern { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+.stat-box {
+  background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 12px; padding: 16px; display: flex; flex-direction: column; align-items: center; gap: 4px;
 }
+.stat-box.trending { border-color: rgba(0,170,255,0.3); background: rgba(0,160,255,0.05); }
+.sb-label { font-size: 11px; color: rgba(255,255,255,0.3); text-transform: uppercase; }
+.sb-val { font-size: 24px; font-weight: 700; color: #fff; }
+.trending .sb-val { color: #00aaff; }
 
-@keyframes spin {
-    to { transform: rotate(360deg); }
+/* ── Preview panel ──────────────────────────────── */
+.preview-col { position: relative; }
+.preview-sticky { position: sticky; top: 80px; display: flex; flex-direction: column; gap: 12px; }
+.preview-label { font-size: 11px; font-weight: 600; color: rgba(255,255,255,0.3); text-transform: uppercase; margin: 0; }
+
+.user-card-preview {
+  background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 14px; padding: 20px; display: flex; align-items: center; gap: 16px;
 }
+.ucp-avatar { width: 56px; height: 56px; border-radius: 50%; overflow: hidden; background: rgba(0,160,255,0.15); }
+.ucp-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.ucp-info { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.ucp-name { font-size: 15px; font-weight: 600; color: #fff; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ucp-username { font-size: 12px; color: rgba(255,255,255,0.4); }
+.ucp-email { font-size: 11px; color: rgba(255,255,255,0.3); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
-/* Content Card */
-.content-card {
-    background: rgba(255, 255, 255, 0.05);
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(0, 170, 255, 0.2);
-    border-radius: 24px;
-    padding: 32px;
-    color: white;
-    max-height: 80vh;
-    overflow-y: auto;
-}
+.ucp-tags { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 4px; }
+.ucp-status { font-size: 10px; padding: 2px 8px; border-radius: 100px; text-transform: capitalize; }
+.ucp-status.active { background: rgba(0,200,120,0.12); color: #00c87a; }
+.ucp-status.inactive { background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.5); }
+.ucp-status.pending { background: rgba(250,200,0,0.1); color: #fac800; }
+.ucp-status.suspended { background: rgba(226,75,74,0.12); color: #e24b4a; }
+.ucp-country { font-size: 10px; padding: 2px 8px; border-radius: 100px; background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.5); }
 
-.card-header {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-    margin-bottom: 32px;
-    padding-bottom: 24px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-}
+.field-summary { padding: 8px 16px; display: flex; flex-direction: column; gap: 8px; }
+.fs-row { display: flex; justify-content: space-between; font-size: 12px; }
+.fs-key { color: rgba(255,255,255,0.3); }
+.fs-val { color: rgba(255,255,255,0.7); font-weight: 500; }
 
-.header-icon {
-    font-size: 48px;
-    background: rgba(0, 170, 255, 0.1);
-    width: 80px;
-    height: 80px;
-    border-radius: 20px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border: 1px solid #00aaff;
-}
+.loading-overlay { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 400px; gap: 16px; }
+.spinner-large { width: 40px; height: 40px; border: 3px solid rgba(255,255,255,0.05); border-top-color: #00aaff; border-radius: 50%; animation: spin 1s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
 
-.header-text h2 {
-    font-size: 24px;
-    font-weight: 600;
-    margin: 0 0 8px 0;
-    color: white;
-}
-
-.subtitle {
-    color: rgba(255, 255, 255, 0.7);
-    margin: 0;
-    font-size: 14px;
-}
-
-/* Profile Summary */
-.profile-summary {
-    display: flex;
-    align-items: center;
-    gap: 24px;
-    padding: 24px;
-    background: rgba(0, 0, 0, 0.2);
-    border-radius: 16px;
-    margin-bottom: 32px;
-    border: 1px solid rgba(255, 255, 255, 0.05);
-}
-
-.avatar-large {
-    width: 100px;
-    height: 100px;
-    border-radius: 50%;
-    overflow: hidden;
-    border: 3px solid #00aaff;
-}
-
-.avatar-large-img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-}
-
-.summary-info h3 {
-    font-size: 24px;
-    font-weight: 600;
-    margin: 0 0 4px 0;
-    color: white;
-}
-
-.summary-info p {
-    color: #00aaff;
-    margin: 0 0 12px 0;
-    font-size: 14px;
-}
-
-/* Detail Sections */
-.detail-section {
-    margin-bottom: 32px;
-    padding: 24px;
-    background: rgba(0, 0, 0, 0.2);
-    border-radius: 16px;
-    border: 1px solid rgba(255, 255, 255, 0.05);
-}
-
-.section-title {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 18px;
-    font-weight: 600;
-    color: white;
-    margin-bottom: 24px;
-}
-
-.section-icon {
-    font-size: 20px;
-}
-
-.detail-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-    gap: 16px;
-}
-
-.detail-item {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-}
-
-.detail-item.full-width {
-    grid-column: 1 / -1;
-}
-
-.detail-label {
-    font-size: 12px;
-    color: rgba(255, 255, 255, 0.5);
-    font-weight: 500;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
-
-.detail-value {
-    font-size: 14px;
-    color: white;
-    padding: 8px 12px;
-    background: rgba(255, 255, 255, 0.05);
-    border-radius: 8px;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.bio-text {
-    white-space: pre-wrap;
-    line-height: 1.6;
-    min-height: 60px;
-}
-
-/* Stats Grid */
-.stats-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 16px;
-}
-
-.stat-card {
-    background: rgba(0, 170, 255, 0.1);
-    border: 1px solid rgba(0, 170, 255, 0.2);
-    border-radius: 12px;
-    padding: 16px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
-}
-
-.stat-label {
-    font-size: 12px;
-    color: rgba(255, 255, 255, 0.7);
-    margin-bottom: 8px;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
-
-.stat-value {
-    font-size: 28px;
-    font-weight: 700;
-    color: #00aaff;
-}
-
-/* Status Badge */
-.status-badge {
-    display: inline-block;
-    padding: 4px 12px;
-    border-radius: 100px;
-    font-size: 12px;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
-
-.status-active {
-    background: rgba(0, 255, 0, 0.1);
-    color: #00ff00;
-    border: 1px solid #00ff00;
-}
-
-.status-inactive {
-    background: rgba(255, 255, 255, 0.1);
-    color: #ffffff;
-    border: 1px solid rgba(255, 255, 255, 0.3);
-}
-
-.status-suspended {
-    background: rgba(255, 0, 0, 0.1);
-    color: #ff4444;
-    border: 1px solid #ff4444;
-}
-
-.status-pending {
-    background: rgba(255, 255, 0, 0.1);
-    color: #ffff00;
-    border: 1px solid #ffff00;
-}
-
-/* Action Buttons */
-.detail-actions {
-    display: flex;
-    justify-content: flex-end;
-    gap: 16px;
-    margin-top: 32px;
-    padding-top: 24px;
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.btn {
-    padding: 12px 24px;
-    border-radius: 100px;
-    font-size: 14px;
-    font-weight: 600;
-    cursor: pointer;
-    border: none;
-    transition: all 0.2s;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.btn-primary {
-    background: linear-gradient(135deg, #00aaff, #0088cc);
-    color: white;
-}
-
-.btn-primary:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 20px rgba(0, 170, 255, 0.4);
-}
-
-.btn-secondary {
-    background: rgba(255, 255, 255, 0.1);
-    color: white;
-    border: 1px solid rgba(255, 255, 255, 0.2);
-}
-
-.btn-secondary:hover {
-    background: rgba(255, 255, 255, 0.15);
-}
-
-.text-success {
-    color: #00ff00;
-}
-
-.text-danger {
-    color: #ff4444;
-}
-
-/* Scrollbar */
-.content-card::-webkit-scrollbar {
-    width: 6px;
-}
-
-.content-card::-webkit-scrollbar-thumb {
-    background: rgba(0, 170, 255, 0.6);
-    border-radius: 3px;
-}
-
-.content-card::-webkit-scrollbar-track {
-    background: transparent;
-}
-
-/* Responsive */
-@media (max-width: 768px) {
-    .user-detail-view {
-        padding: 16px;
-    }
-    
-    .profile-summary {
-        flex-direction: column;
-        text-align: center;
-    }
-    
-    .stats-grid {
-        grid-template-columns: 1fr;
-    }
-    
-    .detail-grid {
-        grid-template-columns: 1fr;
-    }
-    
-    .card-header {
-        flex-direction: column;
-        text-align: center;
-    }
-    
-    .detail-actions {
-        flex-direction: column;
-    }
-    
-    .btn {
-        width: 100%;
-        justify-content: center;
-    }
+@media (max-width: 900px) {
+  .page-body { grid-template-columns: 1fr; }
+  .preview-col { display: none; }
+  .stats-grid-modern { grid-template-columns: repeat(2, 1fr); }
 }
 </style>

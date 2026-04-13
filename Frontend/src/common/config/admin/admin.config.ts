@@ -20,6 +20,20 @@ import AllListSongsView from '@/modules/admin/views/songs/AllListSongsview.vue';
 import SongsUpdateView from '@/modules/admin/views/songs/SongUpdate.view.vue';
 import SongLyrisView from '@/components/common/VcGlobalMiniPlayer/GlobalLyrisPlayer.vue';
 
+// managerment albums
+import AlbumsManagerView from '@/modules/admin/views/albums/AlbumsManager.view.vue';
+import AlbumsDetailView from '@/modules/admin/views/albums/AlbumDetail.view.vue';
+import AlbumsAddView from '@/modules/admin/views/albums/AlbumAdd.view.vue';
+import AllListAlbumsView from '@/modules/admin/views/albums/AllListAlbums.view.vue';
+import AlbumsUpdateView from '@/modules/admin/views/albums/AlbumUpdate.view.vue';
+
+// managerment genres
+import GenresManagerView from '@/modules/admin/views/genres/GenresManager.view.vue';
+import GenresDetailView from '@/modules/admin/views/genres/GenreDetail.view.vue';
+import GenresAddView from '@/modules/admin/views/genres/GenreAdd.view.vue';
+import AllListGenresView from '@/modules/admin/views/genres/AllListGenres.view.vue';
+import GenresUpdateView from '@/modules/admin/views/genres/GenreUpdate.view.vue';
+
 // ĐẢM BẢO EXPORT ĐÚNG
 export const ROUTER_ADMIN = [
   {
@@ -193,6 +207,102 @@ export const ROUTER_ADMIN = [
           requiresAdmin: true
         }
       },
+      /* ================================================ ALBUMS ================================================*/
+      {
+        path: "albums",
+        name: "admin.albumsmanager",
+        component: AlbumsManagerView,
+        meta: {
+          requiresAuth: true,
+          requiresAdmin: true
+        }
+      },
+      {
+        path: "albums/create",
+        name: "admin.albumsmanager.add",
+        component: AlbumsAddView,
+        meta: {
+          requiresAuth: true,
+          requiresAdmin: true
+        }
+      },
+      {
+        path: "albums/all",
+        name: "admin.albumsmanager.all",
+        component: AllListAlbumsView,
+        meta: {
+          requiresAuth: true,
+          requiresAdmin: true
+        }
+      },
+      {
+        path: 'albums/:id',
+        name: "admin.albumsmanager.detail",
+        component: AlbumsDetailView,
+        props: true,
+        meta: {
+          requiresAuth: true,
+          requiresAdmin: true
+        }
+      },
+      {
+        path: 'albums/update/:id',
+        name: "admin.albumsmanager.update",
+        component: AlbumsUpdateView,
+        props: true,
+        meta: {
+          requiresAuth: true,
+          requiresAdmin: true
+        }
+      },
+      /* ================================================ GENRES ================================================*/
+      {
+        path: "genres",
+        name: "admin.genresmanager",
+        component: GenresManagerView,
+        meta: {
+          requiresAuth: true,
+          requiresAdmin: true
+        }
+      },
+      {
+        path: "genres/create",
+        name: "admin.genresmanager.add",
+        component: GenresAddView,
+        meta: {
+          requiresAuth: true,
+          requiresAdmin: true
+        }
+      },
+      {
+        path: "genres/all",
+        name: "admin.genresmanager.all",
+        component: AllListGenresView,
+        meta: {
+          requiresAuth: true,
+          requiresAdmin: true
+        }
+      },
+      {
+        path: 'genres/:id',
+        name: "admin.genresmanager.detail",
+        component: GenresDetailView,
+        props: true,
+        meta: {
+          requiresAuth: true,
+          requiresAdmin: true
+        }
+      },
+      {
+        path: 'genres/update/:id',
+        name: "admin.genresmanager.update",
+        component: GenresUpdateView,
+        props: true,
+        meta: {
+          requiresAuth: true,
+          requiresAdmin: true
+        }
+      }
     ]
   },
 ];

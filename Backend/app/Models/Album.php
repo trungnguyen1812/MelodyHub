@@ -10,7 +10,7 @@ use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
-
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 /**
  * Class Album
  * 
@@ -38,7 +38,10 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property Carbon|null $updated_at
  * @property string|null $deleted_at
  * 
+ * @property Artist $artist
+ * @property Partner $partner
  * @property Collection|AlbumLike[] $album_likes
+ * @property Collection|AlbumTrack[] $album_tracks
  * @property Collection|Song[] $songs
  *
  * @package App\Models
@@ -88,8 +91,35 @@ class Album extends Model
 		return $this->hasMany(AlbumLike::class);
 	}
 
-	public function songs()
+	public function artist()
 	{
-		return $this->hasMany(Song::class);
+		return $this->belongsTo(Artist::class);
+	}
+
+	public function partner()
+	{
+		return $this->belongsTo(Partner::class);
+	}
+	/**
+	 * Get all album tracks (pivot relation with position ordering)
+	 */
+	public function album_tracks()
+	{
+		return $this->hasMany(AlbumTrack::class)->orderBy('position');
+	}
+
+	/**
+	 * Get all songs in this album through album_tracks (with ordered position)
+	 */
+	public function tracks()
+	{
+		return $this->hasManyThrough(
+			Song::class,
+			AlbumTrack::class,
+			'album_id',
+			'id',
+			'id',
+			'track_id'
+		)->orderBy('album_tracks.position');
 	}
 }

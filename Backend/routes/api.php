@@ -13,6 +13,7 @@ use App\Http\Controllers\Api\Admin\ArtistsManagerController;
 use App\Http\Controllers\Api\Admin\GenresManagerController;
 use App\Http\Controllers\Api\Admin\PartnersManagerController;
 use App\Http\Controllers\Api\Admin\SongsManagerController;
+use App\Http\Controllers\Api\Admin\AlbumsManagerController;
 use App\Http\Controllers\Api\Client\ClientArtistsController;
 use App\Http\Controllers\Api\Client\ClientGenresController;
 use App\Http\Controllers\Api\Client\ClientPartnersController;
@@ -105,6 +106,10 @@ Route::prefix('client')->group(function () {
         Route::get('/popular', [ClientSongsController::class, 'getPopularSongs'])
             ->middleware('optional.auth');
         
+        Route::get('/top-liked', [ClientSongsController::class, 'getTopLikedSongs'])
+            ->middleware('optional.auth');
+
+        
         Route::post('/add', [ClientSongsController::class, 'add']);
 
         Route::get('/by-slug/{slug}', [ClientSongsController::class, 'showBySlug']);
@@ -150,10 +155,7 @@ Route::prefix('client')->group(function () {
     // // Router Genres  manager
     Route::prefix('genres')->group(function () {
         Route::get('/',         [ClientGenresController::class, 'index']);
-        // Route::post('/add',        [GenresManagerController::class, 'add']);
-        // Route::get('/{song}',     [GenresManagerController::class, 'show']);
-        // Route::post('/{song}',     [GenresManagerController::class, 'update']);
-        // Route::post('/{song}',  [GenresManagerController::class, 'destroy']);
+        Route::get('/{slug}',   [ClientGenresController::class, 'show']);
     });
 
     Route::middleware('auth:sanctum')->group(function () {
@@ -240,13 +242,24 @@ Route::prefix('admin')->middleware(['admin.token'])->group(function () {
         Route::post('/{song}',  [PartnersManagerController::class, 'destroy']);
     });
 
-    // Router partners  manager
+    // Router genres  manager
     Route::prefix('genres')->group(function () {
         Route::get('/',         [GenresManagerController::class, 'index']);
         Route::post('/add',        [GenresManagerController::class, 'add']);
-        Route::get('/{song}',     [GenresManagerController::class, 'show']);
-        Route::post('/{song}',     [GenresManagerController::class, 'update']);
-        Route::post('/{song}',  [GenresManagerController::class, 'destroy']);
+        Route::get('/{genre}',     [GenresManagerController::class, 'show']);
+        Route::post('/update/{genre}',     [GenresManagerController::class, 'update']);
+        Route::delete('/delete/{genre}',  [GenresManagerController::class, 'destroy']);
+    });
+
+    // Router albums  manager
+    Route::prefix('albums')->group(function () {
+        Route::get('/',         [AlbumsManagerController::class, 'index']);
+        Route::post('/search',  [AlbumsManagerController::class, 'search']);
+        Route::post('/add',     [AlbumsManagerController::class, 'add']);
+        Route::get('/{album}',  [AlbumsManagerController::class, 'show']);
+        Route::post('/update/{album}',  [AlbumsManagerController::class, 'update']);
+        Route::put('/{album}/tracks',  [AlbumsManagerController::class, 'updateTracks']);
+        Route::delete('/delete/{album}', [AlbumsManagerController::class, 'destroy']);
     });
    
 });

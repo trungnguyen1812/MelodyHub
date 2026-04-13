@@ -224,16 +224,24 @@ class SongsManagerController extends Controller
         $query = Song::query()
             ->with(['artist', 'album', 'partner','genre']);
  
-        // ── Tìm kiếm theo title / slug ──
+        // ── Tìm kiếm theo title / slug / artist name ──
         if ($search = $request->get('search')) {
             $query->where(function ($q) use ($search) {
                 $q->where('title', 'like', "%{$search}%")
-                  ->orWhere('slug',  'like', "%{$search}%");
+                  ->orWhere('slug',  'like', "%{$search}%")
+                  ->orWhereHas('artist', function ($artistQuery) use ($search) {
+                      $artistQuery->where('name', 'like', "%{$search}%");
+                  });
             });
         }
  
         // ── Filter ──
         if ($request->filled('artist_id'))  $query->where('artist_id',  $request->artist_id);
+        if ($request->filled('artist_name')) {
+            $query->whereHas('artist', function ($q) use ($request) {
+                $q->where('name', 'like', "%{$request->artist_name}%");
+            });
+        }
         if ($request->filled('album_id'))   $query->where('album_id',   $request->album_id);
         if ($request->filled('partner_id')) $query->where('partner_id', $request->partner_id);
         if ($request->filled('status'))     $query->where('status',     $request->status);

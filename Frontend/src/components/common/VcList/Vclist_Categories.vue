@@ -4,7 +4,7 @@
     <div class="flex items-center justify-between mb-8">
       <div>
         <h2 class="text-3xl font-bold text-white mb-1 bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
-          Music Categories
+          Music Genre
         </h2>
         <p class="text-gray-400 text-sm">A collection of music genres you might like</p>
       </div>
@@ -12,79 +12,68 @@
 
     <!-- Asymmetric Grid Layout -->
     <div class="grid-container">
-      <!-- Classic - Large focal point -->
-      <div class="music-card classic" @click="selectCategory('classic')">
-        <div class="music-label">Classic</div>
-        <div class="overlay"></div>
-      </div>
-
-      <!-- Hip Hop - Medium vertical -->
-      <div class="music-card hiphop" @click="selectCategory('hiphop')">
-        <div class="music-label">Hip Hop</div>
-        <div class="overlay"></div>
-      </div>
-
-      <!-- Jazz - Tall and narrow -->
-      <div class="music-card jazz" @click="selectCategory('jazz')">
-        <div class="music-label">Jazz</div>
-        <div class="overlay"></div>
-      </div>
-
-      <!-- Rock - Square -->
-      <div class="music-card rock" @click="selectCategory('rock')">
-        <div class="music-label">Rock</div>
-        <div class="overlay"></div>
-      </div>
-
-      <!-- Electronic - Wide -->
-      <div class="music-card electronic" @click="selectCategory('electronic')">
-        <div class="music-label">Electronic</div>
-        <div class="overlay"></div>
-      </div>
-
-      <!-- Pop - Medium -->
-      <div class="music-card pop" @click="selectCategory('pop')">
-        <div class="music-label">Pop</div>
-        <div class="overlay"></div>
-      </div>
-
-      <!-- R&B - Small square -->
-      <div class="music-card rnb" @click="selectCategory('rnb')">
-        <div class="music-label">R&B</div>
-        <div class="overlay"></div>
-      </div>
-
-      <!-- Country - Rectangle -->
-      <div class="music-card country" @click="selectCategory('country')">
-        <div class="music-label">Country</div>
-        <div class="overlay"></div>
-      </div>
-
-      <!-- Reggae - Unusual shape -->
-      <div class="music-card reggae" @click="selectCategory('reggae')">
-        <div class="music-label">Reggae</div>
+      <div 
+        v-for="(genre, index) in displayGenres" 
+        :key="genre.id"
+        :class="['music-card', gridClasses[index]]"
+        :style="{ backgroundImage: 'linear-gradient(rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.6)), url(' + getFullImageUrl(genre.cover_url) + ')' }"
+        @click="navigateToGenre(genre.slug)"
+      >
+        <div class="music-label">{{ genre.name }}</div>
         <div class="overlay"></div>
       </div>
 
       <!-- All Types - Gradient button -->
-      <div class="gradient-card all-types" @click="selectCategory('all')">
+      <div class="gradient-card all-types" @click="navigateToAllGenres">
         <span class="text-lg font-bold">All Types</span>
       </div>
     </div>
   </section>
 </template>
 
-<script>
-export default {
+<script lang="ts">
+import { onMounted, computed, defineComponent } from "vue";
+import { useGenrestore, getFullImageUrl } from "@/modules/client/stores/genres/genresStore";
+import { useRouter } from "vue-router";
+
+export default defineComponent({
   name: "Vclist_Categories",
-  methods: {
-    selectCategory(category) {
-      // Emit event hoặc handle category selection
-      this.$emit("category-selected", category);
-      console.log("Selected category:", category);
-    },
-  },
-};
+  setup() {
+    const genreStore = useGenrestore();
+    const router = useRouter();
+
+    const gridClasses: string[] = [
+      'classic', 'hiphop', 'jazz', 'rock',
+      'electronic', 'pop', 'rnb', 'country', 'reggae'
+    ];
+
+    onMounted(async () => {
+      if (genreStore.Genres.length === 0) {
+        await genreStore.fetchGenres();
+      }
+    });
+
+    const displayGenres = computed(() => {
+      return genreStore.Genres.slice(0, 9);
+    });
+
+    const navigateToGenre = (slug: string): void => {
+      router.push({ name: 'genre.detail', params: { slug } });
+    };
+
+    const navigateToAllGenres = (): void => {
+      router.push({ name: 'genres.all' });
+    };
+
+    return {
+      displayGenres,
+      gridClasses,
+      getFullImageUrl,
+      navigateToGenre,
+      navigateToAllGenres
+    };
+  }
+});
 </script>
 
 <style scoped>
@@ -154,64 +143,46 @@ export default {
 .classic {
   grid-column: 1 / 6;
   grid-row: 1 / 5;
-  background-image: linear-gradient(rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.6)),
-    url("@/assets/images/music_type/classicjpg.jpg");
 }
 
 .hiphop {
   grid-column: 6 / 9;
   grid-row: 1 / 3;
-  background-image: linear-gradient(rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.6)),
-    url("@/assets/images/music_type/hiphop.jpg");
 }
 
 .jazz {
   grid-column: 9 / 11;
   grid-row: 1 / 6;
-  background-image: linear-gradient(rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.6)),
-    url("@/assets/images/music_type/jazz(1).jpg");
 }
 
 .rock {
   grid-column: 11 / 13;
   grid-row: 1 / 4;
-  background-image: linear-gradient(rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.6)),
-    url("@/assets/images/music_type/rock.jpg");
 }
 
 .electronic {
   grid-column: 1 / 4;
   grid-row: 5 / 7;
-  background-image: linear-gradient(rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.6)),
-    url("@/assets/images/music_type/ELECTRONIC.jpg");
 }
 
 .pop {
   grid-column: 4 / 7;
   grid-row: 5 / 8;
-  background-image: linear-gradient(rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.6)),
-    url("@/assets/images/music_type/poster-am-nhac-an-tuong.jpg");
 }
 
 .rnb {
   grid-column: 7 / 9;
   grid-row: 6 / 8;
-  background-image: linear-gradient(rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.6)),
-    url("@/assets/images/music_type/r&b.jpg");
 }
 
 .country {
   grid-column: 11 / 13;
   grid-row: 4 / 6;
-  background-image: linear-gradient(rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.6)),
-    url("@/assets/images/music_type/COUNTRY.jpg");
 }
 
 .reggae {
   grid-column: 1 / 5;
   grid-row: 7 / 9;
-  background-image: linear-gradient(rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.6)),
-    url("@/assets/images/music_type/Reggae.jpg");
 }
 
 .gradient-card {

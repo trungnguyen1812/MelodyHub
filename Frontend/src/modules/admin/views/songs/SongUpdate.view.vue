@@ -363,7 +363,7 @@
             <div class="field">
               <label class="field-label">Genre <span class="required">*</span></label>
               <div class="status-options">
-                <label v-for="genre in Genres" :key="genre.id" class="status-option"
+                <label v-for="genre in genres" :key="genre.id" class="status-option"
                   :class="{ active: form.genre_id === genre.id, 'status-option--published': form.genre_id === genre.id }">
                   <input type="radio" :value="genre.id" v-model="form.genre_id" hidden />
                   <span class="status-dot"></span>
@@ -536,7 +536,7 @@ import { ref, computed, watch, onUnmounted, onMounted, reactive } from 'vue'
 import { useRoute } from 'vue-router'
 import { useArtistStore } from '@/modules/admin/stores/artists/artistsStore'
 import { usePartnerStore } from '@/modules/admin/stores/partners/partnersStore'
-import { useGenrestore } from '@/modules/admin/stores/genres/genresStore'
+import { useGenreStore } from '@/modules/admin/stores/genres/genresStore'
 import { useSongStore } from '@/modules/admin/stores/songs/songsStore'
 import type { ArtistInterface } from '@/interfaces/artists.interface'
 import type { Album, Flag } from '@/modules/admin/interfaces/songs/create-song.payload'
@@ -555,7 +555,7 @@ const songId = computed<number>(() => Number(route.params.id))
 // ── Stores ──
 const useArtist  = useArtistStore()
 const usePartner = usePartnerStore()
-const useGenre   = useGenrestore()
+const useGenre   = useGenreStore()
 const useSong    = useSongStore()
 const notificationStore = useNotificationStore()
 
@@ -716,7 +716,7 @@ const flags: Flag[] = [
 const waveHeights: number[] = [8, 14, 20, 28, 18, 10, 24, 32, 16, 12, 26, 20, 8, 30, 18, 14, 22, 28, 10, 20]
 const animatedHeights = ref<number[]>([...waveHeights])
 let waveAnimFrame: number | null = null
-const { Genres } = storeToRefs(useGenre)
+const { genres } = storeToRefs(useGenre)
 
 // ── File & Audio state ──
 const audioFile      = ref<File | null>(null)

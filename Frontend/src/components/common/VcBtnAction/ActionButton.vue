@@ -265,7 +265,6 @@ watch(() => props.type, () => { spamGuard.cancel?.(); spamGuard = createSpamGuar
 const shareModalStore = useShareModalStore()
 
 const handleClick = () => {
-  // Share: mở modal, ghi nhận analytics
    if (props.type === 'share') {
     const slug = props.item.slug ?? props.item.id
     shareModalStore.open(`${window.location.origin}/songs/${slug}`)

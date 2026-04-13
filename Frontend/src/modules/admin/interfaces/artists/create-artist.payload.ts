@@ -36,7 +36,7 @@ export interface CreateArtistPayload {
   partner_id?: number | null;
 
   // Status
-  status?: 'active' | 'inactive';
+  status?: 'active' | 'inactive' | 'pending' | 'rejected';
 
   // SEO
   seo_title?: string | null;

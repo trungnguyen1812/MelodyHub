@@ -184,7 +184,7 @@ const emit = defineEmits<{
 }>();
 
 const AllNewMusicView = () => {
-  router.push({ name: "AllNewMusicView" });
+  router.push({ name: "client.music.popular" });
 };
 
 const carouselInner = ref<HTMLDivElement | null>(null);

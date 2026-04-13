@@ -53,8 +53,8 @@ class ArtistService {
         return res.data;
     }
 
-    async detailArtist(id: number) {
-        return await clientApi.get(`/artists/${id}`);
+    async detailArtist(idOrSlug: string | number) {
+        return await clientApi.get(`/artists/${idOrSlug}`);
     } 
 
     async deleteArtist(id: number) {

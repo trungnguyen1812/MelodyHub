@@ -16,6 +16,8 @@ export const useSongStore = defineStore('client_song', {
         SongGenre:   [] as SongGenre[],
         newSongs: [] as Song[],      
         popularSongs: [] as Song[], 
+        topLikedSongs: [] as Song[], 
+        suggestedSongs: [] as Song[], 
         currentSong: null as Song | null,
         currentLyrics: null as string | null, 
         meta:        null as SongMeta | null,
@@ -100,6 +102,37 @@ export const useSongStore = defineStore('client_song', {
                 if (err.code === 'ERR_CANCELED') return;
                 this.error = err?.response?.data?.message || err.message;
                 this.popularSongs = [];
+            } finally {
+                this.loading = false;
+            }
+        },
+
+        async fetchTopLikedSongs(limit: number = 20) {
+            this.loading = true;
+            this.error = null;
+            try {
+                const res = await songsService.getTopLikedSongs(limit);
+                const raw = res?.data?.data ?? res?.data ?? [];
+                this.topLikedSongs = Array.isArray(raw) ? raw : [];
+            } catch (err: any) {
+                this.error = err?.response?.data?.message || err.message;
+                this.topLikedSongs = [];
+            } finally {
+                this.loading = false;
+            }
+        },
+
+        async fetchSuggestedSongs(limit: number = 12) {
+            this.loading = true;
+            this.error = null;
+            try {
+                // Using sort_by=random for actual suggestions
+                const res = await songsService.getAllSongs({ limit, sort_by: 'random' });
+                const raw = res?.data?.data ?? res?.data ?? [];
+                this.suggestedSongs = Array.isArray(raw) ? raw : [];
+            } catch (err: any) {
+                this.error = err?.response?.data?.message || err.message;
+                this.suggestedSongs = [];
             } finally {
                 this.loading = false;
             }
