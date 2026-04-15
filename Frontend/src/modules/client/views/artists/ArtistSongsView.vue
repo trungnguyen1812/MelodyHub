@@ -56,12 +56,16 @@
               </svg>
               Play all
             </button>
-            <button class="follow-btn" :class="{ 'is-following': isFollowing }" @click="isFollowing = !isFollowing">
-              <svg v-if="isFollowing" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" width="16" height="16">
-                <path d="M10 2a6 6 0 0 0-6 6v3.586l-.707.707A1 1 0 0 0 4 14h12a1 1 0 0 0 .707-1.707L16 11.586V8a6 6 0 0 0-6-6ZM10 18a3 3 0 0 1-3-3h6a3 3 0 0 1-3 3Z" />
-              </svg>
-              {{ isFollowing ? 'Following' : 'Follow' }}
-            </button>
+            <ActionButton 
+              class="follow-btn"
+              type="follow" 
+              :class="{ 'is-following': isFollowing }" @click="isFollowing = !isFollowing"
+              :item="{ 
+                id: player.currentSong!.artist!.id,
+                isActive: player.currentSong!.is_followed,   
+                count:    player.currentSong!.follower_count  
+              }" 
+            />
           </div>
         </header>
 
@@ -171,6 +175,7 @@ import { getFullImageUrl } from '@/modules/client/stores/artists/artistsStore';
 import ArtistService from '@/modules/client/services/artists/artists.service';
 import { ArtistInterface } from '@/interfaces/artists.interface';
 import { usePlayerStore } from '@/store/playerStore';
+import ActionButton  from '@/components/common/VcBtnAction/ActionButton.vue';
 import type { Song } from '@/interfaces/songs.interface';
 
 const route      = useRoute();
@@ -414,7 +419,23 @@ onMounted(async () => {
 
 .play-all-btn:active { transform: scale(0.98); }
 
-.follow-btn {
+
+.header-actions:deep(.follow-btn) {
+  width: fit-content !important;
+  align-self: center;
+  flex-shrink: 0;
+  background: rgba(59, 130, 246, 0.15);
+  border: 1px solid rgba(59, 130, 246, 0.4);
+  color: #3b82f6;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+/* .follow-btn {
   display: inline-flex;
   align-items: center;
   gap: 7px;
@@ -432,7 +453,7 @@ onMounted(async () => {
 .follow-btn:hover {
   background: rgba(255,255,255,0.06);
   border-color: rgba(255,255,255,0.5);
-}
+} */
 
 .follow-btn.is-following {
   background: rgba(0,170,255,0.1);

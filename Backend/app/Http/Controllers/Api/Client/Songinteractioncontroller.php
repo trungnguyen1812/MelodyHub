@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Api\Client;
 
 use App\Http\Controllers\Controller;
+use App\Models\Artist;
+use App\Models\ArtistFollower;
 use App\Models\Song;
 use App\Models\SongLike;
 use Illuminate\Http\JsonResponse;

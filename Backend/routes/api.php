@@ -14,6 +14,7 @@ use App\Http\Controllers\Api\Admin\GenresManagerController;
 use App\Http\Controllers\Api\Admin\PartnersManagerController;
 use App\Http\Controllers\Api\Admin\SongsManagerController;
 use App\Http\Controllers\Api\Admin\AlbumsManagerController;
+use App\Http\Controllers\Api\Client\ArtistInteractionController;
 use App\Http\Controllers\Api\Client\ClientArtistsController;
 use App\Http\Controllers\Api\Client\ClientGenresController;
 use App\Http\Controllers\Api\Client\ClientPartnersController;
@@ -90,9 +91,14 @@ Route::prefix('client')->group(function () {
         Route::post('/search', [ClientArtistsController::class, 'search']);
         Route::get('/statistics', [ClientArtistsController::class, 'statistics']);
         Route::get('/by-partner', [ClientArtistsController::class, 'getArtistByPartnerId']);
-        Route::get('/{artist}', [ClientArtistsController::class, 'show']);
         Route::delete('/delete/{artist}', [ClientArtistsController::class, 'delete']);
         Route::post('/update/{artist}', [ClientArtistsController::class, 'update']);
+        Route::middleware('auth:sanctum')->group(function () {
+            Route::post('/{artist:id}/follow', [ArtistInteractionController::class, 'follow'])
+            ->where('artist', '[0-9]+');
+        });
+        
+        Route::get('/{artist}', [ClientArtistsController::class, 'show']);
     });
     
     // Router songs manager

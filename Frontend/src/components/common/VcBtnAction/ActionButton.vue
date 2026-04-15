@@ -1,35 +1,3 @@
-<!-- components/ActionButton.vue -->
-<!--
-  USAGE EXAMPLES:
-  
-  Like button (song_likes table):
-  <ActionButton
-    type="like"
-    :item="{ id: song.id, isActive: song.isLiked, count: song.likeCount }"
-  />
-
-  Download button (song_downloads table):
-  <ActionButton
-    type="download"
-    :item="{ id: song.id, isActive: song.isDownloaded, count: song.downloadCount }"
-    :extra="{ quality: 'high' }"
-  />
-
-  Comment like button (comments.total_likes):
-  <ActionButton
-    type="comment_like"
-    :item="{ id: comment.id, isActive: comment.isLiked, count: comment.total_likes }"
-  />
-
-  Custom slot:
-  <ActionButton type="like" :item="{ id: song.id, isActive: song.isLiked, count: song.likeCount }">
-    <template #default="{ isActive, count, isLoading }">
-      <MyCustomIcon :active="isActive" />
-      <span>{{ count }}</span>
-    </template>
-  </ActionButton>
--->
-
 <template>
   <button
     @click="handleClick"
@@ -73,7 +41,8 @@ import QRCode from 'qrcode'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-type ActionType = 'like' | 'download' | 'comment_like' | 'share'
+type ActionType = 'like' | 'download' | 'comment_like' | 'share' | 'follow'
+
 
 interface ItemProps {
   id: number | string
@@ -186,6 +155,14 @@ const TYPE_CONFIG: Record<ActionType, TypeConfig> = {
     behavior: 'toggle',
     spamStrategy: 'debounce',
     delay: 400,
+  },
+  follow: {
+    label: 'Follow',
+    serviceFn: (id, newValue) => SongActionService.FollowArtist(Number(id), newValue),    
+    invalidateKeys: [['artists'], ['song_follows']],
+    behavior: 'toggle',
+    spamStrategy: 'debounce',
+    delay: 600,
   },
 }
 
@@ -320,6 +297,7 @@ const currentIcon = computed(() => {
     case 'download':     return DownloadIcon
     case 'comment_like': return optimisticActive.value ? ThumbFilledIcon : ThumbIcon
     case 'share':        return ShareIcon
+    case 'follow':       return optimisticActive.value ? FollowedIcon : FollowIcon
     default:             return HeartIcon
   }
 })
@@ -357,6 +335,18 @@ const SpinnerIcon = () => h('svg', { width: 18, height: 18, viewBox: '0 0 24 24'
 const CloseIcon = () => h('svg', { width: 16, height: 16, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', 'stroke-width': 2 }, [
   h('line', { x1: 18, y1: 6, x2: 6, y2: 18 }),
   h('line', { x1: 6, y1: 6, x2: 18, y2: 18 }),
+])
+const FollowIcon = () => h('svg', { width: 18, height: 18, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', 'stroke-width': 2 }, [
+  h('path', { d: 'M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2' }),
+  h('circle', { cx: 9, cy: 7, r: 4 }),
+  h('line', { x1: 19, y1: 8, x2: 19, y2: 14 }),
+  h('line', { x1: 22, y1: 11, x2: 16, y2: 11 }),
+])
+
+const FollowedIcon = () => h('svg', { width: 18, height: 18, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', 'stroke-width': 2 }, [
+  h('path', { d: 'M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2' }),
+  h('circle', { cx: 9, cy: 7, r: 4 }),
+  h('polyline', { points: '16 11 18 13 22 9' }),
 ])
 </script>
 
@@ -459,5 +449,36 @@ const CloseIcon = () => h('svg', { width: 16, height: 16, viewBox: '0 0 24 24', 
   font-size: 12px;
   font-variant-numeric: tabular-nums;
   opacity: 0.85;
+}
+
+/* Follow */
+.action-btn--follow {
+  padding: 6px 16px;
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 20px;
+}
+
+.action-btn--follow:hover:not(:disabled) {
+  color: #3b82f6;
+  border-color: rgba(59, 130, 246, 0.4);
+  background: rgba(59, 130, 246, 0.12);
+}
+
+.action-btn--follow.action-btn--active {
+  color: #3b82f6;
+  border-color: rgba(59, 130, 246, 0.5);
+  background: rgba(59, 130, 246, 0.15);
+}
+
+/* Đổi label thành "Following" khi active */
+.action-btn--follow.action-btn--active .action-btn__label::before {
+  content: 'Following';
+}
+.action-btn--follow.action-btn--active .action-btn__label {
+  font-size: 0; /* ẩn text gốc "Follow" */
+}
+.action-btn--follow.action-btn--active .action-btn__label::before {
+  font-size: 12px;
 }
 </style>

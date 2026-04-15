@@ -74,6 +74,8 @@ export interface Song {
   total_plays:      number | null
   is_liked:         boolean
   like_count  :     number
+  is_followed:         boolean
+  follower_count  :     number
 }
  
 export interface SongMeta {

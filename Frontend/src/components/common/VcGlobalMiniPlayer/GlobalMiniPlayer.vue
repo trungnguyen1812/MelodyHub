@@ -34,24 +34,6 @@
               <p class="player-title">{{ player.currentSong.title }}</p>
               <p class="player-artist">{{ player.currentSong.artist?.name ?? '—' }}</p>
             </div>
-            <ActionButton 
-              type="like" 
-              class="player-bar-like"
-              :item="{ 
-                id: player.currentSong.id,
-                isActive: player.currentSong.is_liked,   
-                count:    player.currentSong.like_count  
-              }" 
-            >
-              <template #default="{ isActive, isLoading }">
-                <svg v-if="isActive" width="18" height="18" viewBox="0 0 24 24" fill="#ef4444">
-                   <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
-                </svg>
-                <svg v-else width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                   <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
-                </svg>
-              </template>
-            </ActionButton>
           </div>
 
           <div class="player-seek-area">
@@ -167,7 +149,15 @@
                     <span class="artist-handle">@{{ player.currentSong?.artist?.slug ?? 'artist' }}</span>
                   </div>
                 </div>
-                <button class="follow-btn">Follow</button>
+                <ActionButton 
+                  class="follow-btn"
+                  type="follow" 
+                  :item="{ 
+                    id: player.currentSong!.artist!.id,
+                    isActive: player.currentSong!.is_followed,   
+                    count:    player.currentSong!.follower_count  
+                  }" 
+                />
               </div>
 
               <!-- Disc/Cover Art -->
@@ -221,14 +211,6 @@
                     id: player.currentSong!.id,
                     isActive: player.currentSong!.is_liked,   
                     count:    player.currentSong!.like_count  
-                  }" 
-                />
-                <ActionButton 
-                  type="comment_like" 
-                  :item="{ 
-                    id: player.currentSong!.id,
-                    // isActive: player.currentSong!.is_liked,   
-                    // count:    player.currentSong!.like_count  
                   }" 
                 />
                 <ActionButton 
@@ -1208,15 +1190,18 @@ onUnmounted(() => lockScroll(false))
 
 .card-header {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  margin-bottom: 16px;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 4px 0;
 }
 
 .artist-info {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
+  min-width: 0;     
+  flex: 4;        
 }
 
 .artist-avatar-card {
@@ -1237,24 +1222,35 @@ onUnmounted(() => lockScroll(false))
 .artist-details-card {
   display: flex;
   flex-direction: column;
+  gap: 2px;
+  min-width: 0;
 }
 
 .artist-name-card {
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 600;
-  color: white;
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .artist-handle {
   font-size: 12px;
-  color: rgba(255, 255, 255, 0.6);
+  color: rgba(255,255,255,0.45);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.follow-btn {
-  background: rgba(59, 130, 246, 0.2);
-  border: 1px solid rgba(59, 130, 246, 0.5);
+.card-header :deep(.follow-btn) {
+  width: fit-content !important;
+  align-self: center;
+  flex-shrink: 0;
+  background: rgba(59, 130, 246, 0.15);
+  border: 1px solid rgba(59, 130, 246, 0.4);
   color: #3b82f6;
-  padding: 6px 16px;
+  padding: 6px 14px;
   border-radius: 20px;
   font-size: 12px;
   font-weight: 600;
@@ -1262,8 +1258,9 @@ onUnmounted(() => lockScroll(false))
   transition: all 0.2s;
 }
 
-.follow-btn:hover {
+.card-header :deep(.follow-btn):hover {
   background: #3b82f6;
+  border-color: #3b82f6;
   color: white;
   transform: scale(1.05);
 }
