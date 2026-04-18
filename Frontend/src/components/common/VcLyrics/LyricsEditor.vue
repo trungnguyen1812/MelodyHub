@@ -3,9 +3,14 @@
 
     <!-- Player bar -->
     <div class="le-player">
-      <button class="le-play-btn" type="button" @click="togglePlay" :disabled="!src">
-        <svg v-if="!playing" width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-        <svg v-else width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+      <button class="le-play-btn" type="button" @click="togglePlay" :disabled="!hasAudio">
+        <svg v-if="!playing" width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+          <polygon points="5 3 19 12 5 21 5 3"/>
+        </svg>
+        <svg v-else width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+          <rect x="6" y="4" width="4" height="16"/>
+          <rect x="14" y="4" width="4" height="16"/>
+        </svg>
       </button>
       <div class="le-progress-wrap" @click="seek">
         <div class="le-progress-fill" :style="{ width: pct + '%' }"/>
@@ -14,7 +19,15 @@
       <span class="le-time">{{ fmtTime(cur) }} / {{ fmtTime(dur) }}</span>
     </div>
 
-    <audio ref="audioEl" :src="src" @timeupdate="onTick" @loadedmetadata="dur = audioEl!.duration" @ended="playing = false"/>
+    <!-- Internal audio: chỉ mount khi KHÔNG có external audioRef -->
+    <audio
+      v-if="!props.audioRef"
+      ref="internalAudioEl"
+      :src="props.src"
+      @timeupdate="onInternalTick"
+      @loadedmetadata="onInternalMeta"
+      @ended="onInternalEnded"
+    />
 
     <!-- Toolbar -->
     <div class="le-toolbar">
@@ -30,7 +43,14 @@
         <input type="file" accept=".lrc" hidden @change="onLrcImport" />
       </label>
       <div class="le-sep"/>
-      <button type="button" class="le-btn le-btn--danger" @click="clearAll" v-if="lines.length > 0">🗑 Xoá tất cả</button>
+      <button
+        type="button"
+        class="le-btn le-btn--danger"
+        @click="clearAll"
+        v-if="lines.length > 0"
+      >
+        🗑 Xoá tất cả
+      </button>
       <div class="le-sep"/>
       <span class="le-count">{{ lines.length }} dòng</span>
     </div>
@@ -86,41 +106,47 @@
     </div>
 
     <!-- Paste modal -->
-    <div v-if="showPaste" class="le-modal-backdrop" @click.self="showPaste = false">
-      <div class="le-modal">
-        <p class="le-modal-title">Dán lyrics thô</p>
-        <p class="le-modal-sub">Mỗi dòng = 1 câu. Timestamps sẽ được gán sau.</p>
-        <textarea
-          v-model="rawPaste"
-          class="le-paste-area"
-          placeholder="Nhập lyrics vào đây..."
-          rows="12"
-          autofocus
-        />
-        <div class="le-modal-footer">
-          <button type="button" class="le-btn" @click="showPaste = false">Huỷ</button>
-          <button type="button" class="le-btn le-btn--primary" @click="confirmPaste">Xác nhận</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- LRC preview modal -->
-    <div v-if="showLrcPreview" class="le-modal-backdrop" @click.self="showLrcPreview = false">
-      <div class="le-modal le-modal--wide">
-        <p class="le-modal-title">📄 Preview LRC — {{ lrcParsed.length }} dòng</p>
-        <p class="le-modal-sub">Kiểm tra trước khi import. Timestamps đã được parse từ file .lrc.</p>
-        <div class="le-lrc-preview">
-          <div v-for="(line, i) in lrcParsed" :key="i" class="le-lrc-row">
-            <span class="le-lrc-time">{{ fmtTime(line.start) }}</span>
-            <span class="le-lrc-text">{{ line.text }}</span>
+    <Teleport to="body">
+      <div v-if="showPaste" class="le-modal-backdrop" @click.self="showPaste = false">
+        <div class="le-modal">
+          <p class="le-modal-title">Dán lyrics thô</p>
+          <p class="le-modal-sub">Mỗi dòng = 1 câu. Timestamps sẽ được gán sau.</p>
+          <textarea
+            v-model="rawPaste"
+            class="le-paste-area"
+            placeholder="Nhập lyrics vào đây..."
+            rows="12"
+            autofocus
+          />
+          <div class="le-modal-footer">
+            <button type="button" class="le-btn" @click="showPaste = false">Huỷ</button>
+            <button type="button" class="le-btn le-btn--primary" @click="confirmPaste">Xác nhận</button>
           </div>
         </div>
-        <div class="le-modal-footer">
-          <button type="button" class="le-btn" @click="showLrcPreview = false">Huỷ</button>
-          <button type="button" class="le-btn le-btn--primary" @click="confirmLrcImport">Import {{ lrcParsed.length }} dòng</button>
+      </div>
+    </Teleport>
+
+    <!-- LRC preview modal -->
+    <Teleport to="body">
+      <div v-if="showLrcPreview" class="le-modal-backdrop" @click.self="showLrcPreview = false">
+        <div class="le-modal le-modal--wide">
+          <p class="le-modal-title">📄 Preview LRC — {{ lrcParsed.length }} dòng</p>
+          <p class="le-modal-sub">Kiểm tra trước khi import. Timestamps đã được parse từ file .lrc.</p>
+          <div class="le-lrc-preview">
+            <div v-for="(line, i) in lrcParsed" :key="i" class="le-lrc-row">
+              <span class="le-lrc-time">{{ fmtTime(line.start) }}</span>
+              <span class="le-lrc-text">{{ line.text }}</span>
+            </div>
+          </div>
+          <div class="le-modal-footer">
+            <button type="button" class="le-btn" @click="showLrcPreview = false">Huỷ</button>
+            <button type="button" class="le-btn le-btn--primary" @click="confirmLrcImport">
+              Import {{ lrcParsed.length }} dòng
+            </button>
+          </div>
         </div>
       </div>
-    </div>
+    </Teleport>
 
   </div>
 </template>
@@ -128,78 +154,136 @@
 <script setup lang="ts">
 import { ref, computed, watch, nextTick } from 'vue'
 
+// ─────────────────────────────────────────────
+// Types
+// ─────────────────────────────────────────────
 export interface LyricLine {
   start: number
-  end: number
-  text: string
+  end:   number
+  text:  string
 }
 
 interface InternalLine extends LyricLine {
   _id: number
 }
 
+// ─────────────────────────────────────────────
+// Props & Emits
+// ─────────────────────────────────────────────
 const props = defineProps<{
-  modelValue: LyricLine[]
-  src?: string
+  modelValue:   LyricLine[]
+  src?:         string
+  audioRef?:    HTMLAudioElement | null
+  currentTime?: number
+  duration?:    number
+  isPlaying?:   boolean
 }>()
 
 const emit = defineEmits<{
   (e: 'update:modelValue', val: LyricLine[]): void
+  (e: 'toggle-play'): void
+  (e: 'seek', time: number): void
 }>()
 
+// ─────────────────────────────────────────────
+// ID factory
+// ─────────────────────────────────────────────
 let _uid = 0
 function mkId() { return ++_uid }
 
+// ─────────────────────────────────────────────
+// Lines state
+// ─────────────────────────────────────────────
 const lines = ref<InternalLine[]>(
   props.modelValue.map(l => ({ ...l, _id: mkId() }))
 )
 
-watch(() => props.modelValue, (val) => {
-  if (val.length !== lines.value.length) {
-    lines.value = val.map(l => ({ ...l, _id: mkId() }))
-  }
-}, { deep: true })
+watch(
+  () => props.modelValue,
+  (val) => {
+    if (val.length !== lines.value.length) {
+      lines.value = val.map(l => ({ ...l, _id: mkId() }))
+    }
+  },
+  { deep: true }
+)
 
 function emitOut() {
   emit('update:modelValue', lines.value.map(({ start, end, text }) => ({ start, end, text })))
 }
 
-// ── Audio ──
-const audioEl = ref<HTMLAudioElement | null>(null)
+// ─────────────────────────────────────────────
+// Audio state
+// ─────────────────────────────────────────────
+const internalAudioEl = ref<HTMLAudioElement | null>(null)
 const playing = ref(false)
 const cur     = ref(0)
 const dur     = ref(0)
-const pct     = computed(() => dur.value ? (cur.value / dur.value) * 100 : 0)
 
-function togglePlay() {
-  if (!audioEl.value || !props.src) return
-  if (playing.value) { audioEl.value.pause(); playing.value = false }
-  else               { audioEl.value.play();  playing.value = true  }
+const hasAudio = computed(() => !!props.src)
+
+// ── External mode: sync từ props khi có audioRef ──
+watch(
+  () => props.currentTime,
+  (t) => {
+    if (props.audioRef && t !== undefined) cur.value = t
+  },
+  { immediate: true }
+)
+
+watch(
+  () => props.duration,
+  (d) => {
+    if (props.audioRef && d !== undefined) dur.value = d
+  },
+  { immediate: true }
+)
+
+watch(
+  () => props.isPlaying,
+  (p) => {
+    if (props.audioRef && p !== undefined) playing.value = p
+  },
+  { immediate: true }
+)
+
+// ── Reset khi src thay đổi (file mới upload) ──
+watch(
+  () => props.src,
+  (newSrc) => {
+    if (!props.audioRef) {
+      playing.value = false
+      cur.value     = 0
+      if (!newSrc) dur.value = 0
+    }
+  }
+)
+
+// ── Internal audio event handlers ──
+function onInternalTick() {
+  if (internalAudioEl.value) {
+    cur.value = internalAudioEl.value.currentTime
+  }
 }
 
-function onTick() {
-  if (audioEl.value) cur.value = audioEl.value.currentTime
+function onInternalMeta() {
+  if (internalAudioEl.value) {
+    dur.value = internalAudioEl.value.duration || 0
+  }
 }
 
-function seek(e: MouseEvent) {
-  if (!audioEl.value || !dur.value) return
-  const rect  = (e.currentTarget as HTMLElement).getBoundingClientRect()
-  const ratio = (e.clientX - rect.left) / rect.width
-  audioEl.value.currentTime = ratio * dur.value
+function onInternalEnded() {
+  playing.value = false
+  cur.value     = 0
 }
 
-function jumpTo(start: number) {
-  if (!audioEl.value || start <= 0) return
-  audioEl.value.currentTime = start
-}
+// ─────────────────────────────────────────────
+// Computed
+// ─────────────────────────────────────────────
+const pct = computed(() =>
+  dur.value > 0 ? Math.min(100, (cur.value / dur.value) * 100) : 0
+)
 
-function fmtTime(s: number) {
-  const m   = Math.floor(s / 60)
-  const sec = Math.floor(s % 60)
-  return `${m}:${String(sec).padStart(2, '0')}`
-}
-
-// ── Active highlight ──
 const activeIdx = computed(() => {
   const t = cur.value
   for (let i = lines.value.length - 1; i >= 0; i--) {
@@ -208,12 +292,70 @@ const activeIdx = computed(() => {
   return -1
 })
 
-// ── Editing ──
+// ─────────────────────────────────────────────
+// Playback control
+// ─────────────────────────────────────────────
+function togglePlay() {
+  if (!hasAudio.value) return
+
+  if (props.audioRef) {
+    emit('toggle-play')
+  } else if (internalAudioEl.value) {
+    if (playing.value) {
+      internalAudioEl.value.pause()
+      playing.value = false
+    } else {
+      internalAudioEl.value.play().catch(() => {
+        playing.value = false
+      })
+      playing.value = true
+    }
+  }
+}
+
+function seek(e: MouseEvent) {
+  if (!dur.value) return
+  const rect  = (e.currentTarget as HTMLElement).getBoundingClientRect()
+  const ratio = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width))
+  const time  = ratio * dur.value
+
+  if (props.audioRef) {
+    emit('seek', time)
+  } else if (internalAudioEl.value) {
+    internalAudioEl.value.currentTime = time
+  }
+}
+
+function jumpTo(start: number) {
+  if (start < 0) return
+
+  if (props.audioRef) {
+    emit('seek', start)
+  } else if (internalAudioEl.value) {
+    internalAudioEl.value.currentTime = start
+  }
+}
+
+// ─────────────────────────────────────────────
+// Helpers
+// ─────────────────────────────────────────────
+function fmtTime(s: number): string {
+  if (!s || isNaN(s) || !isFinite(s)) return '0:00'
+  const m   = Math.floor(s / 60)
+  const sec = Math.floor(s % 60)
+  return `${m}:${String(sec).padStart(2, '0')}`
+}
+
+// ─────────────────────────────────────────────
+// Editing
+// ─────────────────────────────────────────────
 const focusedIdx = ref(-1)
 const listEl     = ref<HTMLElement | null>(null)
 
 function addLine() {
-  const lastEnd = lines.value.length > 0 ? lines.value[lines.value.length - 1].end : 0
+  const lastEnd = lines.value.length > 0
+    ? lines.value[lines.value.length - 1].end
+    : 0
   lines.value.push({ start: lastEnd, end: 0, text: '', _id: mkId() })
   emitOut()
   nextTick(() => {
@@ -228,7 +370,8 @@ function deleteLine(i: number) {
 }
 
 function updateField(i: number, key: 'start' | 'end', val: string) {
-  lines.value[i][key] = parseFloat(val) || 0
+  const num = parseFloat(val)
+  lines.value[i][key] = isNaN(num) ? 0 : num
   emitOut()
 }
 
@@ -242,24 +385,32 @@ function clearAll() {
   emitOut()
 }
 
-// ── Stamp current time ──
+// ─────────────────────────────────────────────
+// Stamp current time
+// ─────────────────────────────────────────────
 function stampLine() {
   const i = focusedIdx.value
   if (i < 0) return
+
   const t = parseFloat(cur.value.toFixed(2))
   lines.value[i].start = t
+
+  // Auto-fill end của dòng trước nếu chưa có
   if (i > 0 && lines.value[i - 1].end === 0) {
     lines.value[i - 1].end = t
   }
+
   emitOut()
 }
 
-// ── Paste modal ──
+// ─────────────────────────────────────────────
+// Paste modal
+// ─────────────────────────────────────────────
 const showPaste = ref(false)
 const rawPaste  = ref('')
 
 function openPaste() {
-  rawPaste.value = ''
+  rawPaste.value  = ''
   showPaste.value = true
 }
 
@@ -270,12 +421,14 @@ function confirmPaste() {
     .filter(l => l !== '')
     .map(text => ({ start: 0, end: 0, text, _id: mkId() }))
 
-  lines.value = lines.value.length > 0 ? lines.value.concat(newLines) : newLines
+  lines.value     = lines.value.length > 0 ? lines.value.concat(newLines) : newLines
   showPaste.value = false
   emitOut()
 }
 
-// ── LRC Import ──
+// ─────────────────────────────────────────────
+// LRC Import
+// ─────────────────────────────────────────────
 const showLrcPreview = ref(false)
 const lrcParsed      = ref<LyricLine[]>([])
 
@@ -301,7 +454,7 @@ function parseLrc(content: string): LyricLine[] {
       times.push(parseFloat((min * 60 + sec + ms / 1000).toFixed(2)))
     }
 
-    // Bỏ hết timestamp tags để lấy text
+    // Lấy text sau khi bỏ hết timestamp tags
     const text = trimmed.replace(/\[\d{2}:\d{2}\.\d{2,3}\]/g, '').trim()
     if (!text) continue
 
@@ -310,7 +463,7 @@ function parseLrc(content: string): LyricLine[] {
     }
   }
 
-  // Sort theo start
+  // Sort theo start time
   result.sort((a, b) => a.start - b.start)
 
   // Gán end = start của dòng kế tiếp
@@ -327,7 +480,7 @@ function onLrcImport(e: Event) {
 
   // Reset input để có thể import lại cùng file
   ;(e.target as HTMLInputElement).value = ''
-  
+
   const reader = new FileReader()
   reader.onload = (ev) => {
     const content = ev.target?.result as string

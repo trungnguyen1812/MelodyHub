@@ -128,9 +128,7 @@ const handleImageError = (e: Event) => {
 
 
 onMounted(async () => {
-  if (artists.value.length === 0) {
     await artistStore.fetchAllArtists();
-  }
 });
 </script>
 

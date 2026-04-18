@@ -185,10 +185,48 @@ export const usePlayerStore = defineStore('player', () => {
         _resetTracking()
     }
 
+    // ─── Follow status cache (to persist across song resets) ───────────────────
+    // Map: songId -> { is_followed, follower_count }
+    const followStatusCache = ref<Map<number, { is_followed: boolean; follower_count?: number }>>(
+        new Map()
+    )
+
+    // ─── Follow status update (persist follow state) ────────────────────────
+    function updateFollowStatus(songId: number, isFollowed: boolean, followerCount?: number) {
+        // Update current song if it matches
+        if (currentSong.value && currentSong.value.id === songId) {
+            currentSong.value.is_followed = isFollowed
+            if (followerCount !== undefined) {
+                currentSong.value.follower_count = followerCount
+            }
+        }
+        
+        // Also cache it for future restores
+        followStatusCache.value.set(songId, {
+            is_followed: isFollowed,
+            follower_count: followerCount
+        })
+    }
+
+    // ─── Restore follow status from cache ────────────────────────────────────
+    function restoreFollowStatus(songId: number) {
+        if (!currentSong.value || currentSong.value.id !== songId) return
+        
+        const cached = followStatusCache.value.get(songId)
+        if (cached) {
+            currentSong.value.is_followed = cached.is_followed
+            if (cached.follower_count !== undefined) {
+                currentSong.value.follower_count = cached.follower_count
+            }
+        }
+    }
+
     return {
         currentSong, isPlaying, currentTime, duration, volume, isMuted,
         hasPrev, hasNext, currentPlaylistId,  // ← FIX: expose currentPlaylistId
         play, toggle, stop, playPrev, playNext,
-        seek, setVolume, toggleMute
+        seek, setVolume, toggleMute,
+        updateFollowStatus,  // ← Update follow status + cache it
+        restoreFollowStatus  // ← Restore from cache
     }
 })

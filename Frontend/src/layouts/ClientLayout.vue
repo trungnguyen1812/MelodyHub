@@ -28,6 +28,11 @@
             <div v-show="isDropdownOpen"
               class="absolute left-0 mt-2 w-40 bg-gray-800/75 text-white rounded-lg shadow-lg z-50 transition-all duration-200"
               role="menu">
+              <router-link to="/albums"
+                class="block px-4 py-2 text-sm hover:text-cyan-400 drop-shadow-[0_0_10px_#22d3ee] hover:text-white transition-colors duration-200"
+                role="menuitem">
+                Albums
+              </router-link>
               <a href="#"
                 class="block px-4 py-2 text-sm hover:text-cyan-400 drop-shadow-[0_0_10px_#22d3ee] hover:text-white transition-colors duration-200"
                 role="menuitem">

@@ -23,6 +23,7 @@ use App\Http\Controllers\Api\Client\ClientTypePartnerController;
 use App\Http\Controllers\Api\Client\CommentInteractionController;
 use App\Http\Controllers\Api\Client\Songinteractioncontroller;
 use App\Http\Controllers\Api\Client\SongPlayController as ClientSongPlayController;
+use App\Http\Controllers\Api\Client\ClientAlbumsContronller;
 use App\Http\Controllers\Api\SongPlayController;
 use App\Models\Partner;
 use App\Models\Song;
@@ -91,8 +92,8 @@ Route::prefix('client')->group(function () {
         Route::post('/search', [ClientArtistsController::class, 'search']);
         Route::get('/statistics', [ClientArtistsController::class, 'statistics']);
         Route::get('/by-partner', [ClientArtistsController::class, 'getArtistByPartnerId']);
-        Route::delete('/delete/{artist}', [ClientArtistsController::class, 'delete']);
-        Route::post('/update/{artist}', [ClientArtistsController::class, 'update']);
+        Route::delete('/delete/{artist:id}', [ClientArtistsController::class, 'delete']);
+        Route::post('/update/{artist:id}', [ClientArtistsController::class, 'update']);
         Route::middleware('auth:sanctum')->group(function () {
             Route::post('/{artist:id}/follow', [ArtistInteractionController::class, 'follow'])
             ->where('artist', '[0-9]+');
@@ -174,6 +175,20 @@ Route::prefix('client')->group(function () {
 
     // Comments
     Route::post('/comments/{comment}/like', [CommentInteractionController::class, 'like']);
+
+    // Albums
+    Route::prefix('albums')->group(function () {
+        Route::get('/',         [ClientAlbumsContronller::class, 'index']);
+        Route::post('/search',  [ClientAlbumsContronller::class, 'search']);
+        Route::post('/add',     [ClientAlbumsContronller::class, 'add']);
+        Route::get('/{album}',  [ClientAlbumsContronller::class, 'show']);
+        Route::post('/update/{slug}', [ClientAlbumsContronller::class, 'update']);
+        Route::put('/{album}/tracks',  [ClientAlbumsContronller::class, 'updateTracks']);
+        Route::delete('/delete/{album}', [ClientAlbumsContronller::class, 'destroy']);
+
+        // 
+        Route::get('/partner/{partnerId}', [ClientAlbumsContronller::class, 'showAlbumByPartner']);
+    });
 });
 
 });
@@ -224,9 +239,9 @@ Route::prefix('admin')->middleware(['admin.token'])->group(function () {
         Route::post('/add', [ArtistsManagerController::class, 'add']);
         Route::post('/search', [ArtistsManagerController::class, 'search']);
         Route::get('/statistics', [ArtistsManagerController::class, 'statistics']);
-        Route::get('/{artist}', [ArtistsManagerController::class, 'show']);
-        Route::delete('/delete/{artist}', [ArtistsManagerController::class, 'delete']);
-        Route::post('/update/{artist}', [ArtistsManagerController::class, 'update']);
+        Route::get('/{artist}', [ArtistsManagerController::class, 'show'])->withTrashed();
+        Route::delete('/delete/{artist}', [ArtistsManagerController::class, 'delete'])->withTrashed();
+        Route::post('/update/{artist}', [ArtistsManagerController::class, 'update'])->withTrashed();
     });
 
     // Router songs manager
@@ -259,13 +274,14 @@ Route::prefix('admin')->middleware(['admin.token'])->group(function () {
 
     // Router albums  manager
     Route::prefix('albums')->group(function () {
-        Route::get('/',         [AlbumsManagerController::class, 'index']);
-        Route::post('/search',  [AlbumsManagerController::class, 'search']);
-        Route::post('/add',     [AlbumsManagerController::class, 'add']);
-        Route::get('/{album}',  [AlbumsManagerController::class, 'show']);
-        Route::post('/update/{album}',  [AlbumsManagerController::class, 'update']);
-        Route::put('/{album}/tracks',  [AlbumsManagerController::class, 'updateTracks']);
-        Route::delete('/delete/{album}', [AlbumsManagerController::class, 'destroy']);
+        Route::get('/',                         [AlbumsManagerController::class, 'index']);
+        Route::post('/search',                  [AlbumsManagerController::class, 'search']);
+        Route::post('/add',                     [AlbumsManagerController::class, 'add']);
+        
+        Route::get('/{album}',                  [AlbumsManagerController::class, 'show']);
+        Route::post('/update/{album}',          [AlbumsManagerController::class, 'update']);
+        Route::put('/{album}/tracks',           [AlbumsManagerController::class, 'updateTracks']);
+        Route::delete('/delete/{album}',        [AlbumsManagerController::class, 'destroy']);
     });
    
 });

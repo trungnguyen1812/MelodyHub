@@ -22,8 +22,22 @@ class ClientArtistsController extends Controller
         return ArtistResource::collection($artists);
     }
 
-    public function getAllArtists()  {
-        $artists = Artist::all();
+    public function getAllArtists(Request $request)  
+    {
+        $query = Artist::query();
+        log::info($request);
+        if ($request->filled('partner_id')) {
+            $partnerId = (int) $request->get('partner_id');
+            if ($partnerId <= 0) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'partner_id is invalid',
+                ], 422);
+            }
+            $query->where('partner_id', $partnerId);
+        }
+        
+        $artists = $query->get();
         return ArtistResource::collection($artists);
     }
 
@@ -68,6 +82,13 @@ class ClientArtistsController extends Controller
 
         $user = Auth::guard('sanctum')->user();
         $userId = $user ? $user->id : null;
+
+        // Load follow status for artist if user is authenticated
+        if ($userId) {
+            $artist->load(['artist_followers' => function($query) use ($userId) {
+                $query->where('user_id', $userId)->select('id', 'artist_id', 'user_id');
+            }]);
+        }
 
         $artist->load(['songs' => function($query) use ($userId) {
             $query->with(['genre', 'artist'])

@@ -57,14 +57,14 @@
               <div class="field">
                 <label class="flabel">Country</label>
                 <select v-model="form.country" class="fcontrol">
-                  <option value="">Select country</option>
-                  <option value="USA">🇺🇸 United States</option>
-                  <option value="UK">🇬🇧 United Kingdom</option>
-                  <option value="Vietnam">🇻🇳 Vietnam</option>
-                  <option value="Japan">🇯🇵 Japan</option>
-                  <option value="Korea">🇰🇷 South Korea</option>
-                  <option value="France">🇫🇷 France</option>
-                  <option value="Germany">🇩🇪 Germany</option>
+                  <option class="optionCountry" value="">Select country</option>
+                  <option class="optionCountry" value="USA">🇺🇸 United States</option>
+                  <option class="optionCountry" value="UK">🇬🇧 United Kingdom</option>
+                  <option class="optionCountry" value="Vietnam">🇻🇳 Vietnam</option>
+                  <option class="optionCountry" value="Japan">🇯🇵 Japan</option>
+                  <option class="optionCountry" value="Korea">🇰🇷 South Korea</option>
+                  <option class="optionCountry" value="France">🇫🇷 France</option>
+                  <option class="optionCountry" value="Germany">🇩🇪 Germany</option>
                 </select>
               </div>
               <div class="field">
@@ -514,6 +514,10 @@ watch(() => form.name, (newVal) => {
 .fcontrol {
   background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
   border-radius: 9px; padding: 10px 13px; color: #fff; font-size: 14px; width:100%; box-sizing: border-box;
+}
+.fcontrol option {
+  background: #0f1a24;
+  color: #e8edf2;
 }
 .fcontrol:focus { outline: none; border-color: #00aaff; background: rgba(255,255,255,0.08); }
 .fhint { font-size: 11px; color: rgba(255,255,255,0.3); }

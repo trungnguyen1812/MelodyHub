@@ -20,6 +20,7 @@ export interface ArtistInterface {
     total_plays: number;
     total_songs: number;
     total_albums: number;
+    is_followed?: boolean;
     partner_id: number | null;
     status: string; // Có thể là 'active', 'inactive', etc.
     seo_title: string | null;
@@ -29,4 +30,5 @@ export interface ArtistInterface {
     updated_at: string | null; // ISO date string
     deleted_at: string | null; // ISO date string
     songs?: Song[];
+    is_liked?: boolean; // Thêm trường này để xác định xem người dùng đã thích nghệ sĩ này chưa
 }

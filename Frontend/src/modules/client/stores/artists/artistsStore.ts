@@ -65,12 +65,13 @@ export const useArtistStore = defineStore("client_artist", {
     },
     
     actions: {
-        async fetchAllArtists() {
+        async fetchAllArtists(partnerId?: number) {
+            
             try {
                 this.loading = true;
                 this.error = null;
 
-                const data = await ArtistService.getAllArtist();
+                const data = await ArtistService.getAllArtist(partnerId);
 
                 if (!data) {
                     this.artists = [];
@@ -138,7 +139,6 @@ export const useArtistStore = defineStore("client_artist", {
 
             try {
                 const res = await ArtistService.searchArtist(keyword);
-                console.log(res);
                 
                 const artists = res.data.data;
                 

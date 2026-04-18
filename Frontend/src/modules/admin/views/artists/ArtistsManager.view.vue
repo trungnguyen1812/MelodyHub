@@ -141,227 +141,55 @@
                     </div>
 
                     <div class="table-body">
-                        <!-- Top 1 -->
-                        <div class="table-row">
+                        <!-- Dynamic Top Artists -->
+                        <div 
+                            v-for="(artist, rank) in topArtists"
+                            :key="artist.id"
+                            class="table-row"
+                        >
                             <div class="rank-col">
-                                <span class="rank-number rank-1">1</span>
+                                <span class="rank-number" :class="`rank-${rank + 1}`">{{ rank + 1 }}</span>
                             </div>
                             <div class="artist-col">
                                 <div class="artist-info">
                                     <div class="artist-avatar">
-                                        <div class="avatar-placeholder">S</div>
+                                        <img 
+                                            v-if="artist.avatar_url"
+                                            :src="getFullImageUrl(artist.avatar_url)"
+                                            :alt="artist.name"
+                                            class="avatar-img"
+                                        />
+                                        <div v-else class="avatar-placeholder">
+                                            {{ artist.name.charAt(0).toUpperCase() }}
+                                        </div>
                                     </div>
                                     <div class="artist-details">
-                                        <h4>Sơn Tùng M-TP</h4>
-                                        <p class="artist-category">Superstar</p>
+                                        <h4>{{ artist.name }}</h4>
+                                        <p class="artist-category">{{ getCategoryLabel(artist) }}</p>
                                     </div>
                                 </div>
                             </div>
                             <div class="plays-col">
-                                <span class="stat-value">985M</span>
+                                <span class="stat-value">{{ formatNumber(artist.total_plays || 0) }}</span>
                             </div>
                             <div class="followers-col">
-                                <span class="stat-value">12.5M</span>
+                                <span class="stat-value">{{ formatNumber(artist.total_followers || 0) }}</span>
                             </div>
                             <div class="trend-col">
-                                <span class="trend-indicator trend-up">↗</span>
+                                <span class="trend-indicator" :class="getTrendClass(artist)">{{ getTrendIcon(artist) }}</span>
                             </div>
                         </div>
 
-                        <!-- Top 2 -->
-                        <div class="table-row">
-                            <div class="rank-col">
-                                <span class="rank-number rank-2">2</span>
-                            </div>
-                            <div class="artist-col">
-                                <div class="artist-info">
-                                    <div class="artist-avatar">
-                                        <div class="avatar-placeholder">Đ</div>
-                                    </div>
-                                    <div class="artist-details">
-                                        <h4>Đen Vâu</h4>
-                                        <p class="artist-category">Superstar</p>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="plays-col">
-                                <span class="stat-value">750M</span>
-                            </div>
-                            <div class="followers-col">
-                                <span class="stat-value">8.5M</span>
-                            </div>
-                            <div class="trend-col">
-                                <span class="trend-indicator trend-up">↗</span>
-                            </div>
-                        </div>
-
-                        <!-- Top 3 -->
-                        <div class="table-row">
-                            <div class="rank-col">
-                                <span class="rank-number rank-3">3</span>
-                            </div>
-                            <div class="artist-col">
-                                <div class="artist-info">
-                                    <div class="artist-avatar">
-                                        <div class="avatar-placeholder">M</div>
-                                    </div>
-                                    <div class="artist-details">
-                                        <h4>Mỹ Tâm</h4>
-                                        <p class="artist-category">Superstar</p>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="plays-col">
-                                <span class="stat-value">890M</span>
-                            </div>
-                            <div class="followers-col">
-                                <span class="stat-value">9.5M</span>
-                            </div>
-                            <div class="trend-col">
-                                <span class="trend-indicator trend-neutral">→</span>
-                            </div>
-                        </div>
-
-                        <!-- Top 4 -->
-                        <div class="table-row">
-                            <div class="rank-col">
-                                <span class="rank-number">4</span>
-                            </div>
-                            <div class="artist-col">
-                                <div class="artist-info">
-                                    <div class="artist-avatar">
-                                        <div class="avatar-placeholder">H</div>
-                                    </div>
-                                    <div class="artist-details">
-                                        <h4>Hòa Minzy</h4>
-                                        <p class="artist-category">Popular</p>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="plays-col">
-                                <span class="stat-value">680M</span>
-                            </div>
-                            <div class="followers-col">
-                                <span class="stat-value">7.2M</span>
-                            </div>
-                            <div class="trend-col">
-                                <span class="trend-indicator trend-up">↗</span>
-                            </div>
-                        </div>
-
-                        <!-- Top 5 -->
-                        <div class="table-row">
-                            <div class="rank-col">
-                                <span class="rank-number">5</span>
-                            </div>
-                            <div class="artist-col">
-                                <div class="artist-info">
-                                    <div class="artist-avatar">
-                                        <div class="avatar-placeholder">B</div>
-                                    </div>
-                                    <div class="artist-details">
-                                        <h4>Bích Phương</h4>
-                                        <p class="artist-category">Popular</p>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="plays-col">
-                                <span class="stat-value">520M</span>
-                            </div>
-                            <div class="followers-col">
-                                <span class="stat-value">5.8M</span>
-                            </div>
-                            <div class="trend-col">
-                                <span class="trend-indicator trend-up">↗</span>
-                            </div>
-                        </div>
-
-                        <!-- Top 6 -->
-                        <div class="table-row">
-                            <div class="rank-col">
-                                <span class="rank-number">6</span>
-                            </div>
-                            <div class="artist-col">
-                                <div class="artist-info">
-                                    <div class="artist-avatar">
-                                        <div class="avatar-placeholder">Đ</div>
-                                    </div>
-                                    <div class="artist-details">
-                                        <h4>Đức Phúc</h4>
-                                        <p class="artist-category">Rising</p>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="plays-col">
-                                <span class="stat-value">275M</span>
-                            </div>
-                            <div class="followers-col">
-                                <span class="stat-value">3.1M</span>
-                            </div>
-                            <div class="trend-col">
-                                <span class="trend-indicator trend-up">↗</span>
-                            </div>
-                        </div>
-
-                        <!-- Top 7 -->
-                        <div class="table-row">
-                            <div class="rank-col">
-                                <span class="rank-number">7</span>
-                            </div>
-                            <div class="artist-col">
-                                <div class="artist-info">
-                                    <div class="artist-avatar">
-                                        <div class="avatar-placeholder">A</div>
-                                    </div>
-                                    <div class="artist-details">
-                                        <h4>AMEE</h4>
-                                        <p class="artist-category">Rising</p>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="plays-col">
-                                <span class="stat-value">420M</span>
-                            </div>
-                            <div class="followers-col">
-                                <span class="stat-value">4.8M</span>
-                            </div>
-                            <div class="trend-col">
-                                <span class="trend-indicator trend-up">↗</span>
-                            </div>
-                        </div>
-
-                        <!-- Top 8 -->
-                        <div class="table-row">
-                            <div class="rank-col">
-                                <span class="rank-number">8</span>
-                            </div>
-                            <div class="artist-col">
-                                <div class="artist-info">
-                                    <div class="artist-avatar">
-                                        <div class="avatar-placeholder">T</div>
-                                    </div>
-                                    <div class="artist-details">
-                                        <h4>Trúc Nhân</h4>
-                                        <p class="artist-category">Rising</p>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="plays-col">
-                                <span class="stat-value">285M</span>
-                            </div>
-                            <div class="followers-col">
-                                <span class="stat-value">3.2M</span>
-                            </div>
-                            <div class="trend-col">
-                                <span class="trend-indicator trend-neutral">→</span>
-                            </div>
+                        <!-- Empty State -->
+                        <div v-if="topArtists.length === 0" class="empty-state">
+                            <p>No artists available</p>
                         </div>
                     </div>
                 </div>
 
                 <div class="ranking-footer">
                     <div class="pagination-info">
-                        Showing 8 of 156 artists
+                        Showing {{ topArtists.length }} of {{ store.artists.length }} artists
                     </div>
                 </div>
             </div>
@@ -372,49 +200,54 @@
 <script setup lang="ts">
 import VueApexCharts from "vue3-apexcharts"
 import type { ApexOptions } from "apexcharts"
-import { useArtistStore } from '@/modules/admin/stores/artists/artistsStore'
-import { ref , computed, onMounted } from "vue"
-import router from '@/modules/router';
-import CountUp from '@/components/common/VcCountUp/CountUp.vue';
-
+import { useArtistStore, getFullImageUrl } from '@/modules/admin/stores/artists/artistsStore'
+import { ref, computed, onMounted } from "vue"
+import router from '@/modules/router'
+import CountUp from '@/components/common/VcCountUp/CountUp.vue'
 
 const ApexChart = VueApexCharts
 const store = useArtistStore()
-const formattedStats = computed(() => store.getFormattedStatistics)
 
-const series = ref([
+// ─── Computed: Top Artists (sorted by plays) ─────────────────────────────────
+const topArtists = computed(() => {
+  return store.artists
+    .slice()
+    .sort((a: any, b: any) => (b.total_plays || 0) - (a.total_plays || 0))
+    .slice(0, 8)
+})
+
+// ─── Chart: Dynamic data from store ───────────────────────────────────────────
+const chartData = computed(() => {
+  // Get top 12 artists + plays count for chart
+  const artists = store.artists
+    .slice()
+    .sort((a: any, b: any) => (b.total_plays || 0) - (a.total_plays || 0))
+    .slice(0, 12)
+  
+  return {
+    labels: artists.map(a => a.name),
+    data: artists.map(a => Math.round((a.total_plays || 0) / 1_000_000)) // Convert to millions
+  }
+})
+
+const series = computed(() => [
   {
-    name: "Servings",
-    data: [44, 55, 41, 67, 22, 43, 21, 33, 45, 31, 87, 65, 35],
+    name: "Plays (Millions)",
+    data: chartData.value.data,
   },
 ])
 
-const chartOptions: ApexOptions = {
+const chartOptions = computed((): ApexOptions => ({
   chart: {
     type: "bar",
     height: 350,
-  },
-  annotations: {
-    points: [
-      {
-        x: "Bananas",
-        seriesIndex: 0,
-        label: {
-          borderColor: "#775DD0",
-          offsetY: 0,
-          style: {
-            color: "#000",
-            background: "#775DD0",
-          },
-          text: "Bananas are good",
-        },
-      },
-    ],
+    toolbar: { show: false },
   },
   plotOptions: {
     bar: {
       borderRadius: 10,
-      columnWidth: "50%",
+      columnWidth: "60%",
+      dataLabels: { position: "top" },
     },
   },
   dataLabels: {
@@ -424,80 +257,128 @@ const chartOptions: ApexOptions = {
     width: 0,
   },
   grid: {
-    row: {
-    //   colors: ["#fff", "#f2f2f2"],
-    },
+    show: true,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+    strokeDashArray: 4,
   },
   xaxis: {
-    categories: [
-      "Apples","Oranges","Strawberries","Pineapples","Mangoes","Bananas",
-      "Blackberries","Pears","Watermelons","Cherries","Pomegranates","Tangerines","Papayas"
-    ],
+    categories: chartData.value.labels,
     labels: {
-        rotate: -45,
-        style: {
-            colors: "#fff", 
-            fontSize: "12px",
-            fontWeight: 500
-        }
+      rotate: -45,
+      maxHeight: 100,
+      style: {
+        colors: '#9ca3af',
+        fontSize: '12px',
+        fontWeight: 500
+      }
     },
-    tickPlacement: "on",
+    axisBorder: { show: false },
+    axisTicks: { show: false },
   },
   yaxis: {
     title: {
-      text: "Servings",
-       
+      text: "Plays (Millions)",
+      style: { color: '#9ca3af' }
     },
+    labels: {
+      style: { colors: '#9ca3af' }
+    }
   },
+  colors: ['#00aaff'],
+  tooltip: {
+    theme: 'dark',
+    y: {
+      formatter: (val: number) => `${val}M plays`
+    }
+  }
+}))
+
+// ─── Helper Functions ────────────────────────────────────────────────────────
+
+const formatNumber = (n: number): string => {
+  if (n >= 1_000_000) return (n / 1_000_000).toFixed(1) + 'M'
+  if (n >= 1_000) return (n / 1_000).toFixed(1) + 'K'
+  return String(n)
 }
 
-const ViewAllArtists =()=>{
-    router.push({name:"admin.artistsmanager.all"});
+const getCategoryLabel = (artist: any): string => {
+  const plays = artist.total_plays || 0
+  const followers = artist.total_followers || 0
+  
+  if (followers > 1_000_000) return 'Superstar'
+  if (followers > 100_000) return 'Popular'
+  if (plays > 1_000_000) return 'Rising'
+  return 'Emerging'
 }
 
-const CreateArtist =()=>{
-    router.push({name:"admin.artistsmanager.add"});
+const getTrendClass = (artist: any): string => {
+  // Check if follows were gained this month or plays increased
+  const followers = artist.total_followers || 0
+  const plays = artist.total_plays || 0
+  
+  if (followers > 500_000 || plays > 5_000_000) return 'trend-up'
+  if (followers < 50_000) return 'trend-down'
+  return 'trend-neutral'
 }
 
-// Lấy statistics từ store
+const getTrendIcon = (artist: any): string => {
+  const trendClass = getTrendClass(artist)
+  if (trendClass === 'trend-up') return '↗'
+  if (trendClass === 'trend-down') return '↘'
+  return '→'
+}
+
+// ─── Actions ─────────────────────────────────────────────────────────────────
+
+const ViewAllArtists = () => {
+  router.push({ name: "admin.artistsmanager.all" })
+}
+
+const CreateArtist = () => {
+  router.push({ name: "admin.artistsmanager.add" })
+}
+
+// ─── Statistics Getters ──────────────────────────────────────────────────────
+
 const statistics = computed(() => store.statistics)
 
-// Format functions
+// ─── Format Functions ────────────────────────────────────────────────────────
+
 const formatGrowthChange = (percentage: number | undefined): string => {
-    if (percentage === undefined) return 'No data'
-    const sign = percentage >= 0 ? '+' : ''
-    return `${sign}${percentage}% from last month`
+  if (percentage === undefined) return 'No data'
+  const sign = percentage >= 0 ? '+' : ''
+  return `${sign}${percentage}% from last month`
 }
 
 const formatNewArtistsChange = (current: number | undefined, last: number | undefined): string => {
-    if (current === undefined || last === undefined) return 'No data'
-    const diff = current - last
-    const sign = diff >= 0 ? '+' : ''
-    return `${sign}${diff} compared to last month`
+  if (current === undefined || last === undefined) return 'No data'
+  const diff = current - last
+  const sign = diff >= 0 ? '+' : ''
+  return `${sign}${diff} compared to last month`
 }
 
 const formatGrowthValue = (percentage: number | undefined): string => {
-    if (percentage === undefined) return '0%'
-    const sign = percentage >= 0 ? '+' : ''
-    return `${sign}${percentage}%`
+  if (percentage === undefined) return '0%'
+  const sign = percentage >= 0 ? '+' : ''
+  return `${sign}${percentage}%`
 }
 
 const formatGrowthStatus = (status: string | undefined, percentage: number | undefined): string => {
-    if (!status || percentage === undefined) return 'No data'
-    const action = status === 'increase' ? 'Up' : 'Down'
-    return `${action} ${Math.abs(percentage)}% compared to the previous month`
+  if (!status || percentage === undefined) return 'No data'
+  const action = status === 'increase' ? 'Up' : 'Down'
+  return `${action} ${Math.abs(percentage)}% compared to the previous month`
 }
 
 const getChangeClass = (value: number | undefined): string => {
-    if (value === undefined) return ''
-    return value >= 0 ? 'positive' : 'negative'
+  if (value === undefined) return ''
+  return value >= 0 ? 'positive' : 'negative'
 }
 
+// ─── Lifecycle ───────────────────────────────────────────────────────────────
 
-
-// Fetch data on mount
-onMounted(() => {
-    store.fetchShowStatistic()
+onMounted(async () => {
+  await store.fetchArtists()
+  await store.fetchShowStatistic()
 })
 </script>
 
@@ -937,6 +818,14 @@ onMounted(() => {
     border-radius: 50%;
     overflow: hidden;
     flex-shrink: 0;
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.avatar-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
 }
 
 .avatar-placeholder {
@@ -1019,6 +908,14 @@ onMounted(() => {
 .view-more:hover {
     color: #00ffaa;
     gap: 8px;
+}
+
+.empty-state {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 40px 20px;
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 14px;
 }
 
 /* Scrollbar Styling */

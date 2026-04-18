@@ -514,42 +514,31 @@ class SongsManagerController extends Controller
                 $updateData['cover_url'] = $request->cover_url ?: null;
             }
     
-            // ── 6. Audio file mới ─────────────────────────────────────────────────
+            // ── 6. Audio file mới ─────────────────────────────────────────────────────────
             $newAudioStoredPath = null;
             if ($request->hasFile('audio_file')) {
                 $audioFile          = $request->file('audio_file');
                 $newAudioStoredPath = $audioFile->store('audio_originals', 'local');
                 $updateData['file_size'] = $audioFile->getSize();
-    
-                // Reset audio URLs — sẽ được điền lại sau khi transcode xong
+
                 $updateData['song_url']          = null;
                 $updateData['song_url_hq']       = null;
                 $updateData['song_url_lossless'] = null;
-    
+
                 $this->cloudinaryService->deleteSongFolder($song->id);
-    
-                Log::info('New audio file stored', [
-                    'song_id'  => $song->id,
-                    'path'     => $newAudioStoredPath,
-                    'original' => $audioFile->getClientOriginalName(),
-                ]);
             }
-    
+
             $song->update($updateData);
-    
             DB::commit();
-    
+
             // ── 7. Dispatch jobs sau commit ───────────────────────────────────────
-    
-            // Audio processing nếu có file mới
             if ($newAudioStoredPath) {
                 ProcessSongAudio::dispatch(
                     $song->id,
                     $newAudioStoredPath,
-                    $song->status
+                    $song->status,
+                    $lyricsSource !== null 
                 )->onQueue('audio')->delay(now()->addSeconds(5));
-    
-                Log::info("Song #{$song->id} re-queued for audio processing");
             }
     
             // GenerateLyricsJob chỉ chạy khi lyrics là text thô (raw)

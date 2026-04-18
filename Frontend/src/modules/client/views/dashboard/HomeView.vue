@@ -16,9 +16,10 @@
     <!-- Main Sections -->
     <div class="content-container pb-20">
       <VcCarouselArtists :artists="dataArtist" />
+      <VcCarouselAlbums :albums="dataAlbums"/>
       <VcNewMusic :songs="dataNewSong" />
       <VcCarouselPopular :populars="PopularSong" />
-      
+     
       <!-- Chart and Propose Section -->
       <div class="grid grid-cols-1 xl:grid-cols-1 gap-8 mt-12">
         <VcListPropose :songs="proposeSongs" @refresh="refreshPropose" />
@@ -40,9 +41,13 @@ import VcCarouselPopular from "@/components/common/VcCarousel/VcCarouselPopular.
 import VcListPropose from "@/components/common/VcList/VcList_Propose.vue";
 import VcChart from '@/components/common/VcChart/VcChart.vue';
 import VcTypeMusic from "@/components/common/VcList/Vclist_Categories.vue";
+import VcCarouselAlbums from "@/components/common/VcCarousel/VcCarsouselAlbums.vue";
+
 
 import { useArtistStore, getFullImageUrl } from '@/modules/client/stores/artists/artistsStore'
 import { useSongStore } from '@/modules/client/stores/songs/songsStore'
+import { useAlbumStore } from '@/modules/client/stores/albums/albumssStore';
+
 import bg1 from "@/assets/images/bg-img/preview-page2.jpg";
 import bg2 from "@/assets/images/bg-img/preview-page1.jpg";
 import bg3 from "@/assets/images/bg-img/preview-page0.jpg";
@@ -59,6 +64,17 @@ const dataArtist = computed(() =>
 const songStore = useSongStore()
 const dataNewSong = computed(() => songStore.newSongs)
 const PopularSong = computed(() => songStore.popularSongs)
+const albumStore = useAlbumStore()
+const dataAlbums = computed(() =>
+  albumStore.albums.map(a => ({
+    ...a,
+    cover_url: getFullImageUrl(a.cover_url)
+  }))
+)
+
+
+
+
 
 // Mapping for VcChart & VcListPropose - Standardizing metadata
 const formatDuration = (seconds: number) => {
@@ -104,10 +120,12 @@ const refreshPropose = () => {
   songStore.fetchSuggestedSongs(9)
 }
 
+
 onMounted(async () => {
   // Synchronous-looking but parallel fetches
   await Promise.allSettled([
     artistStore.fetchArtists(10),
+    albumStore.fetchAllAlbums(),
     songStore.fetchNewSongs(10),
     songStore.fetchPopularSongs(10),
     songStore.fetchSuggestedSongs(9)

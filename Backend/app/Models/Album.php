@@ -122,4 +122,21 @@ class Album extends Model
 			'track_id'
 		)->orderBy('album_tracks.position');
 	}
+
+	public function resolveRouteBinding($value, $field = null)
+    {
+        return $this->where('id', $value)
+            ->orWhere('slug', $value)
+            ->withTrashed()
+            ->firstOrFail();
+    }
+
+    public function scopeSearch($query, $q)
+    {
+        if (!$q) return $query;
+
+        return $query->where('name', 'like', "%{$q}%")
+            ->orWhere('slug', 'like', "%{$q}%")
+            ->orWhere('description', 'like', "%{$q}%");
+    }
 }

@@ -318,7 +318,13 @@
                 <label class="field-label">Lyrics</label>
                 <LyricsEditor
                   v-model="form.lyrics"
-                  :src="form.cover_url"
+                  :src="audioObjectUrl"
+                  :audioRef="audioPlayer"
+                  :currentTime="currentTime"
+                  :duration="form.duration"
+                  :isPlaying="isPlaying"
+                  @toggle-play="togglePlay"
+                  @seek="seekToTime"
                 />
                 <p class="field-hint">Dán lyrics thô → gán timestamps bằng nút ⏱ trong khi nghe nhạc.</p>
               </div>
@@ -557,7 +563,10 @@ const usePartner = usePartnerStore()
 const useGenre = useGenreStore()
 const useSong = useSongStore()
 const notificationStore = useNotificationStore()
-
+const audioEl = ref<HTMLAudioElement | null>(null)
+const audioCurrentTime = ref(0)
+const audioDuration = ref(0)
+const isAudioPlaying = ref(false)
 // ── Steps ──
 const steps = ['Basic Info', 'Audio Files', 'Artwork & Lyrics', 'Settings'] as const
 const currentStep = ref<number>(0)
@@ -745,6 +754,11 @@ function seekTo(e: MouseEvent): void {
   const rect  = bar.getBoundingClientRect()
   const ratio = (e.clientX - rect.left) / rect.width
   audioPlayer.value.currentTime = ratio * form.duration
+}
+
+function seekToTime(time: number): void {
+  if (!audioPlayer.value) return
+  audioPlayer.value.currentTime = time
 }
 
 // ── Waveform animation ──

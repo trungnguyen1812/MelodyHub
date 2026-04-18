@@ -156,7 +156,8 @@
                     id: player.currentSong!.artist!.id,
                     isActive: player.currentSong!.is_followed,   
                     count:    player.currentSong!.follower_count  
-                  }" 
+                  }"
+                  @success="onFollowSuccess"
                 />
               </div>
 
@@ -457,7 +458,7 @@ watch(activeLyricIdx, async (idx) => {
   }
 })
 
-// ─── Watch: đổi bài → reset lyrics ──────────────────────────────────────────
+// ─── Watch: đổi bài → reset lyrics + restore follow status ──────────────────
 watch(
   () => player.currentSong,
   async (newSong) => {
@@ -469,6 +470,9 @@ watch(
       showLyrics.value = false   // đóng panel khi stop
       return
     }
+
+    // Restore follow status from cache when song loads
+    player.restoreFollowStatus(newSong.id)
 
     lyricGradient.value = getLyricGradient(newSong)
     currentLyrics.value = []     // reset lyrics khi đổi bài
@@ -497,6 +501,22 @@ watch(
 // ─── Watch: collapse → đóng lyrics panel ─────────────────────────────────────
 watch(isCollapsed, (collapsed) => {
   if (collapsed) showLyrics.value = false
+})
+
+// ─── Follow Success Handler ──────────────────────────────────────────────────
+const onFollowSuccess = (result: any) => {
+  if (!player.currentSong) return
+  
+  // Update current song follow status + cache for persistence across song resets
+  player.updateFollowStatus(
+    player.currentSong.id,
+    result?.is_followed ?? false,
+    result?.follower_count
+  )
+}
+
+onUnmounted(() => {
+  // Cleanup if needed
 })
 
 // ─── Body scroll lock ─────────────────────────────────────────────────────────
@@ -944,6 +964,7 @@ onUnmounted(() => lockScroll(false))
   width: 80px;
   height: 4px;
   -webkit-appearance: none;
+  appearance: none;
   background: rgba(255, 255, 255, 0.1);
   border-radius: 4px;
   outline: none;
@@ -1355,6 +1376,7 @@ onUnmounted(() => lockScroll(false))
   margin: 0;
   display: -webkit-box;
   -webkit-line-clamp: 2;
+  line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
@@ -1525,7 +1547,9 @@ onUnmounted(() => lockScroll(false))
 
 /* Card info container */
 .card-info {
-    /* Giữ nguyên style cũ của bạn */
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
 /* Wrapper cho play count */

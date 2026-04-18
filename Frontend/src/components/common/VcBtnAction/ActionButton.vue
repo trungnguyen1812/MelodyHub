@@ -64,6 +64,8 @@ interface TypeConfig {
   behavior: 'toggle' | 'once'
   spamStrategy: 'debounce' | 'throttle'
   delay: number
+  activeField?: string
+  countField?: string
 }
 
 // ─── Props ────────────────────────────────────────────────────────────────────
@@ -130,6 +132,8 @@ const TYPE_CONFIG: Record<ActionType, TypeConfig> = {
     behavior: 'toggle',
     spamStrategy: 'debounce',
     delay: 600,
+    activeField: 'isLiked',
+    countField: 'likeCount',
   },
   share: {
     label: 'Share',
@@ -147,6 +151,7 @@ const TYPE_CONFIG: Record<ActionType, TypeConfig> = {
     behavior: 'once',
     spamStrategy: 'throttle',
     delay: 3000,
+    countField: 'downloadCount',
   },
   comment_like: {
     label: 'Like comment',
@@ -155,6 +160,8 @@ const TYPE_CONFIG: Record<ActionType, TypeConfig> = {
     behavior: 'toggle',
     spamStrategy: 'debounce',
     delay: 400,
+    activeField: 'is_liked',
+    countField: 'like_count',
   },
   follow: {
     label: 'Follow',
@@ -163,6 +170,8 @@ const TYPE_CONFIG: Record<ActionType, TypeConfig> = {
     behavior: 'toggle',
     spamStrategy: 'debounce',
     delay: 600,
+    activeField: 'is_followed',
+    countField: 'follower_count',
   },
 }
 
@@ -187,12 +196,68 @@ const { mutate, isLoading } = useMutation({
     return typeConfig.value.serviceFn(id, newValue, extra)
   },
   onSuccess(result, variables) {
-    rollbackSnapshot = { active: optimisticActive.value, count: optimisticCount.value }
-    isPendingSync.value = true 
+  rollbackSnapshot = { active: optimisticActive.value, count: optimisticCount.value }
+  isPendingSync.value = true
+
+  // Nếu type === 'follow' thì cập nhật cache theo field của artist
+  if (props.type === 'follow') {
+    // update artists list cache if exists
+    const artistsKey = typeConfig.value.invalidateKeys[0] // ['artists']
+    queryCache.setQueryData(artistsKey, (oldData: any) => {
+      if (!oldData) return oldData
+      if (Array.isArray(oldData)) {
+        return oldData.map((it: any) =>
+          it.id === props.item.id
+            ? { ...it, is_followed: optimisticActive.value, follower_count: optimisticCount.value }
+            : it
+        )
+      }
+      // handle common paginated shape { data: [...] }
+      if (oldData.data && Array.isArray(oldData.data)) {
+        return { ...oldData, data: oldData.data.map((it: any) =>
+          it.id === props.item.id
+            ? { ...it, is_followed: optimisticActive.value, follower_count: optimisticCount.value }
+            : it
+        ) }
+      }
+      return oldData
+    })
+
+    // update songs cache where artist is nested (so mini-player or song lists reflect the change)
+    queryCache.setQueryData(['songs'], (oldData: any) => {
+      if (!oldData) return oldData
+      if (Array.isArray(oldData)) {
+        return oldData.map((song: any) => {
+          if (song.artist?.id === props.item.id) {
+            return {
+              ...song,
+              artist: { ...song.artist, is_followed: optimisticActive.value, follower_count: optimisticCount.value }
+            }
+          }
+          return song
+        })
+      }
+      if (oldData.data && Array.isArray(oldData.data)) {
+        return {
+          ...oldData,
+          data: oldData.data.map((song: any) => {
+            if (song.artist?.id === props.item.id) {
+              return {
+                ...song,
+                artist: { ...song.artist, is_followed: optimisticActive.value, follower_count: optimisticCount.value }
+              }
+            }
+            return song
+          })
+        }
+      }
+      return oldData
+    })
+  } else {
+    // hiện tại xử lý cũ cho like (giữ nguyên)
     const cacheKey = props.type === 'like' ? ['songs'] : typeConfig.value.invalidateKeys[0]
     queryCache.setQueryData(cacheKey, (oldData: any) => {
       if (!oldData) return oldData
-      
       if (Array.isArray(oldData)) {
         return oldData.map((item: any) => {
           if (item.id === props.item.id) {
@@ -207,12 +272,15 @@ const { mutate, isLoading } = useMutation({
       }
       return oldData
     })
-    
-    typeConfig.value.invalidateKeys.forEach((key) => 
-      queryCache.invalidateQueries({ key })
-    )
-    setTimeout(() => { isPendingSync.value = false }, 1000)
-    emit('success', result)
+  }
+
+  // invalidate configured keys
+  typeConfig.value.invalidateKeys.forEach((key) =>
+    queryCache.invalidateQueries({ key })
+  )
+
+  setTimeout(() => { isPendingSync.value = false }, 1000)
+  emit('success', result)
   },
   onError(err) {
     isPendingSync.value = false
@@ -258,6 +326,7 @@ const handleClick = () => {
   }
 
   const newValue = !optimisticActive.value
+  
   optimisticActive.value = newValue
   optimisticCount.value = newValue
     ? optimisticCount.value + 1
@@ -271,10 +340,20 @@ const handleClick = () => {
 watch(
   [() => props.item.isActive, () => props.item.count],
   ([newActive, newCount]) => {
+    // Never sync while loading or pending
     if (isLoading.value || isPendingSync.value) return
-    optimisticActive.value = newActive ?? false
-    optimisticCount.value  = newCount ?? 0
-    rollbackSnapshot = { active: optimisticActive.value, count: optimisticCount.value }
+    
+    // Check if state actually changed
+    const activeChanged = newActive !== optimisticActive.value
+    const countChanged = newCount !== optimisticCount.value
+    
+    // Only sync if there's a real change
+    // This prevents unnecessarily resetting state on re-render with same data
+    if (activeChanged || countChanged) {
+      optimisticActive.value = newActive ?? false
+      optimisticCount.value  = newCount ?? 0
+      rollbackSnapshot = { active: optimisticActive.value, count: optimisticCount.value }
+    }
   }
 )
 
@@ -343,7 +422,14 @@ const FollowIcon = () => h('svg', { width: 18, height: 18, viewBox: '0 0 24 24',
   h('line', { x1: 22, y1: 11, x2: 16, y2: 11 }),
 ])
 
-const FollowedIcon = () => h('svg', { width: 18, height: 18, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', 'stroke-width': 2 }, [
+const FollowedIcon = () => h('svg', { 
+  width: 18, 
+  height: 18, 
+  viewBox: '0 0 24 24', 
+  fill: 'none', 
+  stroke: '#00aaff', 
+  'stroke-width': 2 
+}, [
   h('path', { d: 'M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2' }),
   h('circle', { cx: 9, cy: 7, r: 4 }),
   h('polyline', { points: '16 11 18 13 22 9' }),

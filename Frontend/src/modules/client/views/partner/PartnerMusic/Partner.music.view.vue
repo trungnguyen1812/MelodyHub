@@ -27,6 +27,18 @@
             <div class="btn-badge">{{ statistics?.total_artists ?? 0 }}</div>
           </div>
         </button>
+        <button class="btn-view-albums" @click="ViewAlbums">
+          <div class="btn-content">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"/>
+              <line x1="7" y1="2" x2="7" y2="22"/>
+              <line x1="17" y1="2" x2="17" y2="22"/>
+              <line x1="2" y1="7" x2="22" y2="7"/>
+              <line x1="2" y1="17" x2="22" y2="17"/>
+            </svg>
+            <span>Manager Albums</span>
+          </div>
+        </button>
       </div>
     </div>
 
@@ -347,7 +359,7 @@
                               <div class="plays-fill" :style="{ width: getPlaysPercent(song.stats?.total_plays) + '%' }"></div>
                             </div>
                           </div>
-                          <span class="plays-num">{{ formatNumber(song.stats.total_plays) }}</span>
+                          <span class="plays-num">{{ formatNumber(song.stats?.total_plays ?? 0) }}</span>
                         </div>
                       </td>
                       <td>
@@ -727,6 +739,8 @@ const ViewAddSong = () => router.push({ name: 'client.song.add' })
 
 const ViewListArtist = () =>router.push({name: 'client.partner.artists'});
 
+const ViewAlbums = () => router.push({ name: 'client.albums' })
+
 //method
 async function deleteSong(id: number) {
     try {
@@ -886,6 +900,41 @@ onMounted(async () => {
       border-radius: 20px;
       font-size: 12px;
       margin-left: 4px;
+    }
+  }
+  
+  &:hover .btn-content {
+    gap: 12px;
+  }
+}
+
+.btn-view-albums {
+  background: linear-gradient(90deg, #f093fb, #f5576c);
+  border: none;
+  border-radius: 12px;
+  padding: 4px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  
+  &:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 15px rgba(245, 87, 108, 0.4);
+  }
+  
+  .btn-content {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    background: white;
+    border-radius: 10px;
+    color: #f5576c;
+    font-weight: 600;
+    font-size: 14px;
+    
+    svg {
+      stroke: #f5576c;
     }
   }
   

@@ -213,8 +213,8 @@
                 </div>
               </div>
               <div class="field">
-                <label class="flabel">Partner ID</label>
-                <input v-model="form.partner_id" type="number" placeholder="Internal ID" class="fcontrol" />
+                <label class="flabel">Partner</label>
+                <div class="fcontrol" style="background: rgba(255,255,255,0.05); color: rgba(255,255,255,0.7);">{{ partnerName }}</div>
               </div>
             </div>
 
@@ -349,11 +349,13 @@ import { useRoute } from "vue-router";
 import router from "@/modules/router";
 import type { CreateArtistPayload } from "@/modules/admin/interfaces/artists/create-artist.payload";
 import { useArtistStore, getFullImageUrl } from '@/modules/admin/stores/artists/artistsStore';
+import { usePartnerStore } from '@/modules/admin/stores/partners/partnersStore';
 import { useNotificationStore } from "@/store/notificationStore";
 
 const route = useRoute();
 const notificationStore = useNotificationStore();
 const artistStore = useArtistStore();
+const partnerStore = usePartnerStore();
 
 const loading = ref(true);
 const submitting = ref(false);
@@ -454,6 +456,12 @@ const displayBanner = computed(() => {
     return defaultBanner;
 });
 
+const partnerName = computed(() => {
+    if (!form.partner_id) return 'No Partner';
+    const partner = partnerStore.partners.find(p => p.id === form.partner_id);
+    return partner ? partner.company_name : 'Unknown Partner';
+});
+
 const socialCount = computed(() => {
   let count = 0;
   if(form.facebook_url) count++;
@@ -489,7 +497,12 @@ const handleSubmit = async () => {
     }
 };
 
-onMounted(loadArtistData);
+onMounted(async () => {
+    await Promise.all([
+        loadArtistData(),
+        partnerStore.fetchPartners()
+    ]);
+});
 </script>
 
 <style scoped>

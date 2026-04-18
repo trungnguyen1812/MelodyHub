@@ -40,6 +40,7 @@ class ArtistResource extends JsonResource
             'seo_keywords'      => $this->seo_keywords,
             'created_at'        => $this->created_at?->toISOString(),
             'updated_at'        => $this->updated_at?->toISOString(),
+            'is_followed'       => $this->whenLoaded('artist_followers', fn() => $this->artist_followers->isNotEmpty(), false),
             
             // Relations
             'songs'             => SongResource::collection($this->whenLoaded('songs')),

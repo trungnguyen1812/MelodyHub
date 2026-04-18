@@ -28,6 +28,11 @@ import PartnerUpdateArtistsView from '@/modules/client/views/artists/ArtistsUpda
 // genres
 import AllGenresView from '@/modules/client/views/genres/AllGenresView.vue';
 import GenreSongsView from '@/modules/client/views/genres/GenreSongsView.vue';
+// albums
+import AlbumDetailView from '@/modules/client/views/albums/AlbumsSongView.vue';
+import AlbumsManagerView from '@/modules/client/views/albums/AlbumsManager.view.vue'
+import AlbumAddView from '@/modules/client/views/albums/AlbumAdd.view.vue'
+import AlbumUpdateView from '@/modules/client/views/albums/AlbumsUpdate.view.vue'
 
 // user
 import UserUpgradeView from '@/modules/client/views/user/UserUpgrade.view.vue';
@@ -156,7 +161,27 @@ export const CLIENT_ROUTES = [
         name: 'client.partner.Advertisingd',
         component: PartnerAdvertisingdView
       },
-      
+      // albums
+      {
+        path: 'albums',
+        name: 'client.albums',
+        component: AlbumsManagerView
+      },
+      {
+        path: 'album/add',
+        name: 'client.album.add',
+        component: AlbumAddView
+      },
+      {
+        path: 'albums/:slug',
+        name: 'client.album.detail',
+        component: AlbumDetailView
+      },
+      {
+        path: 'albums/:slug/edit',
+        name: 'client.album.update',
+        component: AlbumUpdateView
+      },
      
     ]
   }

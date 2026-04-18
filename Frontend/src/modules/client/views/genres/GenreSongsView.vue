@@ -7,9 +7,18 @@
 
     <div class="content-container">
       <!-- Back Button -->
-      <button class="back-nav-btn" @click="$router.push({ name: 'genres.all' })">
+       <button class="back-nav-btn" @click="$router.back()">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" width="16" height="16">
           <path fill-rule="evenodd" d="M17 10a.75.75 0 0 1-.75.75H5.612l4.158 3.96a.75.75 0 1 1-1.04 1.08l-5.5-5.25a.75.75 0 0 1 0-1.08l5.5-5.25a.75.75 0 1 1 1.04 1.08L5.612 9.25H16.25A.75.75 0 0 1 17 10Z" clip-rule="evenodd" />
+        </svg>
+        Back
+      </button>
+      <button class="back-nav-btn" @click="$router.push({ name: 'genres.all' })">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 28 28" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="3" y1="8" x2="21" y2="8"/>
+          <line x1="3" y1="14" x2="21" y2="14"/>
+          <line x1="3" y1="20" x2="21" y2="20"/>
+          <polyline points="17,3 25,8 17,13"/>
         </svg>
         All Genres
       </button>

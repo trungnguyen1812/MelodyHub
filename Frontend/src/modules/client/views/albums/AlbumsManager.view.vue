@@ -1,31 +1,26 @@
 <template>
-  <div class="artists-shell">
+  <div class="albums-shell">
     <div class="bg-grid" aria-hidden="true"></div>
 
     <!-- Header -->
     <div class="page-header">
       <div class="header-left">
-        <button class="back-btn-sm" @click="router.back()">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" width="16" height="16">
-            <path fill-rule="evenodd" d="M7.793 2.232a.75.75 0 0 1-.025 1.06L3.622 7.25h10.003a5.375 5.375 0 0 1 0 10.75H10.75a.75.75 0 0 1 0-1.5h2.875a3.875 3.875 0 0 0 0-7.75H3.622l4.146 3.957a.75.75 0 0 1-1.036 1.085l-5.5-5.25a.75.75 0 0 1 0-1.085l5.5-5.25a.75.75 0 0 1 1.06.025Z" clip-rule="evenodd" />
-          </svg>
-        </button>
-        <h1 class="page-title">Artists</h1>
-        <span class="page-badge">{{ filteredArtists.length }} total</span>
+        <h1 class="page-title">Albums</h1>
+        <span class="page-badge">{{ filteredAlbums.length }} total</span>
       </div>
       <div class="header-right">
         <div class="search-wrap">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" width="15" height="15" class="search-ico">
             <path fill-rule="evenodd" d="M9 3.5a5.5 5.5 0 1 0 0 11 5.5 5.5 0 0 0 0-11ZM2 9a7 7 0 1 1 12.452 4.391l3.328 3.329a.75.75 0 1 1-1.06 1.06l-3.329-3.328A7 7 0 0 1 2 9Z" clip-rule="evenodd" />
           </svg>
-          <input v-model="keyword" type="text" placeholder="Search artists…" class="search-input" />
+          <input v-model="keyword" type="text" placeholder="Search albums…" class="search-input" />
           <span v-if="keyword" class="search-clear" @click="keyword = ''">✕</span>
         </div>
-        <button class="btn-add" @click="CreateArtist">
+        <button class="btn-add" @click="CreateAlbum">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" width="15" height="15">
             <path d="M10.75 4.75a.75.75 0 0 0-1.5 0v4.5h-4.5a.75.75 0 0 0 0 1.5h4.5v4.5a.75.75 0 0 0 1.5 0v-4.5h4.5a.75.75 0 0 0 0-1.5h-4.5v-4.5Z" />
           </svg>
-          Add artist
+          Add album
         </button>
       </div>
     </div>
@@ -36,89 +31,75 @@
         <table class="gtable">
           <thead>
             <tr>
-              <th style="width:30%">Artist</th>
-              <th>Followers</th>
-              <th>Songs</th>
-              <th>Country</th>
+              <th style="width:35%">Album</th>
+              <th>Type</th>
+              <th>Tracks</th>
+              <th>Plays</th>
               <th>Status</th>
-              <th>Join Date</th>
-              <th>Social</th>
+              <th>Release Date</th>
               <th style="width:110px">Actions</th>
             </tr>
           </thead>
           <tbody>
             <template v-if="!loading">
-              <tr v-for="artist in paginatedArtists" :key="artist.id" class="g-row">
-                <!-- Artist cell -->
+              <tr v-for="album in paginatedAlbums" :key="album.id" class="g-row">
+                <!-- Album cell -->
                 <td>
                   <div class="item-cell">
-                    <div class="item-cover artist-avatar-wrap">
+                    <div class="item-cover album-cover">
                       <img
-                        :src="getFullImageUrl(artist.avatar_url)"
-                        :alt="artist.name"
+                        :src="getFullImageUrl(album.cover_url)"
+                        :alt="album.name"
                         loading="lazy"
                       />
                     </div>
                     <div class="item-meta">
-                      <span class="item-name">{{ artist.name }}</span>
+                      <span class="item-name">{{ album.name }}</span>
+                      <span class="item-sub" v-if="album.label">{{ album.label }}</span>
+                      <span class="item-artist" v-if="album.artist">{{ album.artist.name }}</span>
                     </div>
                   </div>
                 </td>
 
                 <td>
-                  <span class="num-val">{{ formatCompactNumber(artist.total_followers) }}</span>
+                   <span :class="['type-badge', `type-${album.album_type || 'album'}`]">
+                      {{ formatType(album.album_type) }}
+                   </span>
                 </td>
 
                 <td>
-                  <span class="num-val">{{ formatCompactNumber(artist.total_songs) }}</span>
+                  <span class="num-val">{{ formatCompactNumber(album.total_tracks) }}</span>
                 </td>
 
                 <td>
-                  <span class="country-tag" v-if="artist.country">
-                    {{ artist.country }}
-                  </span>
-                  <span v-else class="date-val">—</span>
+                  <span class="num-val">{{ formatCompactNumber(album.total_plays) }}</span>
                 </td>
 
                 <td>
-                  <span class="status-dot" :class="artist.status">
+                  <span class="status-dot" :class="album.status">
                     <span class="dot-pulse"></span>
-                    {{ capitalize(artist.status) }}
+                    {{ capitalize(album.status) }}
                   </span>
                 </td>
 
                 <td>
-                  <span class="date-val">{{ formatDate(artist.created_at || '') }}</span>
-                </td>
-
-                <td>
-                  <div class="social-links">
-                      <a v-if="artist.facebook_url" :href="artist.facebook_url" target="_blank" class="soc-icon fb" title="Facebook">
-                        <svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14"><path d="M24 12c0-6.627-5.373-12-12-12S0 5.373 0 12c0 5.99 4.388 10.954 10.125 11.854V15.47H7.078v-3.47h3.047V9.356c0-3.007 1.792-4.688 4.533-4.688 1.312 0 2.686.234 2.686.234v2.953H15.83c-1.49 0-1.955.925-1.955 1.874V12h3.328l-.532 3.469h-2.796v8.385C19.612 22.954 24 17.99 24 12z"/></svg>
-                      </a>
-                      <a v-if="artist.instagram_url" :href="artist.instagram_url" target="_blank" class="soc-icon ig" title="Instagram">
-                        <svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 1.188.054 1.98.257 2.675.545.73.284 1.334.676 1.928 1.27.594.594.986 1.198 1.27 1.928.288.695.49 1.487.545 2.675.058 1.266.07 1.646.07 4.85s-.012 3.584-.07 4.85c-.054 1.188-.257 1.98-.545 2.675-.284.73-.676 1.334-1.27 1.928-.594.594-1.198.986-1.928 1.27-.695.288-1.487.49-2.675.545-1.266.058-1.646.07-4.85.07s-3.584-.012-4.85-.07c-1.188-.054-1.98-.257-2.675-.545-.73-.284-1.334-.676-1.928-1.27-.594-.594-.986-1.198-1.27-1.928-.288-.695-.49-1.487-.545-2.675-.058-1.266-.07-1.646-.07-4.85s.012-3.584.07-4.85c.054-1.188.257-1.98.545-2.675.284-.73.676-1.334 1.27-1.928.594-.594 1.198-.986 1.928-1.27.695-.288 1.487-.49 2.675-.545 1.266-.058 1.646-.07 4.85-.07zM12 0C8.741 0 8.332.014 7.052.072c-1.267.058-2.147.283-2.912.603-.79.33-1.466.78-2.124 1.437-.657.658-1.107 1.334-1.437 2.124-.32.765-.545 1.645-.603 2.912C.014 8.332 0 8.741 0 12s.014 3.668.072 4.948c.058 1.267.283 2.147.603 2.912.33.79.78 1.466 1.437 2.124.658.657 1.334 1.107 2.124 1.437.765.32 1.645.545 2.912.603C8.332 23.986 8.741 24 12 24s3.668-.014 4.948-.072c1.267-.058 2.147-.283 2.912-.603.79-.33 1.466-.78 2.124-1.437.657-.658 1.107-1.334 1.437-2.124.32-.765.545-1.645.603-2.912.058-1.28.072-1.689.072-4.948s-.014-3.668-.072-4.948c-.058-1.267-.283-2.147-.603-2.912-.33-.79-.78-1.466-1.437-2.124-.658-.657-1.334-1.107-2.124-1.437-.765-.32-1.645-.545-2.912-.603C15.668.014 15.259 0 12 0z"/></svg>
-                      </a>
-                      <a v-if="artist.twitter_url" :href="artist.twitter_url" target="_blank" class="soc-icon tw" title="Twitter/X">
-                        <svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
-                      </a>
-                  </div>
+                  <span class="date-val">{{ formatDate(album.release_date || album.created_at || '') }}</span>
                 </td>
 
                 <td>
                   <div class="actions">
-                    <button class="act-btn edit" @click="viewUpdateArtist(artist.id)" title="Edit">
+                    <button class="act-btn edit" @click="viewUpdateAlbum(album.slug)" title="Edit">
                       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" width="14" height="14">
                         <path d="m5.433 13.917 1.262-3.155A4 4 0 0 1 7.58 9.42l6.92-6.918a2.121 2.121 0 0 1 3 3l-6.92 6.918c-.383.383-.84.685-1.343.886l-3.154 1.262a.5.5 0 0 1-.65-.65Z" />
                         <path d="M3.5 5.75c0-.69.56-1.25 1.25-1.25H10A.75.75 0 0 0 10 3H4.75A2.75 2.75 0 0 0 2 5.75v9.5A2.75 2.75 0 0 0 4.75 18h9.5A2.75 2.75 0 0 0 17 15.25V10a.75.75 0 0 0-1.5 0v5.25c0 .69-.56 1.25-1.25 1.25h-9.5c-.69 0-1.25-.56-1.25-1.25v-9.5Z" />
                       </svg>
                     </button>
-                    <button class="act-btn delete" @click="deleteArtist(artist.id)" title="Delete">
+                    <button class="act-btn delete" @click="deleteAlbum(album.id)" title="Delete">
                       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" width="14" height="14">
                         <path fill-rule="evenodd" d="M8.75 1A2.75 2.75 0 0 0 6 3.75v.443c-.795.077-1.584.176-2.365.298a.75.75 0 1 0 .23 1.482l.149-.022.841 10.518A2.75 2.75 0 0 0 7.596 19h4.807a2.75 2.75 0 0 0 2.742-2.53l.841-10.52.149.023a.75.75 0 0 0 .23-1.482A41.03 41.03 0 0 0 14 4.193V3.75A2.75 2.75 0 0 0 11.25 1h-2.5ZM10 4c.84 0 1.673.025 2.5.075V3.75c0-.69-.56-1.25-1.25-1.25h-2.5c-.69 0-1.25.56-1.25 1.25v.325C8.327 4.025 9.16 4 10 4ZM8.58 7.72a.75.75 0 0 0-1.5.06l.3 7.5a.75.75 0 1 0 1.5-.06l-.3-7.5Zm4.34.06a.75.75 0 1 0-1.5-.06l-.3 7.5a.75.75 0 1 0 1.5.06l.3-7.5Z" clip-rule="evenodd" />
                       </svg>
                     </button>
-                    <button class="act-btn view" @click="viewDetailArtist(artist.id)" title="View">
+                    <button class="act-btn view" @click="viewDetailAlbum(album.slug)" title="View">
                       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" width="14" height="14">
                         <path d="M10 12.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Z" />
                         <path fill-rule="evenodd" d="M.664 10.59a1.651 1.651 0 0 1 0-1.186A10.004 10.004 0 0 1 10 3c4.257 0 7.893 2.66 9.336 6.41.147.381.146.804 0 1.186A10.004 10.004 0 0 1 10 17c-4.257 0-7.893-2.66-9.336-6.41ZM14 10a4 4 0 1 1-8 0 4 4 0 0 1 8 0Z" clip-rule="evenodd" />
@@ -138,25 +119,26 @@
             <div class="sp-dot"></div>
             <div class="sp-dot"></div>
           </div>
-          <span class="state-text">Loading artists…</span>
+          <span class="state-text">Loading albums…</span>
         </div>
 
         <!-- Empty -->
-        <div v-if="!loading && filteredArtists.length === 0" class="state-box">
+        <div v-if="!loading && filteredAlbums.length === 0" class="state-box">
           <div class="empty-icon">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="40" height="40">
-               <path d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
+               <path d="M11.5 8.5c0-.828.672-1.5 1.5-1.5s1.5.672 1.5 1.5c0 .524-.269.983-.672 1.252l-.328.219v.529h-1v-.529l-.328-.219a1.501 1.501 0 0 1-.672-1.252Z" />
+               <path fill-rule="evenodd" d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Zm-1 15v-1h2v1h-2Z" clip-rule="evenodd" />
             </svg>
           </div>
-          <span class="state-text">{{ keyword ? `No artists matching "${keyword}"` : 'No artists yet' }}</span>
-          <button v-if="!keyword" class="btn-add-sm" @click="CreateArtist">Add first artist</button>
+          <span class="state-text">{{ keyword ? `No albums matching "${keyword}"` : 'No albums yet' }}</span>
+          <button v-if="!keyword" class="btn-add-sm" @click="CreateAlbum">Add first album</button>
         </div>
       </div>
 
       <!-- Pagination -->
-      <div v-if="!loading && filteredArtists.length > 0" class="pagination">
+      <div v-if="!loading && filteredAlbums.length > 0" class="pagination">
         <span class="pg-info">
-          {{ paginationStart }}–{{ paginationEnd }} of {{ filteredArtists.length }}
+          {{ paginationStart }}–{{ paginationEnd }} of {{ filteredAlbums.length }}
         </span>
         <div class="pg-controls">
           <button class="pg-btn" :disabled="currentPage === 1" @click="currentPage--">
@@ -187,85 +169,80 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue'
+import { useRouter } from 'vue-router'
+import { useAlbumStore, getFullImageUrl } from '@/modules/client/stores/albums/albumssStore'
+import { useNotificationStore } from "@/store/notificationStore"
 import { usePartnerStore } from '@/modules/client/stores/partners/partnersStore'
-import { useArtistStore, getFullImageUrl } from '@/modules/client/stores/artists/artistsStore';
-import { storeToRefs } from "pinia";
-import router from '@/modules/router';
-import Swal from 'sweetalert2';
-import { useNotificationStore } from "@/store/notificationStore";
+import Swal from 'sweetalert2'
 
-const keyword = ref("");
-const notificationStore = useNotificationStore();
-let searchTimeout: number | null = null;
-const currentPage = ref(1);
-const itemsPerPage = 10;
-const artistStore = useArtistStore();
-const usePartner = usePartnerStore()
+const router = useRouter()
+const notificationStore = useNotificationStore()
+const albumStore = useAlbumStore()
+const partnerStore = usePartnerStore()
 
-const { artists, loading } = storeToRefs(artistStore);
+const loading = ref(true)
+const keyword = ref('')
+const currentPage = ref(1)
+const itemsPerPage = 10
 
-const CreateArtist = () => {
-    router.push({ name: "client.partner.artists.add" });
-}
+const partnerId = ref<number | null>(null)
 
-
-function viewDetailArtist(id: number) {
-    router.push({ name: "client.partner.artists.detail", params: { id } });
-}
-
-function viewUpdateArtist(id: number) {
-    router.push({ name: "client.partner.artists.update", params: { id } });
-}
-
-async function deleteArtist(id: number) {
-    try {
-        const result = await Swal.fire({
-            title: 'Delete Artist',
-            text: 'Are you sure you want to delete this artist? This action cannot be undone.',
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonText: 'Yes, delete it!',
-            cancelButtonText: 'Cancel',
-            confirmButtonColor: '#d33',
-            cancelButtonColor: '#3085d6',
-            reverseButtons: true,
-        });
-
-        if (!result.isConfirmed) return;
-
-        loading.value = true;
-        await artistStore.fetchDelete(id);
-        await artistStore.fetchArtists();
-        notificationStore.notify("Delete artist successful", "success");
-        router.push({ name: "client.partner.artists" });
-
-    } catch (error: any) {
-        const err = error as { response?: { status?: number } }
-        notificationStore.notify("Delete artist error", "error");
-        if (err.response?.status === 404) router.push('/404')
-        else if (err.response?.status === 401) router.push('/login')
-    } finally {
-        loading.value = false;
-    }
-}
-
-const filteredArtists = computed(() => {
-  if (!keyword.value.trim()) return artists.value
-  const k = keyword.value.toLowerCase()
-  return artists.value.filter((a: any) => 
-    a.name?.toLowerCase().includes(k) || 
-    a.country?.toLowerCase().includes(k)
+const filteredAlbums = computed(() => {
+  if (!keyword.value) return albumStore.albumsByPartner
+  return albumStore.albumsByPartner.filter(album =>
+    album.name.toLowerCase().includes(keyword.value.toLowerCase()) ||
+    (album.artist?.name && album.artist.name.toLowerCase().includes(keyword.value.toLowerCase()))
   )
 })
 
-const totalPages = computed(() => Math.max(1, Math.ceil(filteredArtists.value.length / itemsPerPage)))
-const paginationStart = computed(() => filteredArtists.value.length === 0 ? 0 : (currentPage.value - 1) * itemsPerPage + 1)
-const paginationEnd = computed(() => Math.min(currentPage.value * itemsPerPage, filteredArtists.value.length))
-const paginatedArtists = computed(() => {
-  const s = (currentPage.value - 1) * itemsPerPage
-  return filteredArtists.value.slice(s, s + itemsPerPage)
+const totalPages = computed(() => Math.ceil(filteredAlbums.value.length / itemsPerPage))
+const paginationStart = computed(() => filteredAlbums.value.length === 0 ? 0 : (currentPage.value - 1) * itemsPerPage + 1)
+const paginationEnd = computed(() => Math.min(currentPage.value * itemsPerPage, filteredAlbums.value.length))
+
+const paginatedAlbums = computed(() => {
+  const start = (currentPage.value - 1) * itemsPerPage
+  const end = start + itemsPerPage
+  return filteredAlbums.value.slice(start, end)
 })
+
+// Methods
+const CreateAlbum = () => router.push({ name: 'client.album.add' })
+const viewDetailAlbum = (slug: string) => router.push({ name: 'client.album.detail', params: { slug } })
+const viewUpdateAlbum = (slug: string) => router.push({ name: 'client.album.update', params: { slug } })
+
+const deleteAlbum = async (id: number) => {
+  const result = await Swal.fire({
+    title: 'Delete Album?',
+    text: 'This action cannot be undone.',
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonText: 'Delete',
+    confirmButtonColor: '#e24b4a',
+    cancelButtonColor: '#334155',
+    reverseButtons: true,
+    background: '#0f1923',
+    color: '#e8edf2',
+  })
+
+  if (!result.isConfirmed) return
+
+  try {
+    loading.value = true
+    await albumStore.fetchDelete(id)
+
+    if (partnerId.value) {
+      await albumStore.fetchAlbumByPartner(partnerId.value)
+    }
+
+    notificationStore.notify('Album deleted', 'success')
+  } catch (err: any) {
+    notificationStore.notify('Failed to delete album', 'error')
+    if (err.response?.status === 404) router.push('/404')
+  } finally {
+    loading.value = false
+  }
+}
 
 const visiblePages = computed(() => {
   const total = totalPages.value
@@ -279,56 +256,68 @@ const visiblePages = computed(() => {
   return pages
 })
 
-const capitalize = (s?: string) => s ? s.charAt(0).toUpperCase() + s.slice(1) : ''
-
-const formatCompactNumber = (num: number | null): string => {
-    if (num === null || num === undefined) return "0";
-    return new Intl.NumberFormat("en", { notation: "compact", maximumFractionDigits: 1 }).format(num);
-};
-
-const formatDate = (dateString?: string): string => {
-    if (!dateString) return '—'
-    return new Date(dateString).toLocaleString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
+const formatType = (type?: string): string => {
+  if (!type) return 'Album'
+  return type.charAt(0).toUpperCase() + type.slice(1)
 }
 
-const loadInfoPartner = async () => {
-    await usePartner.fetchPartnerInfo()
-    const idPartner = usePartner.partner?.id
-    if (idPartner) await artistStore.fetchGetAritistByIdPartner(idPartner)
+const formatCompactNumber = (num?: number): string => {
+  if (!num) return '0'
+  if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M'
+  if (num >= 1000) return (num / 1000).toFixed(1) + 'K'
+  return num.toString()
 }
 
-const onSearch = () => {
-    if (searchTimeout) clearTimeout(searchTimeout);
-    searchTimeout = window.setTimeout(async () => {
-        if (!keyword.value.trim()) {
-            const idPartner = usePartner.partner?.id
-            if (idPartner) await artistStore.fetchGetAritistByIdPartner(idPartner)
-            return;
-        }
-        await artistStore.fetchSearchArtitst(keyword.value);
-    }, 300);
+const capitalize = (str: string): string => str.charAt(0).toUpperCase() + str.slice(1)
+
+const formatDate = (dateString: string): string => {
+  if (!dateString) return '—'
+  return new Date(dateString).toLocaleDateString('en-US', {
+    month: 'short', day: 'numeric', year: 'numeric'
+  })
 }
 
+watch(keyword, () => { currentPage.value = 1 })
 
 onMounted(async () => {
-    try {
-        loadInfoPartner()
-        await usePartner.fetchPartners()
-    } catch {
-        notificationStore.notify('Error fetching data', 'error')
+  try {
+    loading.value = true
+
+    await partnerStore.fetchPartnerInfo()
+
+
+    const id = partnerStore.partnerInfo?.partner?.id 
+      || partnerStore.partnerInfo?.partner.id
+      || partnerStore.partner?.id
+
+
+    if (!id) {
+      notificationStore.notify('Partner not found', 'error')
+      return
     }
+
+    partnerId.value = id
+
+    await albumStore.fetchAlbumByPartner(id)
+
+
+  } catch (error) {
+    console.error('Failed to load albums:', error)
+    notificationStore.notify('Failed to load albums', 'error')
+  } finally {
+    loading.value = false
+  }
 })
 </script>
 
 <style scoped>
 /* ── Base ───────────────────────────────────────── */
-.artists-shell {
+.albums-shell {
   min-height: 100%;
   padding: 24px;
   font-family: 'DM Sans', 'Segoe UI', sans-serif;
   color: #e8edf2;
   position: relative;
-  height: 74vh;
 }
 
 .bg-grid {
@@ -353,21 +342,6 @@ onMounted(async () => {
 }
 
 .header-left { display: flex; align-items: center; gap: 12px; }
-
-.back-btn-sm {
-  background: rgba(255,255,255,0.05);
-  border: 1px solid rgba(255,255,255,0.1);
-  color: rgba(255,255,255,0.5);
-  width: 32px;
-  height: 32px;
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-.back-btn-sm:hover { background: rgba(255,255,255,0.1); color: #fff; }
 
 .page-title {
   font-size: 26px;
@@ -461,7 +435,7 @@ onMounted(async () => {
 .gtable {
   width: 100%;
   border-collapse: collapse;
-  min-width: 900px;
+  min-width: 800px;
 }
 
 .gtable thead tr {
@@ -495,13 +469,13 @@ onMounted(async () => {
 .item-cell { display: flex; align-items: center; gap: 12px; }
 
 .item-cover {
-  width: 40px;
-  height: 40px;
+  width: 44px;
+  height: 44px;
   overflow: hidden;
   border: 1px solid rgba(255,255,255,0.1);
   flex-shrink: 0;
 }
-.artist-avatar-wrap { border-radius: 50%; }
+.album-cover { border-radius: 6px; }
 .item-cover img { width: 100%; height: 100%; object-fit: cover; display: block; }
 
 .item-meta { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
@@ -516,35 +490,26 @@ onMounted(async () => {
   max-width: 250px;
 }
 
-/* ── Social Links ───────────────────────────────── */
-.social-links { display: flex; gap: 6px; }
-.soc-icon {
-  width: 26px;
-  height: 26px;
-  border-radius: 6px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(255,255,255,0.05);
-  color: rgba(255,255,255,0.4);
-  transition: all 0.2s;
+.item-sub, .item-artist {
+  font-size: 11px;
+  color: rgba(255,255,255,0.35);
 }
-.soc-icon:hover { color: #fff; transform: translateY(-2px); }
-.soc-icon.fb:hover { background: #1877f2; }
-.soc-icon.ig:hover { background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%); }
-.soc-icon.tw:hover { background: #000; }
 
 /* ── Badges & Values ────────────────────────────── */
-.country-tag {
-  display: inline-block;
-  padding: 2px 8px;
-  border-radius: 4px;
-  background: rgba(255,255,255,0.06);
-  border: 1px solid rgba(255,255,255,0.1);
-  color: rgba(255,255,255,0.6);
-  font-size: 11px;
-  font-weight: 500;
+.type-badge {
+    padding: 3px 10px;
+    border-radius: 6px;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    background: rgba(255,255,255,0.05);
+    color: rgba(255,255,255,0.5);
+    border: 1px solid rgba(255,255,255,0.1);
 }
+.type-album  { color: #00aaff; border-color: rgba(0,170,255,0.3); background: rgba(0,170,255,0.1); }
+.type-single { color: #bb6bd9; border-color: rgba(187,107,217,0.3); background: rgba(187,107,217,0.1); }
+.type-ep     { color: #00ffaa; border-color: rgba(0,255,170,0.3); background: rgba(0,255,170,0.1); }
 
 .num-val { font-size: 13px; color: rgba(255,255,255,0.7); font-variant-numeric: tabular-nums; }
 .date-val { font-size: 12px; color: rgba(255,255,255,0.4); white-space: nowrap; }
@@ -560,12 +525,12 @@ onMounted(async () => {
   border-radius: 100px;
   text-transform: capitalize;
 }
-.status-dot.active    { background: rgba(0,200,120,0.1); border: 1px solid rgba(0,200,120,0.25); color: #00c87a; }
-.status-dot.inactive  { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.15); color: rgba(255,255,255,0.4); }
-.status-dot.blocked   { background: rgba(255,100,100,0.1); border: 1px solid rgba(255,100,100,0.2); color: #ff7070; }
+.status-dot.published { background: rgba(0,200,120,0.1); border: 1px solid rgba(0,200,120,0.25); color: #00c87a; }
+.status-dot.draft     { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.15); color: rgba(255,255,255,0.4); }
+.status-dot.pending   { background: rgba(250,200,0,0.08); border: 1px solid rgba(250,200,0,0.2); color: #fac800; }
 
 .dot-pulse { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
-.status-dot.active .dot-pulse { animation: pulse-green 2s infinite; }
+.status-dot.published .dot-pulse { animation: pulse-green 2s infinite; }
 
 @keyframes pulse-green { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
 
@@ -585,9 +550,9 @@ onMounted(async () => {
   transition: all 0.15s;
 }
 .act-btn:hover { transform: translateY(-1px); }
-.act-btn.view:hover  { bcolor: #10b981; border-color: #10b981; background: rgba(16, 185, 129, 0.05); }
-.act-btn.edit:hover  { color: #3b82f6; border-color: #3b82f6; background: rgba(59, 130, 246, 0.05);  }
-.act-btn.delete:hover { color: #ef4444; border-color: #ef4444; background: rgba(239, 68, 68, 0.05); }
+.act-btn.view:hover  { background: rgba(0,170,255,0.15); border-color: rgba(0,170,255,0.4); color: #00aaff; }
+.act-btn.edit:hover  { background: rgba(250,200,0,0.12); border-color: rgba(250,200,0,0.35); color: #fac800; }
+.act-btn.delete:hover { background: rgba(226,75,74,0.15); border-color: rgba(226,75,74,0.4); color: #e24b4a; }
 
 /* State boxes */
 .state-box { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 60px 24px; gap: 12px; }
@@ -614,8 +579,8 @@ onMounted(async () => {
 .pg-num.active { background: #00aaff; color: #000; font-weight: 600; border-color: #00aaff; }
 .pg-num.ellipsis { cursor: default; color: rgba(255,255,255,0.2); }
 
-@media (max-width: 768px) {
-  .artists-shell { padding: 16px; }
+@media (max-width: 640px) {
+  .albums-shell { padding: 16px; }
   .page-header { flex-direction: column; align-items: flex-start; gap: 12px; }
   .header-right { width: 100%; }
   .search-input { width: 100%; }

@@ -1,7 +1,7 @@
 <template>
-  <div class="artist-songs-shell">
+  <div class="album-detail-shell">
     <div class="bg-blur-container">
-      <div v-if="artist?.banner_url" class="banner-blur" :style="{ backgroundImage: `url(${getFullImageUrl(artist.banner_url)})` }"></div>
+      <div v-if="album?.cover_url" class="banner-blur" :style="{ backgroundImage: `url(${getFullImageUrl(album.cover_url)})` }"></div>
       <div v-else class="banner-blur-placeholder"></div>
     </div>
 
@@ -14,37 +14,34 @@
         Back
       </button>
 
-      <!-- Loading State -->
+      <!-- Loading -->
       <div v-if="loading" class="loading-overlay">
         <div class="spinner"></div>
-        <p>Loading artist...</p>
+        <p>Loading album...</p>
       </div>
 
-      <template v-else-if="artist">
-        <!-- Artist Header -->
-        <header class="artist-header">
+      <template v-else-if="album">
+        <!-- Album Header -->
+        <header class="album-header">
           <div class="profile-main">
-            <div class="avatar-wrap">
-              <img :src="getFullImageUrl(artist.avatar_url)" :alt="artist.name" class="profile-avatar" />
-              <div v-if="artist.verified" class="verified-badge" title="Verified Artist">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" width="18" height="18">
-                  <path fill-rule="evenodd" d="M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16Zm3.857-9.809a.75.75 0 0 0-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 1 0-1.06 1.061l2.5 2.5a.75.75 0 0 0 1.137-.089l4-5.5Z" clip-rule="evenodd" />
-                </svg>
-              </div>
+            <!-- Album Cover -->
+            <div class="cover-wrap">
+              <img :src="getFullImageUrl(album.cover_url)" :alt="album.name" class="album-cover" />
             </div>
+
             <div class="profile-info">
-              <div class="type-pill">Artist</div>
-              <h1 class="artist-name">{{ artist.name }}</h1>
+              <div class="type-pill">ALBUM</div>
+              <h1 class="album-name">{{ album.name }}</h1>
+              <p class="album-artist" @click="goToArtist">
+                {{ album.artist?.name }}
+              </p>
+
               <div class="stats-row">
-                <span class="stat-item">
-                  <b>{{ formatNumbers(artist.monthly_listeners || 0) }}</b>
-                  <span>Monthly listeners</span>
-                </span>
+                <span>{{ album.release_date ? new Date(album.release_date).getFullYear() : '' }}</span>
                 <span class="dot">·</span>
-                <span class="stat-item">
-                  <b>{{ formatNumbers(artist.total_followers || 0) }}</b>
-                  <span>Followers</span>
-                </span>
+                <span>{{ album.tracks?.length || 0 }} songs</span>
+                <span class="dot">·</span>
+                <span>{{ formatTotalDuration() }}</span>
               </div>
             </div>
           </div>
@@ -56,33 +53,29 @@
               </svg>
               Play all
             </button>
+
             <ActionButton 
-              v-if="artist?.id"
+              v-if="album?.id"
               class="follow-btn"
-              type="follow" 
-              :item="{ 
-                id: artist.id,
-                isActive: artist.is_followed ?? false,   
-                count: artist.total_followers ?? 0  
-              }"
-              @success="onFollowSuccess"
+              type="like" 
+              :item="{ id: album.id, isActive: album.is_liked ?? false }"
+              @success="onLikeSuccess"
             />
           </div>
         </header>
 
-        <!-- Song List Section -->
-        <section class="songs-section">
+        <!-- Tracks Section -->
+        <section class="tracks-section">
           <div class="section-head">
-            <h2 class="section-title">Popular</h2>
-            <span class="song-count" v-if="artist.songs?.length">{{ artist.songs.length }} songs</span>
+            <h2 class="section-title">Tracks</h2>
+            <span class="track-count" v-if="album.tracks?.length">{{ album.tracks.length }} songs</span>
           </div>
 
-          <div v-if="artist.songs && artist.songs.length" class="songs-list">
-            <!-- Header row -->
-            <div class="songs-list-header">
+          <div v-if="album.tracks && album.tracks.length" class="tracks-list">
+            <!-- Header -->
+            <div class="tracks-list-header">
               <span>#</span>
               <span>Title</span>
-              <span class="col-plays">Plays</span>
               <span class="col-duration">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" width="14" height="14">
                   <path fill-rule="evenodd" d="M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16Zm.75-13a.75.75 0 0 0-1.5 0v5c0 .414.336.75.75.75h4a.75.75 0 0 0 0-1.5h-3.25V5Z" clip-rule="evenodd" />
@@ -92,16 +85,16 @@
             </div>
 
             <div
-              v-for="(song, index) in (artist.songs ?? [])"
-              :key="song.id"
-              class="song-row"
-              :class="{ 'is-active': player.currentSong?.id === song.id }"
-              @click="playSong(song)"
+              v-for="(track, index) in album.tracks"
+              :key="track.id"
+              class="track-row"
+              :class="{ 'is-active': player.currentSong?.id === track.id }"
+              @click="playTrack(track)"
             >
-              <!-- Rank / Wave -->
-              <div class="s-rank">
-                <span class="rank-num" v-if="!(player.currentSong?.id === song.id && player.isPlaying)">
-                  {{ (index as number) + 1 }}
+              <!-- Track number / Wave -->
+              <div class="t-rank">
+                <span class="rank-num" v-if="!(player.currentSong?.id === track.id && player.isPlaying)">
+                  {{ index + 1 }}
                 </span>
                 <span class="rank-wave" v-else>
                   <span></span><span></span><span></span>
@@ -109,12 +102,11 @@
               </div>
 
               <!-- Cover + Info -->
-              <div class="s-info">
-                <div class="s-cover">
-                  <img :src="getFullImageUrl(song.cover_url)" alt="cover" />
-                  <div class="s-cover-overlay">
-                    <svg v-if="!(player.currentSong?.id === song.id && player.isPlaying)"
-                      xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="16" height="16">
+              <div class="t-info">
+                <div class="t-cover">
+                  <img :src="getFullImageUrl(track.cover_url || album.cover_url)" alt="cover" />
+                  <div class="t-cover-overlay">
+                    <svg v-if="!(player.currentSong?.id === track.id && player.isPlaying)" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="16" height="16">
                       <path fill-rule="evenodd" d="M4.5 5.653c0-1.427 1.529-2.33 2.779-1.643l11.54 6.347c1.295.712 1.295 2.573 0 3.286L7.28 19.99c-1.25.687-2.779-.217-2.779-1.643V5.653Z" clip-rule="evenodd" />
                     </svg>
                     <svg v-else xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="16" height="16">
@@ -122,25 +114,20 @@
                     </svg>
                   </div>
                 </div>
-                <div class="s-details">
-                  <div class="s-title">{{ song.title }}</div>
-                  <div class="s-tags">
-                    <span v-if="song.is_premium" class="tag tag-premium">Premium</span>
-                    <span v-if="song.is_explicit" class="tag tag-explicit">E</span>
+                <div class="t-details">
+                  <div class="t-title">{{ track.title }}</div>
+                  <div class="t-tags">
+                    <span v-if="track.is_premium" class="tag tag-premium">Premium</span>
+                    <span v-if="track.is_explicit" class="tag tag-explicit">E</span>
                   </div>
                 </div>
               </div>
 
-              <!-- Plays -->
-              <div class="s-plays col-plays">
-                {{ formatNumbers(song.total_plays || 0) }}
-              </div>
-
               <!-- Duration -->
-              <div class="s-duration col-duration">{{ formatDuration(song.duration) }}</div>
+              <div class="t-duration col-duration">{{ formatDuration(track.duration) }}</div>
 
               <!-- Actions -->
-              <div class="s-actions">
+              <div class="t-actions">
                 <button class="row-action-btn" @click.stop>
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" width="16" height="16">
                     <path d="M10 3a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3ZM10 8.5a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3ZM11.5 15.5a1.5 1.5 0 1 0-3 0 1.5 1.5 0 0 0 3 0Z" />
@@ -150,133 +137,102 @@
             </div>
           </div>
 
-          <div v-else class="empty-songs">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.2" stroke="currentColor" width="48" height="48">
-              <path stroke-linecap="round" stroke-linejoin="round" d="m9 9 10.5-3m0 6.553v3.75a2.25 2.25 0 0 1-1.632 2.163l-1.32.377a1.803 1.803 0 1 1-2.8-1.452l.328-.094a1.125 1.125 0 0 0 .764-1.235V5.11a.75.75 0 0 0-.272-.578l-7.5 5.75a.75.75 0 0 0-.228.531V16.65c0 .543-.321 1.03-.815 1.235l-1.32.378a1.803 1.803 0 1 1-2.8-1.452l.328-.094a1.125 1.125 0 0 0 .764-1.235V10.5c0-.621.504-1.125 1.125-1.125h1.5" />
-            </svg>
-            <p>No songs released yet.</p>
+          <div v-else class="empty-tracks">
+            <p>No tracks available yet.</p>
           </div>
         </section>
       </template>
 
-      <!-- Error State -->
+      <!-- Error -->
       <div v-else class="error-state">
-        <h2>Artist not found.</h2>
-        <p>This link may no longer exist or has been changed.</p>
-        <button @click="$router.push({ name: 'client.artists' })" class="back-btn">Go back</button>
+        <h2>Album not found</h2>
+        <p>This album may have been removed or the link is invalid.</p>
+        <button @click="$router.push({ name: 'client.albums' })" class="back-btn">Back to Albums</button>
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
-import { useRoute } from 'vue-router';
-import { getFullImageUrl } from '@/modules/client/stores/artists/artistsStore';
-import ArtistService from '@/modules/client/services/artists/artists.service';
-import { ArtistInterface } from '@/interfaces/artists.interface';
-import { usePlayerStore } from '@/store/playerStore';
-import ActionButton  from '@/components/common/VcBtnAction/ActionButton.vue';
-import type { Song } from '@/interfaces/songs.interface';
+import { ref, onMounted } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { getFullImageUrl } from '@/modules/client/stores/artists/artistsStore'
+import AlbumService from '@/modules/client/services/albums/albums.service'
+import { usePlayerStore } from '@/store/playerStore'
+import ActionButton from '@/components/common/VcBtnAction/ActionButton.vue'
+import type { AlbumInterface } from '@/interfaces/albums.interface'
+import type { Song } from '@/interfaces/songs.interface'
 
-const route      = useRoute();
-const artist     = ref<ArtistInterface | null>(null);
-const loading    = ref(true);
-const isFollowing = ref(false);
-const player     = usePlayerStore();
+const route = useRoute()
+const router = useRouter()
+const album = ref<AlbumInterface | null>(null)
+const loading = ref(true)
+const player = usePlayerStore()
 
-// Map song to player format - now simpler thanks toized backend Resource
-const mapSong = (song: any): Song => {
-  return {
-    ...song,
-    // Use resource urls or fallback to raw properties
-    urls: song.urls || {
-      standard: song.song_url ?? null,
-      hq:       song.song_url_hq ?? null,
-      lossless: song.song_url_lossless ?? null,
-    },
-    // Copy follow status from artist to each song
-    is_followed: song.is_followed ?? artist.value?.is_followed ?? false,
-    follower_count: artist.value?.total_followers ?? 0,
-    // Artist is now correctly loaded via backend relationship
-    artist: song.artist ? {
-      id: song.artist.id,
-      name: song.artist.name,
-      slug: song.artist.slug,
-      avatar_url: song.artist.avatar_url ?? null
-    } : {
-      id:         artist.value?.id ?? 0,
-      name:       artist.value?.name ?? 'Unknown Artist',
-      slug:       artist.value?.slug ?? '',
-      avatar_url: artist.value?.avatar_url ?? null,
-    }
-  };
-};
+const mapTrack = (track: any): Song => ({
+  ...track,
+  urls: track.urls || {
+    standard: track.song_url ?? null,
+    hq: track.song_url_hq ?? null,
+    lossless: track.song_url_lossless ?? null,
+  },
+  artist: album.value?.artist || track.artist,
+})
 
-const playSong = (song: any): void => {
-  const mapped = mapSong(song);
-  const queue  = (artist.value?.songs ?? []).map(mapSong);
-  player.play(mapped, queue);
-  
-  // Restore follow status from cache if it exists
-  player.restoreFollowStatus(mapped.id)
-};
+const playTrack = (track: any) => {
+  const mapped = mapTrack(track)
+  const queue = (album.value?.tracks ?? []).map(mapTrack)
+  player.play(mapped, queue)
+}
 
-const playAll = (): void => {
-  const songs = artist.value?.songs;
-  if (!songs?.length) return;
-  const queue = songs.map(mapSong);
-  player.play(queue[0], queue);
-};
+const playAll = () => {
+  if (!album.value?.tracks?.length) return
+  const queue = album.value.tracks.map(mapTrack)
+  player.play(queue[0], queue)
+}
 
-const formatDuration = (seconds: number): string => {
-  const mins = Math.floor(seconds / 60);
-  const secs = seconds % 60;
-  return `${mins}:${secs.toString().padStart(2, '0')}`;
-};
+const formatDuration = (seconds: number) => {
+  const min = Math.floor(seconds / 60)
+  const sec = seconds % 60
+  return `${min}:${sec.toString().padStart(2, '0')}`
+}
 
-const formatNumbers = (n: number): string =>
-  n >= 1_000_000 ? (n / 1_000_000).toFixed(1) + 'M'
-  : n >= 1_000   ? (n / 1_000).toFixed(1) + 'K'
-  : String(n);
+const formatTotalDuration = () => {
+  const total = album.value?.tracks?.reduce((sum, t) => sum + (t.duration || 0), 0) || 0
+  const min = Math.floor(total / 60)
+  return min > 60 ? `${Math.floor(min / 60)} hr ${min % 60} min` : `${min} min`
+}
 
-onMounted(async () => {
+const goToArtist = () => {
+  if (album.value?.artist?.slug) {
+    router.push({ name: 'client.artist.detail', params: { slug: album.value.artist.slug } })
+  }
+}
+
+const onLikeSuccess = async () => {
+  // Refetch nếu cần update trạng thái
+  await fetchAlbum()
+}
+
+const fetchAlbum = async () => {
   try {
-    loading.value = true;
-    const slug = route.params.slug as string;
-    const res  = await ArtistService.detailArtist(slug);
-    artist.value = res.data.data || res.data;
+    loading.value = true
+    const slug = route.params.slug as string
+    const res = await AlbumService.detailAlbum(slug)
+    album.value = res.data.data || res.data
   } catch (error) {
-    console.error('Failed to fetch artist details:', error);
+    console.error('Failed to fetch album:', error)
   } finally {
-    loading.value = false;
+    loading.value = false
   }
-});
+}
 
-const onFollowSuccess = async (result: any) => {
-  // Refetch artist data to update is_followed status
-  try {
-    const slug = route.params.slug as string;
-    const res  = await ArtistService.detailArtist(slug);
-    artist.value = res.data.data || res.data;
-    
-    // Update player store with follow status - ensures persistence + caching
-    if (player.currentSong?.artist?.id === artist.value?.id && player.currentSong) {
-      player.updateFollowStatus(
-        player.currentSong.id,
-        result?.is_followed ?? false,
-        result?.follower_count ?? artist.value?.total_followers
-      )
-    }
-  } catch (error) {
-    console.error('Failed to refetch artist details after follow:', error);
-  }
-};
+onMounted(fetchAlbum)
 </script>
 
 <style scoped>
 /* ─── Shell ──────────────────────────────────────────────── */
-.artist-songs-shell {
+.album-detail-shell {
   min-height: 100vh;
   color: #fff;
   position: relative;
@@ -340,7 +296,7 @@ const onFollowSuccess = async (result: any) => {
 }
 
 /* ─── Header ──────────────────────────────────────────────── */
-.artist-header {
+.album-header {
   display: flex;
   flex-direction: column;
   gap: 36px;
@@ -353,18 +309,18 @@ const onFollowSuccess = async (result: any) => {
   gap: 28px;
 }
 
-.avatar-wrap {
+.cover-wrap {
   position: relative;
   width: 220px; height: 220px;
   flex-shrink: 0;
-  border-radius: 50%;
+  border-radius: 10px;
   box-shadow: 0 24px 60px rgba(0,0,0,0.6);
 }
 
-.profile-avatar {
+.album-cover {
   width: 100%; height: 100%;
   object-fit: cover;
-  border-radius: 50%;
+  border-radius: 10px;
   border: 3px solid rgba(255,255,255,0.08);
 }
 
@@ -396,7 +352,7 @@ const onFollowSuccess = async (result: any) => {
   color: rgba(255,255,255,0.5);
 }
 
-.artist-name {
+.album-name {
   font-size: clamp(42px, 7vw, 80px);
   font-weight: 900;
   margin: 0;
@@ -496,7 +452,7 @@ const onFollowSuccess = async (result: any) => {
 }
 
 /* ─── Songs section ───────────────────────────────────────── */
-.songs-section { margin-top: 36px; }
+.tracks-section { margin-top: 36px; }
 
 .section-head {
   display: flex;
@@ -513,13 +469,13 @@ const onFollowSuccess = async (result: any) => {
   margin: 0;
 }
 
-.song-count {
+.track-count {
   font-size: 12px;
   color: rgba(255,255,255,0.3);
 }
 
 /* ─── List header ─────────────────────────────────────────── */
-.songs-list-header {
+.tracks-list-header {
   display: grid;
   grid-template-columns: 44px 1fr 120px 72px 40px;
   align-items: center;
@@ -533,7 +489,7 @@ const onFollowSuccess = async (result: any) => {
 }
 
 /* ─── Song row ────────────────────────────────────────────── */
-.song-row {
+.track-row {
   display: grid;
   grid-template-columns: 44px 1fr 120px 72px 40px;
   align-items: center;
@@ -544,12 +500,12 @@ const onFollowSuccess = async (result: any) => {
   position: relative;
 }
 
-.song-row:hover { background: rgba(255,255,255,0.05); }
+.track-row:hover { background: rgba(255,255,255,0.05); }
 
-.song-row.is-active { background: rgba(0,170,255,0.07); }
+.track-row.is-active { background: rgba(0,170,255,0.07); }
 
 /* ─── Rank ────────────────────────────────────────────────── */
-.s-rank {
+.t-rank {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -588,14 +544,14 @@ const onFollowSuccess = async (result: any) => {
 }
 
 /* ─── Cover ───────────────────────────────────────────────── */
-.s-info {
+.t-info {
   display: flex;
   align-items: center;
   gap: 14px;
   min-width: 0;
 }
 
-.s-cover {
+.t-cover {
   position: relative;
   width: 42px; height: 42px;
   border-radius: 7px;
@@ -604,13 +560,13 @@ const onFollowSuccess = async (result: any) => {
   background: rgba(255,255,255,0.05);
 }
 
-.s-cover img {
+.t-cover img {
   width: 100%; height: 100%;
   object-fit: cover;
   display: block;
 }
 
-.s-cover-overlay {
+.t-cover-overlay {
   position: absolute;
   inset: 0;
   background: rgba(0,0,0,0.58);
@@ -622,18 +578,18 @@ const onFollowSuccess = async (result: any) => {
   transition: opacity 0.15s;
 }
 
-.song-row:hover .s-cover-overlay,
-.song-row.is-active .s-cover-overlay { opacity: 1; }
+.track-row:hover .t-cover-overlay,
+.track-row.is-active .t-cover-overlay { opacity: 1; }
 
 /* ─── Details ─────────────────────────────────────────────── */
-.s-details {
+.t-details {
   display: flex;
   flex-direction: column;
   gap: 4px;
   min-width: 0;
 }
 
-.s-title {
+.t-title {
   font-size: 14px;
   font-weight: 600;
   color: #fff;
@@ -643,9 +599,9 @@ const onFollowSuccess = async (result: any) => {
   transition: color 0.15s;
 }
 
-.song-row.is-active .s-title { color: #00aaff; }
+.track-row.is-active .t-title { color: #00aaff; }
 
-.s-tags {
+.t-tags {
   display: flex;
   gap: 5px;
   align-items: center;
@@ -673,14 +629,14 @@ const onFollowSuccess = async (result: any) => {
 }
 
 /* ─── Plays / Duration ────────────────────────────────────── */
-.s-plays, .s-duration {
+.t-duration {
   font-size: 13px;
   color: rgba(255,255,255,0.38);
   font-variant-numeric: tabular-nums;
   text-align: right;
 }
 
-.col-plays, .col-duration { text-align: right; }
+.col-duration { text-align: right; }
 
 /* ─── Actions ─────────────────────────────────────────────── */
 .row-action-btn {
@@ -697,11 +653,11 @@ const onFollowSuccess = async (result: any) => {
   transition: opacity 0.15s, color 0.15s, background 0.15s;
 }
 
-.song-row:hover .row-action-btn { opacity: 1; }
+.track-row:hover .row-action-btn { opacity: 1; }
 .row-action-btn:hover { color: #fff; background: rgba(255,255,255,0.08); }
 
 /* ─── Empty ───────────────────────────────────────────────── */
-.empty-songs {
+.empty-tracks {
   text-align: center;
   padding: 80px 0;
   color: rgba(255,255,255,0.28);
@@ -765,18 +721,18 @@ const onFollowSuccess = async (result: any) => {
 @media (max-width: 900px) {
   .content-container { padding: 36px 20px 80px; }
   .profile-main { flex-direction: column; align-items: center; text-align: center; }
-  .artist-name { font-size: 42px; }
-  .avatar-wrap { width: 160px; height: 160px; }
+  .album-name { font-size: 42px; }
+  .cover-wrap { width: 160px; height: 160px; }
   .stats-row { justify-content: center; }
   .header-actions { justify-content: center; }
-  .song-row,
-  .songs-list-header { grid-template-columns: 36px 1fr 68px 36px; }
-  .col-plays { display: none; }
+  .track-row,
+  .tracks-list-header { grid-template-columns: 36px 1fr 68px 36px; }
 }
 
 @media (max-width: 480px) {
-  .song-row,
-  .songs-list-header { grid-template-columns: 32px 1fr 56px; }
-  .s-actions { display: none; }
+  .track-row,
+  .tracks-list-header { grid-template-columns: 32px 1fr 56px; }
+  .t-actions { display: none; }
 }
+
 </style>

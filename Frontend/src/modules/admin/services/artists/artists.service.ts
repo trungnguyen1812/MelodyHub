@@ -16,6 +16,7 @@ class ArtistService {
     }
 
     async detailArtist(id: number) {
+          console.log('Calling detailArtist with id:', id, typeof id);
         return await adminApi.get(`/artists/${id}`);
     } 
 

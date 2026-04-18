@@ -100,7 +100,6 @@ class ArtistsManagerController extends Controller
 
     public function show(Artist $artist)
     {
-        log::info($artist);
         return response()->json($artist);
     }
 

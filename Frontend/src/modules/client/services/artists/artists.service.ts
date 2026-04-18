@@ -3,8 +3,12 @@ import type { CreateArtistPayload } from "@/modules/admin/interfaces/artists/cre
 
 class ArtistService {
 
-    async getAllArtist() {
-        const res = await clientApi.get("/artists/allArtists");
+    async getAllArtist(partnerId?: number) {
+        const params: any = {};
+        if (partnerId) {
+            params.partner_id = partnerId;
+        }
+        const res = await clientApi.get("/artists/allArtists", { params });
         return res.data;
     }
 

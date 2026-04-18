@@ -170,9 +170,4 @@ class Artist extends Model
     {
         return $this->belongsTo(Partner::class, 'partner_id', 'id');
     }
-
-    public function getRouteKeyName()
-    {
-        return 'slug';
-    }
 }
