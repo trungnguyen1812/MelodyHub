@@ -36,7 +36,7 @@ class PaymentController extends Controller
                 'amount' => $plan->price,
                 'currency' => 'VND',
             ]);
-        } else {    
+        } else {
             $payment = Payment::create([
                 'user_id' => $user->id,
                 'subscription_plan_id' => $plan->id,
@@ -46,7 +46,6 @@ class PaymentController extends Controller
                 'status' => 'pending',
             ]);
         }
-
 
         $prefix = "SEVQR";
         $transferContent = $prefix . ' SEPAY ' . $payment->id;
@@ -76,6 +75,68 @@ class PaymentController extends Controller
             'amount' => $payment->amount,
             'bank_account' => config('services.sepay.bank_account'),
             'bank_name' => config('services.sepay.bank_provider'),
+        ]);
+    }
+
+    public function create_TopUp_QR(Request $request)
+    {
+        $user = Auth::user();
+
+        $request->validate([
+            'amount' => 'required|numeric|min:1|max:10000000',
+        ]);
+
+        $amount = $request->amount;
+
+        $payment = Payment::where('user_id', $user->id)
+            ->where('payment_type', 'topup')
+            ->where('status', 'pending')
+            ->first();
+
+        if ($payment) {
+            $payment->update([
+                'amount'   => $amount,
+                'currency' => 'VND',
+            ]);
+        } else {
+            $payment = Payment::create([
+                'user_id'              => $user->id,
+                'subscription_plan_id' => null,
+                'payment_type'         => 'topup',
+                'amount'               => $amount,
+                'currency'             => 'VND',
+                'status'               => 'pending',
+            ]);
+        }
+
+        $prefix = "SEVQR";
+        $transferContent = $prefix . ' SEPAY ' . $payment->id;
+
+        $payment->update(['transfer_content' => $transferContent]);
+
+        Log::info('TopUp QR created', [
+            'payment_id' => $payment->id,
+            'user_id'    => $user->id,
+            'amount'     => $payment->amount,
+        ]);
+
+        $params = [
+            'acc'      => config('services.sepay.bank_account'),
+            'bank'     => config('services.sepay.bank_provider'),
+            'amount'   => (int)$payment->amount,
+            'des'      => $transferContent,
+            'template' => 'compact',
+        ];
+
+        $qrUrl = "https://qr.sepay.vn/img?" . http_build_query($params);
+
+        return response()->json([
+            'qr_url'       => $qrUrl,
+            'payment_id'   => $payment->id,
+            'content'      => $transferContent,
+            'amount'       => $payment->amount,
+            'bank_account' => config('services.sepay.bank_account'),
+            'bank_name'    => config('services.sepay.bank_provider'),
         ]);
     }
 
@@ -175,12 +236,12 @@ class PaymentController extends Controller
         }
 
         Log::info('Webhook: Processing payment', [
-            'payment_id' => $payment->id,
-            'user_id' => $payment->user_id,
-            'amount' => $payment->amount
+            'payment_id'   => $payment->id,
+            'user_id'      => $payment->user_id,
+            'amount'       => $payment->amount,
+            'payment_type' => $payment->payment_type, 
         ]);
 
-        // check amount of money
         $receivedAmount = $request->input('transferAmount') ?? $request->input('amount');
         if ($receivedAmount && abs($receivedAmount - $payment->amount) > 0.01) {
             Log::warning('Webhook: Amount mismatch', [
@@ -194,18 +255,18 @@ class PaymentController extends Controller
         if (in_array($status, ['success', 'completed', 'successful'])) {
             DB::transaction(function () use ($payment, $request) {
                 $payment->update([
-                    'status' => 'completed',
-                    'paid_at' => now(),
+                    'status'         => 'completed',
+                    'paid_at'        => now(),
                     'transaction_id' => $request->input('id'),
-                    'metadata' => $request->all(),
+                    'metadata'       => $request->all(),
                 ]);
 
-                $this->upgradeUser($payment);
+                $this->upgradeUser($payment); 
             });
 
             Log::info('Webhook: Payment completed', [
                 'payment_id' => $payment->id,
-                'user_id' => $payment->user_id
+                'user_id'    => $payment->user_id
             ]);
 
             return response()->json([
@@ -216,9 +277,9 @@ class PaymentController extends Controller
 
         if (in_array($status, ['failed', 'cancelled', 'canceled', 'expired', 'rejected'])) {
             $payment->update([
-                'status' => 'failed',
+                'status'    => 'failed',
                 'failed_at' => now(),
-                'metadata' => $request->all(),
+                'metadata'  => $request->all(),
             ]);
 
             Log::info('Webhook: Payment failed', ['status' => $status]);
@@ -232,8 +293,37 @@ class PaymentController extends Controller
 
     private function upgradeUser(Payment $payment): void
     {
+        if ($payment->payment_type === 'topup') {
+            $this->handleTopUp($payment);
+        } elseif ($payment->payment_type === 'subscription') {
+            $this->handleSubscription($payment);
+        } else {
+            Log::warning('Webhook: Unknown payment type', [
+                'payment_id'   => $payment->id,
+                'payment_type' => $payment->payment_type,
+            ]);
+        }
+    }
+
+    private function handleTopUp(Payment $payment): void
+    {
+        $user = User::findOrFail($payment->user_id);
+
+        $user->increment('wallet_balance', $payment->amount);
+
+        Log::info('TopUp completed', [
+            'payment_id'     => $payment->id,
+            'user_id'        => $user->id,
+            'amount'         => $payment->amount,
+            'wallet_balance' => $user->fresh()->wallet_balance,
+        ]);
+    }
+
+    private function handleSubscription(Payment $payment): void
+    {
         $user = User::findOrFail($payment->user_id);
         $plan = $payment->subscriptionPlan;
+
         Log::info('PLAN DEBUG', [
             'plan' => $payment->subscriptionPlan
         ]);
@@ -246,10 +336,10 @@ class PaymentController extends Controller
         }
 
         Log::info('Starting upgrade process', [
-            'user_id' => $user->id,
-            'plan_id' => $plan->id,
+            'user_id'       => $user->id,
+            'plan_id'       => $plan->id,
             'plan_role_name' => $plan->role_name,
-            'payment_id' => $payment->id
+            'payment_id'    => $payment->id
         ]);
 
         $currentRole = DB::table('user_roles')
@@ -260,7 +350,7 @@ class PaymentController extends Controller
             ->first();
 
         Log::info('Current role', [
-            'current_role' => $currentRole?->name,
+            'current_role'    => $currentRole?->name,
             'current_role_id' => $currentRole?->id
         ]);
 
@@ -273,19 +363,20 @@ class PaymentController extends Controller
         }
 
         $newRole = Role::where('name', $plan->role_name)->first();
-        log::info(' role update new ');
-        log::info($newRole);
+        Log::info(' role update new ');
+        Log::info($newRole);
+
         if (!$newRole) {
             Log::error('Role not found for plan', [
-                'plan_id' => $plan->id,
-                'role_name' => $plan->role_name,
+                'plan_id'         => $plan->id,
+                'role_name'       => $plan->role_name,
                 'available_roles' => Role::pluck('name')->toArray()
             ]);
             return;
         }
 
         Log::info('New role found', [
-            'new_role_id' => $newRole->id,
+            'new_role_id'   => $newRole->id,
             'new_role_name' => $newRole->name
         ]);
 
@@ -304,7 +395,6 @@ class PaymentController extends Controller
             $startsAt = $currentSubscription->ends_at;
         }
 
-
         $endsAt = $startsAt->copy()->addDays($plan->duration_days);
 
         DB::transaction(function () use ($user, $plan, $newRole, $startsAt, $endsAt) {
@@ -313,11 +403,11 @@ class PaymentController extends Controller
                 ->update(['status' => 'expired']);
 
             UserSubscription::create([
-                'user_id' => $user->id,
-                'plan_id' => $plan->id,
+                'user_id'   => $user->id,
+                'plan_id'   => $plan->id,
                 'starts_at' => $startsAt,
-                'ends_at' => $endsAt,
-                'status' => 'active',
+                'ends_at'   => $endsAt,
+                'status'    => 'active',
             ]);
 
             DB::table('user_roles')
@@ -339,25 +429,25 @@ class PaymentController extends Controller
                     ->where('user_id', $user->id)
                     ->where('role_id', $newRole->id)
                     ->update([
-                        'is_primary' => 1,
-                        'expires_at' => $endsAt,
+                        'is_primary'  => 1,
+                        'expires_at'  => $endsAt,
                         'assigned_at' => now()
                     ]);
-                
+
                 Log::info('Updated existing role to primary', [
                     'user_id' => $user->id,
                     'role_id' => $newRole->id
                 ]);
             } else {
                 DB::table('user_roles')->insert([
-                    'user_id' => $user->id,
-                    'role_id' => $newRole->id,
-                    'is_primary' => 1,
-                    'expires_at' => $endsAt,
+                    'user_id'     => $user->id,
+                    'role_id'     => $newRole->id,
+                    'is_primary'  => 1,
+                    'expires_at'  => $endsAt,
                     'assigned_at' => now(),
-                    'assigned_by' => null, 
+                    'assigned_by' => null,
                 ]);
-                
+
                 Log::info('Created new user role', [
                     'user_id' => $user->id,
                     'role_id' => $newRole->id
@@ -373,14 +463,43 @@ class PaymentController extends Controller
             ->first();
 
         Log::info('User upgraded successfully', [
-            'user_id' => $user->id,
-            'old_role' => $currentRole?->name,
-            'new_role' => $updatedRole?->name,
-            'plan_role_name' => $plan->role_name,
-            'ends_at' => $endsAt,
-            'verified_role' => $updatedRole?->name,
-            'verified_expires_at' => $updatedRole?->expires_at
+            'user_id'              => $user->id,
+            'old_role'             => $currentRole?->name,
+            'new_role'             => $updatedRole?->name,
+            'plan_role_name'       => $plan->role_name,
+            'ends_at'              => $endsAt,
+            'verified_role'        => $updatedRole?->name,
+            'verified_expires_at'  => $updatedRole?->expires_at
         ]);
     }
 
+    public function checkStatus(Request $request)
+    {
+        $request->validate([
+            'amount' => 'nullable|numeric|min:1|max:10000000',
+        ]);
+
+        /** @var \App\Models\User $user */
+        $user = $request->user();
+
+        // Lấy payment topup mới nhất (bao gồm cả pending và completed)
+        $payment = Payment::where('user_id', $user->id)
+            ->where('payment_type', 'topup')
+            ->latest()
+            ->first();
+
+        if (!$payment) {
+            return response()->json([
+                'status'  => 'not_found',
+                'message' => 'No payment found',
+            ], 404);
+        }
+
+        return response()->json([
+            'payment_id'     => $payment->id,
+            'status'         => $payment->status,        
+            'amount'         => $payment->amount,
+            'wallet_balance' => (float)$user->wallet_balance,
+        ]);
+    }
 }

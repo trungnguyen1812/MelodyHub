@@ -16,6 +16,10 @@ import PartnerDashboardView from '@/modules/client/views/partner/partner.dashboa
 // partner Music distribution partners + Advertising partners
 import PartnerMusicView from '@/modules/client/views/partner/PartnerMusic/Partner.music.view.vue';
 import PartnerAdvertisingdView from '@/modules/client/views/partner/partner.dashboard.view.vue';
+// partner Advertising partners
+import PartnerAdvertisingdDashboadView from '@/modules/client/views/partner/PartnerAd/Partner.advertising.view.vue';
+import PartnerAdvertisingdAddView from '@/modules/client/views/partner/PartnerAd/Partner.advertising.add.view.vue';
+import PartnerAdvertisingdUpdateView from '@/modules/client/views/partner/PartnerAd/Partner.advertising.update.view.vue';
 // song manager 
 import SongAddView from '@/modules/client/views/music/SongAddView.vue';
 import SongDetailView from '@/modules/client/views/music/SongDetail.view.vue';
@@ -160,6 +164,21 @@ export const CLIENT_ROUTES = [
         path: 'partner/Advertisingd',
         name: 'client.partner.Advertisingd',
         component: PartnerAdvertisingdView
+      },
+      {
+        path: 'partner/Advertisingd/dashboard',
+        name: 'client.partner.Advertisingd.dashboard',
+        component: PartnerAdvertisingdDashboadView
+      },
+      {
+        path: 'partner/Advertisingd/add',
+        name: 'client.partner.Advertisingd.add',
+        component: PartnerAdvertisingdAddView
+      },
+      {
+        path: 'partner/Advertisingd/update/:id',
+        name: 'client.partner.Advertisingd.update',
+        component: PartnerAdvertisingdUpdateView
       },
       // albums
       {

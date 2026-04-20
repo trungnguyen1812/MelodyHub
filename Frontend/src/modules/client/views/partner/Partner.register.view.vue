@@ -180,7 +180,7 @@
 
             <div class="form-group">
             <label>Revenue Share (%)</label>
-            <input v-model.number="form.revenue_share_percentage" type="number" min="0" max="100" step="0.01" placeholder="70.00" disabled="true">
+            <input v-model.number="form.revenue_share_percentage" type="number" min="0" max="100" step="0.01" placeholder="70.00" readonly>
             </div>
 
             <div class="form-group">
@@ -387,6 +387,7 @@ const selectedTypepaymentthreshold = computed(() => {
 
 
 
+
 // ── Steps ──
 const steps = [
   { label: 'Company' },
@@ -442,7 +443,7 @@ const form = reactive({
   // Step 1 - Contract
   contract_number:          generateContractNumber(),
   contract_start_date:      formatDateForInput(new Date()),
-  revenue_share_percentage: 70,
+  revenue_share_percentage: 0,
   payment_frequency:        'monthly' as 'weekly' | 'monthly' | 'quarterly',
   payment_threshold:        0 as number,
 
@@ -458,7 +459,22 @@ const errors = reactive<Record<string, string>>({})
 // ── Generate contract (auto khi vào Step 1) ──
 const generateContract = async () => {
   try {
-    const response = await fetch(`/template/contract_template.docx?t=${Date.now()}`, {
+    const currentType = TypePartners.value.find(t => t.id === form.partner_type_id)
+    const typeCode    = currentType?.code ?? ''
+
+    console.log('currentType:', currentType)
+    console.log('typeCode:', typeCode)
+
+    const templateMap: Record<string, string> = {
+      'advertising': '/template/contract_template - adv.docx',
+      'music':       '/template/contract_template.docx',
+    }
+
+    const templateFile = templateMap[typeCode] ?? '/template/contract_template.docx'
+
+    console.log('Using template:', templateFile)
+
+    const response = await fetch(`${templateFile}?t=${Date.now()}`, {
       cache: 'no-store'
     })
     if (!response.ok) throw new Error(`Failed to fetch template: ${response.status}`)
@@ -472,13 +488,13 @@ const generateContract = async () => {
     })
 
     doc.setData({
-      contract_number:          form.contract_number           || '',
-      partner_type_id:          partnerTypeName.value          || '',
-      company_name:             form.company_name              || '',
-      company_email:            form.company_email             || '',
-      tax_code:                 form.tax_code                  || '',
-      revenue_share_percentage: form.revenue_share_percentage  || '',
-      signer_name:              fullName.value                 || '',
+      contract_number:          form.contract_number          || '',
+      partner_type_id:          partnerTypeName.value         || '',
+      company_name:             form.company_name             || '',
+      company_email:            form.company_email            || '',
+      tax_code:                 form.tax_code                 || '',
+      revenue_share_percentage: form.revenue_share_percentage || '',
+      signer_name:              fullName.value                || '',
     })
 
     doc.render()
@@ -604,16 +620,26 @@ onMounted(async () => {
   }
 })
 
-watch(() => form.partner_type_id, (newTypeId) => {
-  const found = TypePartners.value.find(t => t.id === newTypeId)
-  console.log(found);
-  
-  if (found) {
-    form.payment_threshold = found.default_payment_threshold
-  } else {
-    form.payment_threshold = 0
-  }
-}, { immediate: true })
+watch(
+  [() => form.partner_type_id, TypePartners],
+  ([newTypeId]) => {
+    if (!newTypeId || !TypePartners.value.length) return
+
+    const found = TypePartners.value.find(t => t.id === newTypeId)
+    console.log('found:', found)
+
+    if (found) {
+      form.payment_threshold        = found.default_payment_threshold
+      form.revenue_share_percentage = found.default_revenue_share
+      form.payment_frequency        = (found.default_payment_frequency ?? 'monthly') as 'weekly' | 'monthly' | 'quarterly'
+    } else {
+      form.payment_threshold        = 0
+      form.revenue_share_percentage = 0
+      form.payment_frequency        = 'monthly'
+    }
+  },
+  { immediate: true }
+)
 </script>
 
 <style scoped>

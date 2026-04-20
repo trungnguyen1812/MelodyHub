@@ -24,6 +24,7 @@ use App\Http\Controllers\Api\Client\CommentInteractionController;
 use App\Http\Controllers\Api\Client\Songinteractioncontroller;
 use App\Http\Controllers\Api\Client\SongPlayController as ClientSongPlayController;
 use App\Http\Controllers\Api\Client\ClientAlbumsContronller;
+use App\Http\Controllers\Api\Client\ClientAdvertisingController;
 use App\Http\Controllers\Api\SongPlayController;
 use App\Models\Partner;
 use App\Models\Song;
@@ -77,8 +78,13 @@ Route::prefix('client')->group(function () {
     // 
     Route::get('/showsubcription', [SubscriptionController::class,'getAllSubscription']);
     // payment
-    Route::post('/payment/create-qr', [PaymentController::class, 'create_QR'])
-        ->middleware('auth:sanctum');
+    Route::middleware('auth:sanctum')->group(function () {
+        Route::post('/payment/create-qr',        [PaymentController::class, 'create_QR']);
+        Route::post('/payment/create-topup-qr',  [PaymentController::class, 'create_TopUp_QR']);
+        Route::post('/payment/webhook',          [PaymentController::class, 'webhook']);
+        Route::get('/payments/check-status', [PaymentController::class, 'checkStatus']);
+
+    });
 
     Route::middleware('auth:sanctum')->get(
         '/me/subscription',
@@ -153,10 +159,18 @@ Route::prefix('client')->group(function () {
         Route::get('/',         [ClientPartnersController::class, 'index']);
         Route::middleware('auth:sanctum')->group(function () {
             Route::post('/add', [ClientPartnersController::class, 'add']);
+
+            // Advertising
+            Route::prefix('advertising')->group(function () {
+                Route::get('/', [ClientAdvertisingController::class, 'index']);
+                Route::post('/store', [ClientAdvertisingController::class, 'store']);
+                Route::get('/{advertisement}', [ClientAdvertisingController::class, 'show']);  
+                Route::put('/{advertisement}', [ClientAdvertisingController::class, 'update']); 
+                Route::patch('/{advertisement}', [ClientAdvertisingController::class, 'update']);
+                Route::delete('/{advertisement}', [ClientAdvertisingController::class, 'destroy']);
+                Route::patch('/{advertisement}/toggle-status', [ClientAdvertisingController::class, 'toggleStatus']);
+            });
         });
-        // Route::get('/{song}',     [PartnersManagerController::class, 'show']);
-        // Route::post('/{song}',     [PartnersManagerController::class, 'update']);
-        // Route::post('/{song}',  [PartnersManagerController::class, 'destroy']);
     });
 
     // // Router Genres  manager

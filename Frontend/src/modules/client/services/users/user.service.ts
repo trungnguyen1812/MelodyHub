@@ -2,7 +2,7 @@ import api from "@/plugins/axios";
 import adminApi from '@/plugins/axios_admin';
 import adminAuthApi from '@/plugins/axios_admin_auth';
 // import interface
-import {CreateQRPayload } from '@/modules/client/interfaces/users/CreateQRPayload';
+import {CreateQRPayload ,CreateTopUpQRPayload} from '@/modules/client/interfaces/users/CreateQRPayload';
 
 export interface CreateQRResponse {
   qr_url: string;
@@ -35,12 +35,19 @@ class UserService {
     async create_QR(payload: CreateQRPayload){  
         return await api.post("/payment/create-qr",payload);
     }
+    async create_QR_TopUp(payload: CreateTopUpQRPayload){  
+        return await api.post("/payment/create-topup-qr",payload);
+    }
     async checkStatus(paymentId: number): Promise<PaymentStatusResponse> {
         const { data } = await api.get(`/payment/${paymentId}/status`);
         return data;
     }
     async checkSubscription(){
         const  data = await api.get(`/me/subscription`);
+        return data;
+    } 
+    async checkTopUpStatus(){
+        const data = await api.get('/payments/check-status')
         return data;
     } 
 }

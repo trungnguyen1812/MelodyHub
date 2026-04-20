@@ -80,6 +80,7 @@ export interface PermissionResponse {
     created_at: string
     updated_at: string
     deleted_at: string | null
+    wallet_balance: number| null
   }
   roles_flags: {
     is_admin: boolean

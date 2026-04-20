@@ -47,6 +47,7 @@ use Illuminate\Support\Facades\DB;
  * @property int $has_used_trial
  * @property bool $is_vip
  * @property Carbon|null $vip_expires_at
+ * @property float $wallet_balance
  * 
  * @property Collection|AdImpression[] $ad_impressions
  * @property Collection|AdminActivityLog[] $admin_activity_logs
@@ -103,7 +104,8 @@ class User extends Authenticatable
 		'trending_score' => 'float',
 		'has_used_trial' => 'int',
 		'is_vip' => 'bool',
-		'vip_expires_at' => 'datetime'
+		'vip_expires_at' => 'datetime',
+		'wallet_balance' => 'decimal:2',
 	];
 
 	protected $hidden = [
@@ -133,7 +135,8 @@ class User extends Authenticatable
 		'seo_description',
 		'has_used_trial',
 		'is_vip',
-		'vip_expires_at'
+		'vip_expires_at',
+		'wallet_balance'
 	];
 
 	public function country()

@@ -213,7 +213,7 @@ const continueToDashboard = () => {
   if (selectedType.value === musicPartner.value?.code) {
     router.push({ name: 'client.partner.music' })
   } else if (selectedType.value === adPartner.value?.code) {
-    router.push({ name: 'client.partner.Advertisingd' })
+    router.push({ name: 'client.partner.Advertisingd.dashboard' })
   }
 }
 </script>

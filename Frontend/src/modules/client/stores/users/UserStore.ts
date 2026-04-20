@@ -1,7 +1,7 @@
 // @/modules/client/stores/users/UserStore.ts
 import userService from "@/modules/client/services/users/user.service";
 import { SubscriptionPlan } from '@/modules/client/interfaces/users/SubscriptionPlan';
-import { CreateQRPayload } from '@/modules/client/interfaces/users/CreateQRPayload';
+import { CreateQRPayload , CreateTopUpQRPayload} from '@/modules/client/interfaces/users/CreateQRPayload';
 import { defineStore } from 'pinia';
 import router from "@/modules/router";
 import { useNotificationStore } from "@/store/notificationStore";
@@ -123,6 +123,13 @@ export const useUserStore = defineStore('client_user', {
       const response = await userService.create_QR(payload);
       return response.data;
     },
+    async fetchCreateQRToUp(payload: CreateTopUpQRPayload) {
+      this.loading = true
+      this.error = null
+
+      const response = await userService.create_QR_TopUp(payload);
+      return response.data;
+    },
     async fetchSubscriptionStatus() {
       this.subscriptionLoaded = false;
       try {
@@ -145,6 +152,26 @@ export const useUserStore = defineStore('client_user', {
             this.stopCheckSubscription();
             notificationStore.notify('Payment successful', 'success')
             router.push('/');
+          }
+        } catch (e) {
+        }
+      }, 3000);
+    },
+    startCheckTopUp(onSuccess: (balance: number) => void) {
+      if (this.checkingInterval) return;
+      const notificationStore = useNotificationStore();
+
+      this.checkingInterval = window.setInterval(async () => {
+        try {
+          const { data } = await userService.checkTopUpStatus();
+
+          if (data.status === 'completed') {
+            this.stopCheckSubscription();
+            notificationStore.notify('Top up successful!', 'success');
+            onSuccess(parseFloat(data.wallet_balance));
+          } else if (data.status === 'failed') {
+            this.stopCheckSubscription();
+            notificationStore.notify('Payment failed. Please try again.', 'error');
           }
         } catch (e) {
         }
