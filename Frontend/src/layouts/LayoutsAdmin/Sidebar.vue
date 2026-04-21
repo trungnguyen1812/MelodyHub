@@ -86,7 +86,13 @@
             <span>Partners</span>
           </li>
         </router-link>
-        <li><span class="icon-wrap"><img src="@/assets/images/icon/ad.png" alt="" /></span><span>Advertising</span></li>
+        <router-link :to="{ name: 'admin.advtisingmanager' }" custom v-slot="{ navigate, isActive }">
+          <li :class="{ active: isActive }" @click="navigate" @keyup.enter="navigate" role="link" tabindex="0">
+            <span class="icon-wrap"><img src="@/assets/images/icon/ad.png" alt="" /></span>
+            <span>Advertising</span>
+          </li>
+        </router-link>
+        
       </ul>
     </div>
 

@@ -4,9 +4,11 @@ namespace App\Http\Controllers\Api\Client;
 
 use App\Http\Controllers\Controller;
 use App\Models\Partner;
+use App\Models\Role;
 use Cloudinary\Cloudinary;
 use Illuminate\Http\UploadedFile;
 use App\Models\User;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Http\Request;
 
@@ -71,6 +73,8 @@ class ClientPartnersController extends Controller
                 ],
             ]);
 
+            DB::beginTransaction(); // Sử dụng transaction để đảm bảo tính toàn vẹn dữ liệu
+
             $file     = $request->file('contract_file');
             $fileName = $request->contract_number . '_' . time();
 
@@ -83,8 +87,10 @@ class ClientPartnersController extends Controller
                 ]
             );
 
+            $userId = $request->user()?->id ?? $request->input('user_id');
+
             $partner = Partner::create([
-                'user_id' => $request->user()?->id ?? $request->input('user_id'),
+                'user_id' => $userId,
 
                 'partner_type_id'          => $request->partner_type_id,
                 'company_name'             => $request->company_name,
@@ -112,18 +118,34 @@ class ClientPartnersController extends Controller
                 'status'                   => 'pending',
             ]);
 
+            // Gán role 'partner' cho user
+            $partnerRole = Role::firstOrCreate(
+                ['name' => 'partner'],
+                ['guard_name' => 'web']
+            );
+            
+            // Kiểm tra và gán role (nếu chưa có)
+            $user = User::find($userId);
+            if ($user && !$user->hasRole('partner')) {
+                $user->assignRole($partnerRole);
+            }
+
+            DB::commit();
+
             return response()->json([
                 'message' => 'Create partner success',
                 'data'    => $partner,
             ], 201);
 
         } catch (\Illuminate\Validation\ValidationException $e) {
+            DB::rollBack();
             return response()->json([
                 'message' => 'Validation failed',
                 'errors'  => $e->errors(),
             ], 422);
 
         } catch (\Exception $e) {
+            DB::rollBack();
             return response()->json([
                 'message' => 'Error creating partner',
                 'error'   => $e->getMessage(),

@@ -36,6 +36,8 @@ import GenresUpdateView from '@/modules/admin/views/genres/GenreUpdate.view.vue'
 // managerment partner
 import PartnerManagerView from '@/modules/admin/views/partners/PartnersManager.view.vue';
 import PartnerDetailView from '@/modules/admin/views/partners/PartnerDetailview.vue';
+// managerment advertising
+import AdvertisingManagerView from '@/modules/admin/views/advertising/AdvertisingManager.view.vue';
 // ĐẢM BẢO EXPORT ĐÚNG
 export const ROUTER_ADMIN = [
   {
@@ -319,6 +321,16 @@ export const ROUTER_ADMIN = [
         path: "partners/detail/:id",
         name: "admin.partner.detail",
         component: PartnerDetailView,
+        meta: {
+          requiresAuth: true,
+          requiresAdmin: true
+        }
+      },
+      /* ================================================ Advertising ================================================*/
+       {
+        path: "advtising/",
+        name: "admin.advtisingmanager",
+        component: AdvertisingManagerView,
         meta: {
           requiresAuth: true,
           requiresAdmin: true

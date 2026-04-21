@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\Admin\UserManagerController;
 use App\Http\Controllers\Api\Auth\AuthController;
 use App\Http\Controllers\Api\Auth\OTPController;
 use App\Http\Controllers\Api\Admin\AdminAuthController;
+use App\Http\Controllers\Api\Admin\AdvertisingManagerController;
 use App\Http\Controllers\Api\client\SubscriptionController; 
 use App\Http\Controllers\Api\Payment\PaymentController;
 use App\Http\Controllers\Api\Payment\UserSubscriptionController;
@@ -320,6 +321,13 @@ Route::prefix('admin')->middleware(['admin.token'])->group(function () {
         // Route::delete('/delete/{song}', [SongsManagerController::class, 'delete']);
         // Route::delete('/delete-multiple', [SongsManagerController::class, 'deleteMultiple']);
         // Route::post('/update/{song}', [SongsManagerController::class, 'update']);
+    });
+
+     // Advertising
+    Route::prefix('advertising')->group(function () {
+        Route::get('/', [AdvertisingManagerController::class, 'index']);
+        Route::get('/{advertisement}', [AdvertisingManagerController::class, 'show']);  
+        Route::patch('/{advertisement}/toggle-status', [AdvertisingManagerController::class, 'toggleStatus']);
     });
    
 });

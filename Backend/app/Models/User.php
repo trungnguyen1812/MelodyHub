@@ -384,64 +384,105 @@ class User extends Authenticatable
 
 	public static function getUserStatistics()
 	{
-		$currentMonth = Carbon::now()->startOfMonth(); // 2026-03-01
-		$lastMonth = Carbon::now()->subMonth()->startOfMonth(); // 2026-02-01
-		$endOfLastMonth = $lastMonth->copy()->endOfMonth(); // 2026-02-28
+		$currentMonth = Carbon::now()->startOfMonth();
+		$lastMonth = Carbon::now()->subMonth()->startOfMonth();
+		$endOfLastMonth = $lastMonth->copy()->endOfMonth();
+		$twoMonthsAgo = Carbon::now()->subMonths(2)->startOfMonth();
+		$endOfTwoMonthsAgo = $twoMonthsAgo->copy()->endOfMonth();
 
-		// Lấy thống kê hiện tại theo role
-		$currentStats = DB::table('users as u')
-			->leftJoin('user_roles as ur', 'ur.user_id', '=', 'u.id')
-			->leftJoin('roles as r', 'r.id', '=', 'ur.role_id')
-			->whereNull('u.deleted_at')
-			->selectRaw("
-				COUNT(DISTINCT u.id) as total_users,
-				COUNT(DISTINCT CASE WHEN r.name = 'user_free' THEN u.id END) as free_users,
-				COUNT(DISTINCT CASE WHEN r.name = 'partner' THEN u.id END) as partners,
-				COUNT(DISTINCT CASE WHEN r.name IN ('boss','admin') THEN u.id END) as admins,
-				COUNT(DISTINCT CASE WHEN r.name IN ('user_vip_yearly', 'user_vip_monthly') THEN u.id END) as vip_users
-			")
-			->first();
-
-		// Lấy thống kê cuối tháng trước (để so sánh tổng số)
-		$lastMonthStats = DB::table('users as u')
-			->leftJoin('user_roles as ur', 'ur.user_id', '=', 'u.id')
-			->leftJoin('roles as r', 'r.id', '=', 'ur.role_id')
-			->whereNull('u.deleted_at')
-			->where('u.created_at', '<=', $endOfLastMonth) // Users created before end of last month
-			->selectRaw("
-				COUNT(DISTINCT u.id) as total_users,
-				COUNT(DISTINCT CASE WHEN r.name = 'user_free' THEN u.id END) as free_users,
-				COUNT(DISTINCT CASE WHEN r.name = 'partner' THEN u.id END) as partners,
-				COUNT(DISTINCT CASE WHEN r.name IN ('boss','admin') THEN u.id END) as admins,
-				COUNT(DISTINCT CASE WHEN r.name IN ('user_vip_yearly', 'user_vip_monthly') THEN u.id END) as vip_users
-			")
-			->first();
-
-		// Số người dùng mới trong tháng này
-		$newUsersThisMonth = DB::table('users as u')
-			->leftJoin('user_roles as ur', 'ur.user_id', '=', 'u.id')
-			->leftJoin('roles as r', 'r.id', '=', 'ur.role_id')
-			->whereNull('u.deleted_at')
-			->where('u.created_at', '>=', $currentMonth)
-			->selectRaw("
-				COUNT(DISTINCT u.id) as total_users,
-				COUNT(DISTINCT CASE WHEN r.name = 'user_free' THEN u.id END) as free_users,
-				COUNT(DISTINCT CASE WHEN r.name = 'partner' THEN u.id END) as partners,
-				COUNT(DISTINCT CASE WHEN r.name IN ('boss','admin') THEN u.id END) as admins,
-				COUNT(DISTINCT CASE WHEN r.name IN ('user_vip_yearly', 'user_vip_monthly') THEN u.id END) as vip_users
-			")
-			->first();
-
-		// Helper function tính growth (so sánh TỔNG số)
-		$calculateTotalGrowth = function($current, $previous) {
-			if ($previous == 0) {
-				return $current > 0 ? 100 : 0;
+		// Helper function để lấy thống kê với subquery (chính xác cho từng role)
+		$getStats = function($dateCondition = null) {
+			$query = DB::table('users as u')->whereNull('u.deleted_at');
+			
+			if ($dateCondition) {
+				$query->where('u.created_at', '<=', $dateCondition);
 			}
-			return round((($current - $previous) / $previous) * 100, 2);
+			
+			return $query->selectRaw("
+				COUNT(DISTINCT u.id) as total_users,
+				COUNT(DISTINCT CASE 
+					WHEN EXISTS (
+						SELECT 1 FROM user_roles ur 
+						JOIN roles r ON r.id = ur.role_id 
+						WHERE ur.user_id = u.id AND r.name = 'user_free'
+					) THEN u.id 
+				END) as free_users,
+				COUNT(DISTINCT CASE 
+					WHEN EXISTS (
+						SELECT 1 FROM user_roles ur 
+						JOIN roles r ON r.id = ur.role_id 
+						WHERE ur.user_id = u.id AND r.name = 'partner'
+					) THEN u.id 
+				END) as partners,
+				COUNT(DISTINCT CASE 
+					WHEN EXISTS (
+						SELECT 1 FROM user_roles ur 
+						JOIN roles r ON r.id = ur.role_id 
+						WHERE ur.user_id = u.id AND r.name IN ('boss', 'admin')
+					) THEN u.id 
+				END) as admins,
+				COUNT(DISTINCT CASE 
+					WHEN EXISTS (
+						SELECT 1 FROM user_roles ur 
+						JOIN roles r ON r.id = ur.role_id 
+						WHERE ur.user_id = u.id AND r.name IN ('user_vip_yearly', 'user_vip_monthly')
+					) THEN u.id 
+				END) as vip_users
+			")->first();
 		};
 
-		// Helper function tính growth cho users mới
-		$calculateNewUsersGrowth = function($current, $previous) {
+		// Helper function để lấy thống kê user mới trong khoảng thời gian
+		$getNewUsersStats = function($startDate, $endDate = null) {
+			$query = DB::table('users as u')->whereNull('u.deleted_at')
+				->where('u.created_at', '>=', $startDate);
+			
+			if ($endDate) {
+				$query->where('u.created_at', '<=', $endDate);
+			}
+			
+			return $query->selectRaw("
+				COUNT(DISTINCT u.id) as total_users,
+				COUNT(DISTINCT CASE 
+					WHEN EXISTS (
+						SELECT 1 FROM user_roles ur 
+						JOIN roles r ON r.id = ur.role_id 
+						WHERE ur.user_id = u.id AND r.name = 'user_free'
+					) THEN u.id 
+				END) as free_users,
+				COUNT(DISTINCT CASE 
+					WHEN EXISTS (
+						SELECT 1 FROM user_roles ur 
+						JOIN roles r ON r.id = ur.role_id 
+						WHERE ur.user_id = u.id AND r.name = 'partner'
+					) THEN u.id 
+				END) as partners,
+				COUNT(DISTINCT CASE 
+					WHEN EXISTS (
+						SELECT 1 FROM user_roles ur 
+						JOIN roles r ON r.id = ur.role_id 
+						WHERE ur.user_id = u.id AND r.name IN ('boss', 'admin')
+					) THEN u.id 
+				END) as admins,
+				COUNT(DISTINCT CASE 
+					WHEN EXISTS (
+						SELECT 1 FROM user_roles ur 
+						JOIN roles r ON r.id = ur.role_id 
+						WHERE ur.user_id = u.id AND r.name IN ('user_vip_yearly', 'user_vip_monthly')
+					) THEN u.id 
+				END) as vip_users
+			")->first();
+		};
+
+		// Lấy thống kê
+		$currentStats = $getStats();
+		$lastMonthStats = $getStats($endOfLastMonth);
+		$twoMonthsAgoStats = $getStats($endOfTwoMonthsAgo);
+		
+		$newUsersThisMonth = $getNewUsersStats($currentMonth);
+		$newUsersLastMonth = $getNewUsersStats($lastMonth, $endOfLastMonth);
+
+		// Helper function tính growth
+		$calculateGrowth = function($current, $previous) {
 			if ($previous == 0) {
 				return $current > 0 ? 100 : 0;
 			}
@@ -456,42 +497,41 @@ class User extends Authenticatable
 			'admins' => $currentStats->admins ?? 0,
 			'vip_users' => $currentStats->vip_users ?? 0,
 			
-			// Last month totals (để tham khảo)
+			// Last month totals
 			'total_users_last_month' => $lastMonthStats->total_users ?? 0,
 			'free_users_last_month' => $lastMonthStats->free_users ?? 0,
 			'partners_last_month' => $lastMonthStats->partners ?? 0,
 			'admins_last_month' => $lastMonthStats->admins ?? 0,
 			'vip_users_last_month' => $lastMonthStats->vip_users ?? 0,
 			
-			// GROWTH PERCENTAGES - So sánh TỔNG SỐ (đúng)
-			'total_growth_percentage' => $calculateTotalGrowth(
+			// GROWTH PERCENTAGES
+			'total_growth_percentage' => $calculateGrowth(
 				$currentStats->total_users ?? 0, 
 				$lastMonthStats->total_users ?? 0
-			), // = ((10-7)/7)*100 = 42.86% ✅
-			
-			'free_growth_percentage' => $calculateTotalGrowth(
+			),
+			'free_growth_percentage' => $calculateGrowth(
 				$currentStats->free_users ?? 0, 
 				$lastMonthStats->free_users ?? 0
 			),
-			'partner_growth_percentage' => $calculateTotalGrowth(
+			'partner_growth_percentage' => $calculateGrowth(
 				$currentStats->partners ?? 0, 
 				$lastMonthStats->partners ?? 0
 			),
-			'admin_growth_percentage' => $calculateTotalGrowth(
+			'admin_growth_percentage' => $calculateGrowth(
 				$currentStats->admins ?? 0, 
 				$lastMonthStats->admins ?? 0
 			),
-			'vip_growth_percentage' => $calculateTotalGrowth(
+			'vip_growth_percentage' => $calculateGrowth(
 				$currentStats->vip_users ?? 0, 
 				$lastMonthStats->vip_users ?? 0
 			),
 			
 			// Growth trends
-			'total_growth_trend' => $calculateTotalGrowth($currentStats->total_users ?? 0, $lastMonthStats->total_users ?? 0) >= 0 ? 'up' : 'down',
-			'free_growth_trend' => $calculateTotalGrowth($currentStats->free_users ?? 0, $lastMonthStats->free_users ?? 0) >= 0 ? 'up' : 'down',
-			'partner_growth_trend' => $calculateTotalGrowth($currentStats->partners ?? 0, $lastMonthStats->partners ?? 0) >= 0 ? 'up' : 'down',
-			'admin_growth_trend' => $calculateTotalGrowth($currentStats->admins ?? 0, $lastMonthStats->admins ?? 0) >= 0 ? 'up' : 'down',
-			'vip_growth_trend' => $calculateTotalGrowth($currentStats->vip_users ?? 0, $lastMonthStats->vip_users ?? 0) >= 0 ? 'up' : 'down',
+			'total_growth_trend' => ($currentStats->total_users ?? 0) >= ($lastMonthStats->total_users ?? 0) ? 'up' : 'down',
+			'free_growth_trend' => ($currentStats->free_users ?? 0) >= ($lastMonthStats->free_users ?? 0) ? 'up' : 'down',
+			'partner_growth_trend' => ($currentStats->partners ?? 0) >= ($lastMonthStats->partners ?? 0) ? 'up' : 'down',
+			'admin_growth_trend' => ($currentStats->admins ?? 0) >= ($lastMonthStats->admins ?? 0) ? 'up' : 'down',
+			'vip_growth_trend' => ($currentStats->vip_users ?? 0) >= ($lastMonthStats->vip_users ?? 0) ? 'up' : 'down',
 			
 			// New users this month
 			'new_users_this_month' => $newUsersThisMonth->total_users ?? 0,
@@ -500,10 +540,14 @@ class User extends Authenticatable
 			'new_admins_this_month' => $newUsersThisMonth->admins ?? 0,
 			'new_vip_users_this_month' => $newUsersThisMonth->vip_users ?? 0,
 			
-			// New users growth (so sánh tốc độ đăng ký mới)
-			'new_users_growth_percentage' => $calculateNewUsersGrowth(
+			// New users growth (so sánh với tháng trước)
+			'new_users_growth_percentage' => $calculateGrowth(
 				$newUsersThisMonth->total_users ?? 0,
-				($lastMonthStats->total_users ?? 0) - ($lastMonthStatsBeforeLastMonth->total_users ?? 0) // Cần thêm biến này
+				$newUsersLastMonth->total_users ?? 0
+			),
+			'new_partners_growth_percentage' => $calculateGrowth(
+				$newUsersThisMonth->partners ?? 0,
+				$newUsersLastMonth->partners ?? 0
 			),
 		];
 
