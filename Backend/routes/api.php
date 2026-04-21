@@ -14,6 +14,7 @@ use App\Http\Controllers\Api\Admin\GenresManagerController;
 use App\Http\Controllers\Api\Admin\PartnersManagerController;
 use App\Http\Controllers\Api\Admin\SongsManagerController;
 use App\Http\Controllers\Api\Admin\AlbumsManagerController;
+use App\Http\Controllers\Api\Admin\TypePartnerController;
 use App\Http\Controllers\Api\Client\ArtistInteractionController;
 use App\Http\Controllers\Api\Client\ClientArtistsController;
 use App\Http\Controllers\Api\Client\ClientGenresController;
@@ -58,7 +59,7 @@ Route::prefix('client')->group(function () {
                 || $rolesFlags['is_content_manager'];
 
         $partner = Partner::where('user_id', $user->id)
-                    ->whereIn('status', ['active', 'pending'])
+                    ->whereIn('status', ['active', 'pending','suspended','terminated'])
                     ->with('partnerType') 
                     ->first();
 
@@ -270,11 +271,23 @@ Route::prefix('admin')->middleware(['admin.token'])->group(function () {
     
     // Router partners  manager
     Route::prefix('partners')->group(function () {
-        Route::get('/',         [PartnersManagerController::class, 'index']);
-        Route::post('/add',        [PartnersManagerController::class, 'add']);
-        Route::get('/{song}',     [PartnersManagerController::class, 'show']);
-        Route::post('/{song}',     [PartnersManagerController::class, 'update']);
-        Route::post('/{song}',  [PartnersManagerController::class, 'destroy']);
+        // Xem dữ liệu
+        Route::get('/', [PartnersManagerController::class, 'index']);
+        Route::get('/recent', [PartnersManagerController::class, 'recent']);
+        Route::get('/search', [PartnersManagerController::class, 'search']);
+        Route::get('/statistics', [PartnersManagerController::class, 'statistics']);
+        Route::get('/export', [PartnersManagerController::class, 'export']);
+        Route::get('/{id}', [PartnersManagerController::class, 'show']);
+        
+        // Quản lý trạng thái (admin chỉ được làm cái này)
+        Route::patch('/{id}/status', [PartnersManagerController::class, 'updateStatus']);
+        Route::post('/bulk-update-status', [PartnersManagerController::class, 'bulkUpdateStatus']);
+        
+        // Duyệt partner
+        Route::post('/{id}/verify', [PartnersManagerController::class, 'verify']);
+        
+        // Xóa (nếu cần)
+        Route::delete('/{id}', [PartnersManagerController::class, 'destroy']);
     });
 
     // Router genres  manager
@@ -295,7 +308,18 @@ Route::prefix('admin')->middleware(['admin.token'])->group(function () {
         Route::get('/{album}',                  [AlbumsManagerController::class, 'show']);
         Route::post('/update/{album}',          [AlbumsManagerController::class, 'update']);
         Route::put('/{album}/tracks',           [AlbumsManagerController::class, 'updateTracks']);
-        Route::delete('/delete/{album}',        [AlbumsManagerController::class, 'destroy']);
+    });
+
+    // type partner
+    Route::prefix('partnerTypes')->group(function () {
+        Route::get('/',         [TypePartnerController::class, 'getAllTypePartnar']);
+        // Route::get('/new',       [ClientSongsController::class, 'getNewSongs']);      
+        // Route::get('/popular',   [ClientSongsController::class, 'getPopularSongs']);  
+        // Route::post('/add',        [SongsManagerController::class, 'add']);
+        // Route::get('/{song}',     [ClientSongsController::class, 'show']);
+        // Route::delete('/delete/{song}', [SongsManagerController::class, 'delete']);
+        // Route::delete('/delete-multiple', [SongsManagerController::class, 'deleteMultiple']);
+        // Route::post('/update/{song}', [SongsManagerController::class, 'update']);
     });
    
 });

@@ -280,4 +280,37 @@ class Song extends Model
     {
         return $this->hasMany(UserQueue::class);
     }
+
+     protected static function boot()
+    {
+        parent::boot();
+        
+        static::created(function ($song) {
+            if ($song->partner_id) {
+                Partner::find($song->partner_id)?->clearCache();
+            }
+        });
+        
+        static::deleted(function ($song) {
+            if ($song->partner_id) {
+                Partner::find($song->partner_id)?->clearCache();
+            }
+        });
+        
+        static::updated(function ($song) {
+            if ($song->isDirty('partner_id')) {
+                if ($song->getOriginal('partner_id')) {
+                    Partner::find($song->getOriginal('partner_id'))?->clearCache();
+                }
+                if ($song->partner_id) {
+                    Partner::find($song->partner_id)?->clearCache();
+                }
+            }
+            
+            // Nếu total_plays thay đổi, clear cache để tính lại revenue
+            if ($song->isDirty('total_plays') && $song->partner_id) {
+                Partner::find($song->partner_id)?->clearCache();
+            }
+        });
+    }
 }

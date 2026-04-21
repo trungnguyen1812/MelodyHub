@@ -3,132 +3,207 @@
     <div class="bg-grid"></div>
     <div class="bg-glow"></div>
     <div class="container">
-      <!-- Header -->
-      <div class="header">
-        <h1 class="title">Welcome back, {{ partnerName }}</h1>
-        <p class="subtitle">Please select your partner type to continue</p>
-      </div>
-
-      <!-- 2 Cards Selection -->
-      <div class="cards-container">
-        <!-- Music Distribution Partner Card -->
-        <div
-          v-if="musicPartner"
-          class="partner-card music-card"
-          :class="{
-            selected: selectedType === musicPartner.code,
-            locked: !isMusiceDistrib
-          }"
-          @click="selectPartnerType(musicPartner.code)"
-        >
-          <div class="card-glow"></div>
-
-          <!-- Lock overlay -->
-          <div class="lock-overlay" v-if="!isMusiceDistrib">
-            <div class="lock-icon-wrap">
-              <svg width="32" height="32" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
-                <rect x="3" y="11" width="18" height="11" rx="2" />
-                <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-              </svg>
-            </div>
-            <p class="lock-text">Not available for your account</p>
+      <!-- Case 1: Đang chờ duyệt (Pending) -->
+      <div v-if="partnerStatus === 'pending'" class="pending-state">
+        <div class="pending-card">
+          <div class="pending-icon">
+            <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <circle cx="12" cy="12" r="10" />
+              <path d="M12 8v4l3 3" />
+            </svg>
           </div>
-
-          <div class="card-content">
-            <div class="icon-wrapper">
-              <svg class="card-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
-                  d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
-              </svg>
+          <h2 class="pending-title">Account Pending Verification</h2>
+          <p class="pending-desc">
+            Your partner account is currently under review by our admin team.<br>
+            You will be notified once your account is approved.
+          </p>
+          <div class="pending-info">
+            <div class="info-item">
+              <span class="info-label">Company:</span>
+              <span class="info-value">{{ partnerInfo?.company_name }}</span>
             </div>
-            <h2 class="card-title">{{ musicPartner.name }}</h2>
-            <p class="card-description">
-              {{ musicPartner.description || 'Manage your music catalog, track releases, and monitor streaming performance' }}
-            </p>
-            <div class="card-stats">
-              <div class="stat">
-                <span class="stat-value">{{ musicPartner.default_revenue_share }}%</span>
-                <span class="stat-label">Default Revenue Share</span>
-              </div>
-              <div class="stat">
-                <span class="stat-value">{{ musicPartner.default_payment_threshold }}USD</span>
-                <span class="stat-label">Default Payment Threshold</span>
-              </div>
+            <div class="info-item">
+              <span class="info-label">Status:</span>
+              <span class="info-value status-pending">Pending</span>
             </div>
-            <button class="select-btn" :disabled="!isMusiceDistrib">
-              {{ selectedType === musicPartner.code ? 'Selected' : 'Select' }}
-              <svg v-if="selectedType === musicPartner.code" class="check-icon" fill="none" stroke="currentColor"
-                viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-              </svg>
-            </button>
+            <div class="info-item">
+              <span class="info-label">Registered on:</span>
+              <span class="info-value">{{ formatDate(partnerInfo?.created_at) }}</span>
+            </div>
           </div>
-        </div>
-
-        <!-- Advertising Partner Card -->
-        <div
-          v-if="adPartner"
-          class="partner-card ad-card"
-          :class="{
-            selected: selectedType === adPartner.code,
-            locked: !isAdvertising
-          }"
-          @click="selectPartnerType(adPartner.code)"
-        >
-          <div class="card-glow"></div>
-
-          <!-- Lock overlay -->
-          <div class="lock-overlay" v-if="!isAdvertising">
-            <div class="lock-icon-wrap">
-              <svg width="32" height="32" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
-                <rect x="3" y="11" width="18" height="11" rx="2" />
-                <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-              </svg>
-            </div>
-            <p class="lock-text">Not available for your account</p>
-          </div>
-
-          <div class="card-content">
-            <div class="icon-wrapper">
-              <svg class="card-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
-                  d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055zM20.488 9H15V3.512A9.001 9.001 0 0120.488 9zM3 12a9 9 0 109-9" />
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 12l3-3" />
-              </svg>
-            </div>
-            <h2 class="card-title">{{ adPartner.name }}</h2>
-            <p class="card-description">
-              {{ adPartner.description || 'Manage ad campaigns, track impressions, and optimize your marketing ROI' }}
-            </p>
-            <div class="card-stats">
-              <div class="stat">
-                <span class="stat-value">{{ adPartner.default_revenue_share }}%</span>
-                <span class="stat-label">Default Revenue Share</span>
-              </div>
-              <div class="stat">
-                <span class="stat-value">{{ adPartner.default_payment_threshold }}USD</span>
-                <span class="stat-label">Default Payment Threshold</span>
-              </div>
-            </div>
-            <button class="select-btn" :disabled="!isAdvertising">
-              {{ selectedType === adPartner.code ? 'Selected' : 'Select' }}
-              <svg v-if="selectedType === adPartner.code" class="check-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-              </svg>
-            </button>
-          </div>
+          <button class="back-btn" @click="router.push({ name: 'client.home' })">
+            Back to Home
+          </button>
         </div>
       </div>
 
-      <!-- Continue Button -->
-      <div class="action-footer" v-if="selectedType">
-        <button class="continue-btn" @click="continueToDashboard">
-          Continue to {{ selectedType === musicPartner?.code ? musicPartner?.name : adPartner?.name }} Dashboard
-          <svg class="arrow-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3" />
-          </svg>
-        </button>
+      <!-- Case 2: Bị suspended -->
+      <div v-else-if="partnerStatus === 'suspended'" class="suspended-state">
+        <div class="suspended-card">
+          <div class="suspended-icon">
+            <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <circle cx="12" cy="12" r="10" />
+              <line x1="12" y1="8" x2="12" y2="12" />
+              <line x1="12" y1="16" x2="12.01" y2="16" />
+            </svg>
+          </div>
+          <h2 class="suspended-title">Account Suspended</h2>
+          <p class="suspended-desc">
+            Your partner account has been suspended. Please contact support for more information.
+          </p>
+          <button class="contact-btn" @click="contactSupport">
+            Contact Support
+          </button>
+        </div>
       </div>
+
+      <!-- Case 3: Bị terminated -->
+      <div v-else-if="partnerStatus === 'terminated'" class="terminated-state">
+        <div class="terminated-card">
+          <div class="terminated-icon">
+            <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M18 6L6 18M6 6l12 12" />
+            </svg>
+          </div>
+          <h2 class="terminated-title">Account Terminated</h2>
+          <p class="terminated-desc">
+            Your partnership has been terminated. If you believe this is a mistake, please contact our support team.
+          </p>
+          <button class="contact-btn" @click="contactSupport">
+            Contact Support
+          </button>
+        </div>
+      </div>
+
+      <!-- Case 4: Active - Hiển thị bình thường -->
+      <template v-else-if="partnerStatus === 'active'">
+        <!-- Header -->
+        <div class="header">
+          <h1 class="title">Welcome back, {{ partnerName }}</h1>
+          <p class="subtitle">Please select your partner type to continue</p>
+        </div>
+
+        <!-- 2 Cards Selection -->
+        <div class="cards-container">
+          <!-- Music Distribution Partner Card -->
+          <div
+            v-if="musicPartner"
+            class="partner-card music-card"
+            :class="{
+              selected: selectedType === musicPartner.code,
+              locked: !isMusiceDistrib
+            }"
+            @click="selectPartnerType(musicPartner.code)"
+          >
+            <div class="card-glow"></div>
+
+            <!-- Lock overlay -->
+            <div class="lock-overlay" v-if="!isMusiceDistrib">
+              <div class="lock-icon-wrap">
+                <svg width="32" height="32" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                  <rect x="3" y="11" width="18" height="11" rx="2" />
+                  <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                </svg>
+              </div>
+              <p class="lock-text">Not available for your account</p>
+            </div>
+
+            <div class="card-content">
+              <div class="icon-wrapper">
+                <svg class="card-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                    d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
+                </svg>
+              </div>
+              <h2 class="card-title">{{ musicPartner.name }}</h2>
+              <p class="card-description">
+                {{ musicPartner.description || 'Manage your music catalog, track releases, and monitor streaming performance' }}
+              </p>
+              <div class="card-stats">
+                <div class="stat">
+                  <span class="stat-value">{{ musicPartner.default_revenue_share }}%</span>
+                  <span class="stat-label">Default Revenue Share</span>
+                </div>
+                <div class="stat">
+                  <span class="stat-value">{{ musicPartner.default_payment_threshold }}USD</span>
+                  <span class="stat-label">Default Payment Threshold</span>
+                </div>
+              </div>
+              <button class="select-btn" :disabled="!isMusiceDistrib">
+                {{ selectedType === musicPartner.code ? 'Selected' : 'Select' }}
+                <svg v-if="selectedType === musicPartner.code" class="check-icon" fill="none" stroke="currentColor"
+                  viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <!-- Advertising Partner Card -->
+          <div
+            v-if="adPartner"
+            class="partner-card ad-card"
+            :class="{
+              selected: selectedType === adPartner.code,
+              locked: !isAdvertising
+            }"
+            @click="selectPartnerType(adPartner.code)"
+          >
+            <div class="card-glow"></div>
+
+            <!-- Lock overlay -->
+            <div class="lock-overlay" v-if="!isAdvertising">
+              <div class="lock-icon-wrap">
+                <svg width="32" height="32" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                  <rect x="3" y="11" width="18" height="11" rx="2" />
+                  <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                </svg>
+              </div>
+              <p class="lock-text">Not available for your account</p>
+            </div>
+
+            <div class="card-content">
+              <div class="icon-wrapper">
+                <svg class="card-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                    d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055zM20.488 9H15V3.512A9.001 9.001 0 0120.488 9zM3 12a9 9 0 109-9" />
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 12l3-3" />
+                </svg>
+              </div>
+              <h2 class="card-title">{{ adPartner.name }}</h2>
+              <p class="card-description">
+                {{ adPartner.description || 'Manage ad campaigns, track impressions, and optimize your marketing ROI' }}
+              </p>
+              <div class="card-stats">
+                <div class="stat">
+                  <span class="stat-value">{{ adPartner.default_revenue_share }}%</span>
+                  <span class="stat-label">Default Revenue Share</span>
+                </div>
+                <div class="stat">
+                  <span class="stat-value">{{ adPartner.default_payment_threshold }}USD</span>
+                  <span class="stat-label">Default Payment Threshold</span>
+                </div>
+              </div>
+              <button class="select-btn" :disabled="!isAdvertising">
+                {{ selectedType === adPartner.code ? 'Selected' : 'Select' }}
+                <svg v-if="selectedType === adPartner.code" class="check-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Continue Button -->
+        <div class="action-footer" v-if="selectedType">
+          <button class="continue-btn" @click="continueToDashboard">
+            Continue to {{ selectedType === musicPartner?.code ? musicPartner?.name : adPartner?.name }} Dashboard
+            <svg class="arrow-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+            </svg>
+          </button>
+        </div>
+      </template>
     </div>
   </div>
 </template>
@@ -149,6 +224,8 @@ const selectedType = ref<string | null>(null)
 const isMusiceDistrib = ref(false)
 const isAdvertising = ref(false)
 const loadingPermission = ref(true)
+const partnerStatus = ref<string>('')
+const partnerInfo = ref<any>(null)
 
 // Lấy thông tin partner từ store
 const musicPartner = computed(() => {
@@ -159,10 +236,14 @@ const adPartner = computed(() => {
   return TypePartners.value?.find((p: any) => p.code === 'advertising')
 })
 
+const formatDate = (date: string) => {
+  if (!date) return 'N/A'
+  return new Date(date).toLocaleDateString('vi-VN')
+}
 
-// Stats từ partner data
-const musicStats = ref({ releases: 0, streams: '0' })
-const adStats = ref({ campaigns: 0, impressions: '0' })
+const contactSupport = () => {
+  window.location.href = 'mailto:support@yourdomain.com'
+}
 
 onMounted(async () => {
   try {
@@ -172,6 +253,16 @@ onMounted(async () => {
 
     const res = await clientApi.get('/check-permission')
     const data = res.data
+
+    // Lấy status của partner
+    partnerStatus.value = data.partner?.status || 'pending'
+    partnerInfo.value = data.partner
+
+    // Nếu không phải active thì không cần xử lý tiếp
+    if (partnerStatus.value !== 'active') {
+      loadingPermission.value = false
+      return
+    }
 
     partnerName.value = data.user?.name ?? 'Partner'
     isMusiceDistrib.value = data.is_music_distribution
@@ -184,24 +275,13 @@ onMounted(async () => {
       selectedType.value = adPartner.value?.code || 'advertising'
     }
 
-    if (data.partner) {
-      musicStats.value.releases = data.partner.total_songs ?? 0
-      musicStats.value.streams = formatNumber(data.partner.total_streams ?? 0)
-      adStats.value.campaigns = data.partner.total_campaigns ?? 0
-      adStats.value.impressions = formatNumber(data.partner.total_impressions ?? 0)
-    }
-  } catch {
+  } catch (error) {
+    console.error(error)
     router.push({ name: 'login' })
   } finally {
     loadingPermission.value = false
   }
 })
-
-const formatNumber = (num: number): string => {
-  if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M'
-  if (num >= 1000) return (num / 1000).toFixed(1) + 'K'
-  return num.toString()
-}
 
 const selectPartnerType = (type: string) => {
   if (type === musicPartner.value?.code && !isMusiceDistrib.value) return
@@ -551,5 +631,115 @@ const continueToDashboard = () => {
   .card-title {
     font-size: 1.5rem;
   }
+}
+.pending-state,
+.suspended-state,
+.terminated-state,
+.loading-state {
+  min-height: 80vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pending-card,
+.suspended-card,
+.terminated-card {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 24px;
+  padding: 48px;
+  text-align: center;
+  max-width: 500px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.pending-icon,
+.suspended-icon,
+.terminated-icon {
+  width: 80px;
+  height: 80px;
+  margin: 0 auto 24px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #f59e0b;
+}
+
+.suspended-icon {
+  color: #ef4444;
+}
+
+.terminated-icon {
+  color: #ef4444;
+}
+
+.pending-title,
+.suspended-title,
+.terminated-title {
+  font-size: 28px;
+  font-weight: 700;
+  margin-bottom: 16px;
+  color: #f0f4f8;
+}
+
+.pending-desc,
+.suspended-desc,
+.terminated-desc {
+  color: #94a3b8;
+  margin-bottom: 32px;
+  line-height: 1.6;
+}
+
+.pending-info {
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 32px;
+  text-align: left;
+}
+
+.info-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.info-item:last-child {
+  border-bottom: none;
+}
+
+.info-label {
+  color: #64748b;
+  font-weight: 500;
+}
+
+.info-value {
+  color: #e2e8f0;
+}
+
+.status-pending {
+  color: #f59e0b;
+  font-weight: 600;
+}
+
+.back-btn,
+.contact-btn {
+  background: linear-gradient(90deg, #3b82f6, #2563eb);
+  border: none;
+  padding: 12px 24px;
+  border-radius: 12px;
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.back-btn:hover,
+.contact-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
 }
 </style>

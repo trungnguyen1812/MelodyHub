@@ -10,6 +10,7 @@ use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\DB;
 
 /**
  * Class Partner
@@ -70,12 +71,6 @@ class Partner extends Model
 		'contract_end_date' => 'datetime',
 		'revenue_share_percentage' => 'float',
 		'payment_threshold' => 'float',
-		'total_songs' => 'int',
-		'total_artists' => 'int',
-		'total_albums' => 'int',
-		'total_revenue' => 'float',
-		'total_paid' => 'float',
-		'pending_payout' => 'float',
 		'verified_at' => 'datetime',
 		'verified_by' => 'int'
 	];
@@ -102,12 +97,6 @@ class Partner extends Model
 		'bank_branch',
 		'bank_account_number',
 		'bank_account_name',
-		'total_songs',
-		'total_artists',
-		'total_albums',
-		'total_revenue',
-		'total_paid',
-		'pending_payout',
 		'status',
 		'verified_at',
 		'verified_by',
@@ -143,4 +132,63 @@ class Partner extends Model
 	{
 		return $this->belongsTo(PartnerType::class, 'partner_type_id');
 	}
+
+	public function artists()
+    {
+        return $this->hasMany(Artist::class, 'partner_id');
+    }
+    
+    public function albums()
+    {
+        return $this->hasMany(Album::class, 'partner_id');
+    }
+    
+    public function payments()
+    {
+        return $this->hasMany(Payment::class, 'partner_id');
+    }
+
+	// app/Models/Partner.php
+	public function getTotalSongsAttribute()
+	{
+		return $this->songs_count ?? $this->songs()->count();
+	}
+
+    
+	public function getTotalArtistsAttribute()
+	{
+		return $this->artists_count ?? $this->artists()->count();
+	}
+
+	public function getTotalAlbumsAttribute()
+	{
+		return $this->albums_count ?? $this->albums()->count();
+	}
+
+    public function getTotalRevenueAttribute(): float
+    {
+        try {
+            return $this->partner_revenues()->sum('amount') ?? 0;
+        } catch (\Exception $e) {
+            return 0;
+        }
+    }
+
+    public function getTotalPaidAttribute(): float
+    {
+        try {
+            return $this->partner_payouts()->sum('amount') ?? 0;
+        } catch (\Exception $e) {
+            return 0;
+        }
+    }
+
+    public function getPendingPayoutAttribute(): float
+    {
+        try {
+            return $this->total_revenue - $this->total_paid;
+        } catch (\Exception $e) {
+            return 0;
+        }
+    }
 }

@@ -33,7 +33,9 @@ import GenresDetailView from '@/modules/admin/views/genres/GenreDetail.view.vue'
 import GenresAddView from '@/modules/admin/views/genres/GenreAdd.view.vue';
 import AllListGenresView from '@/modules/admin/views/genres/AllListGenres.view.vue';
 import GenresUpdateView from '@/modules/admin/views/genres/GenreUpdate.view.vue';
-
+// managerment partner
+import PartnerManagerView from '@/modules/admin/views/partners/PartnersManager.view.vue';
+import PartnerDetailView from '@/modules/admin/views/partners/PartnerDetailview.vue';
 // ĐẢM BẢO EXPORT ĐÚNG
 export const ROUTER_ADMIN = [
   {
@@ -302,7 +304,26 @@ export const ROUTER_ADMIN = [
           requiresAuth: true,
           requiresAdmin: true
         }
-      }
+      },
+      /* ================================================ Partner ================================================*/
+      {
+        path: "partners",
+        name: "admin.partnersmanager",
+        component: PartnerManagerView,
+        meta: {
+          requiresAuth: true,
+          requiresAdmin: true
+        }
+      },
+      {
+        path: "partners/detail/:id",
+        name: "admin.partner.detail",
+        component: PartnerDetailView,
+        meta: {
+          requiresAuth: true,
+          requiresAdmin: true
+        }
+      },
     ]
   },
 ];

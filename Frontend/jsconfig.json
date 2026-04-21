@@ -1,20 +1,3 @@
-// {
-//   "compilerOptions": {
-//     "target": "es2020",
-//     "module": "es2020",
-//     "moduleResolution": "node",
-//     "baseUrl": "./",
-//     "paths": {
-//       "@/*": ["src/*"],
-//       "@client/*": ["src/modules/client/*"],
-//       "@admin/*": ["src/modules/admin/*"],
-//       "@common/*": ["src/modules/common/*"]
-//     },
-//     "types": ["vite/client"],
-//     "esModuleInterop": true
-//   }
-// }
-
 {
   "compilerOptions": {
     "target": "ESNext",

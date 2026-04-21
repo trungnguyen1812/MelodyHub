@@ -1,11 +1,11 @@
 import { defineStore } from "pinia";
-import TypePartnersService from "@/modules/client/services/typePartners/typePartner.service";
+import TypePartnersService from "@/modules/admin/services/typePartners/typePartner.service";
 import {PartnerType} from '@/interfaces/typePartner.interface';
 
 
 
 
-export const useTypePartnerstore = defineStore("TypePartners_client", {
+export const useTypePartnerstore = defineStore("TypePartners", {
     state: () => ({
         profile: null as PartnerType | null,
         TypePartners: [] as PartnerType[],

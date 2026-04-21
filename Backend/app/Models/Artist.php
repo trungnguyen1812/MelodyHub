@@ -170,4 +170,32 @@ class Artist extends Model
     {
         return $this->belongsTo(Partner::class, 'partner_id', 'id');
     }
+
+	 protected static function boot()
+    {
+        parent::boot();
+        
+        static::created(function ($artist) {
+            if ($artist->partner_id) {
+                Partner::find($artist->partner_id)?->clearCache();
+            }
+        });
+        
+        static::deleted(function ($artist) {
+            if ($artist->partner_id) {
+                Partner::find($artist->partner_id)?->clearCache();
+            }
+        });
+        
+        static::updated(function ($artist) {
+            if ($artist->isDirty('partner_id')) {
+                if ($artist->getOriginal('partner_id')) {
+                    Partner::find($artist->getOriginal('partner_id'))?->clearCache();
+                }
+                if ($artist->partner_id) {
+                    Partner::find($artist->partner_id)?->clearCache();
+                }
+            }
+        });
+    }
 }

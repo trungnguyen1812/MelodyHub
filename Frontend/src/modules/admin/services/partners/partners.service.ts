@@ -1,66 +1,131 @@
+// services/partnerService.ts
 import adminApi from '@/plugins/axios_admin';
-import type { CreateArtistPayload } from "@/modules/admin/interfaces/artists/create-artist.payload";
+import type { CreatePartnerPayload } from "@/modules/admin/interfaces/partners/create-partner.payload";
+import type { UpdatePartnerPayload } from "@/modules/admin/interfaces/partners/update-partner.payload";
 
 class PartnerService {
 
+    /**
+     * Lấy danh sách tất cả partners
+     */
     async getAllPartners() {
         const res = await adminApi.get("/partners");
         return res.data;
     }
 
-    // async searchArtist(keyword: string) {
-    //     const res = await adminApi.post("/artists/search", {
-    //         q: keyword  
-    //     });
-    //     return res.data;
-    // }
+    /**
+     * Lấy danh sách partners gần đây (cho dashboard)
+     */
+    async getRecentPartners(limit: number = 8) {
+        const res = await adminApi.get("/partners/recent", {
+            params: { limit }
+        });
+        return res.data;
+    }
 
-    // async detailArtist(id: number) {
-    //     return await adminApi.get(`/artists/${id}`);
-    // } 
+    /**
+     * Tìm kiếm partners
+     */
+    async searchPartners(keyword: string) {
+        const res = await adminApi.get("/partners/search", {
+            params: { keyword }
+        });
+        return res.data;
+    }
 
-    // async deleteArtist(id: number) {
-    //     return await adminApi.delete(`/artists/delete/${id}`);
-    // }
+    /**
+     * Lấy chi tiết một partner
+     */
+    async detailPartner(id: number) {
+        const res = await adminApi.get(`/partners/${id}`);
+        return res.data;
+    }
 
-    // async addArtist(payload: CreateArtistPayload) {
-    //     return adminApi.post('/artists/add', payload, {
-    //         headers: {
-    //             'Content-Type': 'multipart/form-data'
-    //         }
-    //     });
-    // }
+    /**
+     * Verify partner (pending -> active)
+     */
+    async verifyPartner(id: number) {
+        const res = await adminApi.post(`/partners/${id}/verify`);
+        return res.data;
+    }
 
-    // async updateArtist(id: number, payload: CreateArtistPayload) {
-    //     const formData = new FormData();
+    /**
+     * Update status của partner (active/suspended/terminated)
+     */
+    async updatePartnerStatus(id: number, status: 'active' | 'pending' | 'suspended' | 'terminated') {
+        const res = await adminApi.patch(`/partners/${id}/status`, { status });
+        return res.data;
+    }
+
+    /**
+     * Lấy thống kê partners cho dashboard
+     */
+    async getPartnerStatistics() {
+        const res = await adminApi.get("/partners/statistics");
+        return res.data;
+    }
+
+    /**
+     * Bulk update status cho nhiều partners
+     */
+    async bulkUpdateStatus(ids: number[], status: string) {
+        const res = await adminApi.post("/partners/bulk-update-status", {
+            ids,
+            status
+        });
+        return res.data;
+    }
+
+    /**
+     * Lấy partners theo status
+     */
+    async getPartnersByStatus(status: string) {
+        const res = await adminApi.get("/partners", {
+            params: { status }
+        });
+        return res.data;
+    }
+
+    /**
+     * Upload logo cho partner
+     */
+    async uploadLogo(id: number, file: File) {
+        const formData = new FormData();
+        formData.append('logo', file);
         
-    //     Object.keys(payload).forEach(key => {
-    //         if (key !== 'avatar' && key !== 'banner'  && payload[key as keyof CreateArtistPayload]) {
-    //             formData.append(key, String(payload[key as keyof CreateArtistPayload]));
-    //         }
-    //     });
-        
-    //     if (payload.avatar instanceof File) {
-    //         formData.append('avatar', payload.avatar);
-    //     }
-    //     if (payload.banner instanceof File) {
-    //         formData.append('banner', payload.banner);
-    //     }
-    //     console.log(payload.avatar);
-    //     console.log(payload.banner);
-        
-        
-    //     return await adminApi.post(`/artists/update/${id}`, formData, {
-    //         headers: {
-    //             'Content-Type': undefined, 
-    //         },
-    //     });
-    // }
+        const res = await adminApi.post(`/partners/${id}/upload-logo`, formData, {
+            headers: {
+                'Content-Type': 'multipart/form-data'
+            }
+        });
+        return res.data;
+    }
 
-    // async getArtistStatistics(){
-    //     const res = await adminApi.get("/artists/statistics");
-    //     return res.data;
-    // }
+    /**
+     * Upload contract file cho partner
+     */
+    async uploadContract(id: number, file: File) {
+        const formData = new FormData();
+        formData.append('contract', file);
+        
+        const res = await adminApi.post(`/partners/${id}/upload-contract`, formData, {
+            headers: {
+                'Content-Type': 'multipart/form-data'
+            }
+        });
+        return res.data;
+    }
+
+    /**
+     * Export partners data
+     */
+    async exportPartners(format: 'csv' | 'excel' | 'pdf' = 'csv') {
+        const res = await adminApi.get("/partners/export", {
+            params: { format },
+            responseType: 'blob'
+        });
+        return res.data;
+    }
 }
 
 export default new PartnerService();
