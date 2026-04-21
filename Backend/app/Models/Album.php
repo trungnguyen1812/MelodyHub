@@ -48,7 +48,6 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
  */
 class Album extends Model
 {
-	use SoftDeletes;
 	protected $table = 'albums';
 
 	protected $casts = [
@@ -123,13 +122,10 @@ class Album extends Model
 		)->orderBy('album_tracks.position');
 	}
 
-	public function resolveRouteBinding($value, $field = null)
-    {
-        return $this->where('id', $value)
-            ->orWhere('slug', $value)
-            ->withTrashed()
-            ->firstOrFail();
-    }
+	public function getRouteKeyName()
+	{
+		return 'slug';
+	}
 
     public function scopeSearch($query, $q)
     {

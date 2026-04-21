@@ -191,4 +191,11 @@ class Partner extends Model
             return 0;
         }
     }
+	public function clearCache(): void
+	{
+		\Illuminate\Support\Facades\Cache::forget("partner_{$this->id}");
+		\Illuminate\Support\Facades\Cache::forget("partner_{$this->id}_songs");
+		\Illuminate\Support\Facades\Cache::forget("partner_{$this->id}_artists");
+		\Illuminate\Support\Facades\Cache::forget("partners_all");
+	}
 }

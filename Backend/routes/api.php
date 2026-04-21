@@ -197,13 +197,15 @@ Route::prefix('client')->group(function () {
         Route::get('/',         [ClientAlbumsContronller::class, 'index']);
         Route::post('/search',  [ClientAlbumsContronller::class, 'search']);
         Route::post('/add',     [ClientAlbumsContronller::class, 'add']);
-        Route::get('/{album}',  [ClientAlbumsContronller::class, 'show']);
-        Route::post('/update/{slug}', [ClientAlbumsContronller::class, 'update']);
-        Route::put('/{album}/tracks',  [ClientAlbumsContronller::class, 'updateTracks']);
-        Route::delete('/delete/{album}', [ClientAlbumsContronller::class, 'destroy']);
-
-        // 
+        
         Route::get('/partner/{partnerId}', [ClientAlbumsContronller::class, 'showAlbumByPartner']);
+        Route::post('/update/{slug}',      [ClientAlbumsContronller::class, 'update']);
+        Route::delete('/delete/{album}',   [ClientAlbumsContronller::class, 'destroy']);
+        
+        Route::get('/{album}',             [ClientAlbumsContronller::class, 'show'])
+            ->where('album', '[a-z0-9-]+');
+        
+        Route::put('/{album}/tracks',      [ClientAlbumsContronller::class, 'updateTracks']);
     });
 });
 

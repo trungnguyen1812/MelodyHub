@@ -73,7 +73,7 @@ class ClientPartnersController extends Controller
                 ],
             ]);
 
-            DB::beginTransaction(); // Sử dụng transaction để đảm bảo tính toàn vẹn dữ liệu
+            DB::beginTransaction();
 
             $file     = $request->file('contract_file');
             $fileName = $request->contract_number . '_' . time();
@@ -118,16 +118,36 @@ class ClientPartnersController extends Controller
                 'status'                   => 'pending',
             ]);
 
-            // Gán role 'partner' cho user
-            $partnerRole = Role::firstOrCreate(
-                ['name' => 'partner'],
-                ['guard_name' => 'web']
-            );
+            // Gán role 'partner' cho user - Sửa phần này
+            $partnerRole = DB::table('roles')->where('name', 'partner')->first();
             
-            // Kiểm tra và gán role (nếu chưa có)
-            $user = User::find($userId);
-            if ($user && !$user->hasRole('partner')) {
-                $user->assignRole($partnerRole);
+            // Nếu chưa có role partner thì tạo mới
+            if (!$partnerRole) {
+                $partnerRoleId = DB::table('roles')->insertGetId([
+                    'name' => 'partner',
+                    'description' => 'Partner/Producer',
+                    'created_at' => now(),
+                    'updated_at' => now()
+                ]);
+            } else {
+                $partnerRoleId = $partnerRole->id;
+            }
+            
+            // Kiểm tra xem user đã có role partner chưa
+            $existingRole = DB::table('user_roles')
+                ->where('user_id', $userId)
+                ->where('role_id', $partnerRoleId)
+                ->first();
+            
+            // Nếu chưa có thì gán role partner
+            if (!$existingRole) {
+                DB::table('user_roles')->insert([
+                    'user_id' => $userId,
+                    'role_id' => $partnerRoleId,
+                    'assigned_by' => $request->user()?->id ?? null,
+                    'assigned_at' => now(),
+                    'is_primary' => 0
+                ]);
             }
 
             DB::commit();

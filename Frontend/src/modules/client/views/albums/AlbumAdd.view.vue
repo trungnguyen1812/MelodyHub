@@ -392,6 +392,7 @@ const songStore = useSongStore()
 const partnerStore = usePartnerStore()
 const { artists } = storeToRefs(artistStore)
 const loading = ref(false)
+const partnerReady = ref(false);
 
 // ── Steps ──────────────────────────────────────────────
 const steps = [
@@ -510,27 +511,54 @@ const buildParams = () => ({
 
 
 const loadPartner = async () => {
-  await partnerStore.fetchPartnerInfo()
-}
+  try {
+    await partnerStore.fetchPartnerInfo();
+    partnerReady.value = true;
+    console.log('Partner loaded:', partnerStore.partner);
+  } catch (error) {
+    console.error('Failed to load partner:', error);
+    notificationStore.notify('Failed to load partner info', 'error');
+  }
+};
 
-const loadSongs = async () => { await songStore.fetchSongs(buildParams() as SongFilterParams) }
+const loadArtists = async () => {
+  const partner_id = partnerStore.partner?.id;
+  
+  if (!partner_id) {
+    console.warn('Cannot load artists: partner_id is null');
+    return;
+  }
+  
+  console.log('Loading artists for partner_id:', partner_id);
+  await artistStore.fetchAllArtists(partner_id);
+};
 
-const partner_id = partnerStore.partner?.id
 
+const loadSongs = async () => {
+  const partner_id = partnerStore.partner?.id;
+  
+  if (!partner_id) {
+    console.warn('Cannot load songs: partner_id is null');
+    return;
+  }
+  
+  const params = { partner_id } as SongFilterParams;
+  console.log('Loading songs with params:', params);
+  await songStore.fetchSongs(params);
+};
 
-const loadArtists = async () => { 
-  const partner_id = partnerStore.partner?.id 
-  console.log('partner_id:', partner_id)        
-  await artistStore.fetchAllArtists(partner_id) 
-}
 
 watch(() => form.name, generateSlug)
 
 onMounted(async () => {
-  await loadPartner(),
-  await loadArtists(),
-  await loadSongs()
-})
+  await loadPartner();
+    if (partnerStore.partner?.id) {
+    await Promise.all([loadArtists(), loadSongs()]);
+  } else {
+    notificationStore.notify('Partner information not available', 'error');
+  }
+});
+
 
 watch(filterArtistId, (val) => {
   form.artist_id = val === '' ? null : val
@@ -542,7 +570,7 @@ const submitForm = async () => {
 
     // Populate track_ids from selectedTracks
     form.track_ids = selectedTracks.value.map(t => t.id)
-
+    form.partner_id = partnerStore.partner?.id || null;
     // Validate required fields
     if (!form.name) {
       notificationStore.notify('Album name is required', 'error')

@@ -100,6 +100,7 @@ export const useAlbumStore = defineStore("album", {
         },
 
         async fetchAddAlbum(payload: CreateAlbumPayload){
+            
             this.loading = true;
             this.error = null;
             try {

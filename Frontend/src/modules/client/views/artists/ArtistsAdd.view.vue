@@ -215,11 +215,15 @@
               </div>
               <div class="field">
                 <label class="flabel">Partner</label>
-                <select v-model="form.partner_id" class="fcontrol">
-                  <option >
-                    {{ partnerStore.companyName || 'Select partner (optional)' }}
-                  </option>
-                </select>
+                <input 
+                  :value="partnerStore.companyName || 'Loading...'" 
+                  type="text" 
+                  class="fcontrol" 
+                  readonly 
+                  disabled
+                  style="cursor: not-allowed;"
+                />
+                <input type="hidden" v-model="form.partner_id" />
               </div>
             </div>
 
@@ -360,6 +364,7 @@ const notificationStore = useNotificationStore();
 const artistStore = useArtistStore();
 const partnerStore = usePartnerStore();
 const loading = ref(false);
+const partnerName = ref('');
 
 const avatarInput = ref<HTMLInputElement | null>(null)
 const bannerInput = ref<HTMLInputElement | null>(null)
@@ -434,7 +439,7 @@ const submitForm = async () => {
         return;
     }
     try {
-        loading.value = true;
+        loading.value = true;        
         await artistStore.fetchAddArtist(form);
         notificationStore.notify("Artist created successfully!", "success");
         router.push({ name: "client.partner.artists" });
@@ -458,8 +463,10 @@ watch(() => form.name, (newVal) => {
     if (newVal) generateSlug();
 });
 
-onMounted(() => {
-    partnerStore.fetchPartners();
+onMounted(async () => {
+  await partnerStore.fetchPartnerInfo();
+  
+  form.partner_id = partnerStore.partner?.id || null;
 });
 </script>
 

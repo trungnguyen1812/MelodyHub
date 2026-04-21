@@ -6,6 +6,7 @@ use App\Helpers\FileUploadHelper;
 use App\Http\Controllers\Controller;
 use App\Models\Album;
 use App\Models\AlbumTrack;
+use App\Models\Partner;
 use App\Models\Song;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Http\Request;
@@ -21,24 +22,43 @@ class ClientAlbumsContronller extends Controller
         return response()->json($albums);
     }
 
-    public function showAlbumByPartner($partnerId)
+   public function showAlbumByPartner($partnerId)
     {
         try {
+            // Debug xem partnerId nhận được là gì
+            Log::info('showAlbumByPartner called:', ['partnerId' => $partnerId]);
+            
+            // Kiểm tra partner có tồn tại không
+            $partnerExists = Partner::find($partnerId);
+            Log::info('Partner exists:', ['partner' => $partnerExists]);
+            
+            // Query albums
             $albums = Album::where('partner_id', $partnerId)
                 ->with(['artist', 'tracks.artist'])
-                ->paginate(10);
-            log::info($albums);
+                ->get(); // Bỏ paginate để test
+            
+            Log::info('Albums found:', ['count' => $albums->count()]);
+            
+            // Luôn trả về 200 dù không có albums
             return response()->json([
                 'status' => 'success',
-                'data' => $albums
+                'data' => [
+                    'data' => $albums,
+                    'total' => $albums->count()
+                ]
             ], 200);
 
         } catch (\Throwable $e) {
-            Log::error('Album showAlbumByPartner error:', ['error' => $e->getMessage()]);
+            Log::error('Album showAlbumByPartner error:', [
+                'error' => $e->getMessage(),
+                'line' => $e->getLine(),
+                'file' => $e->getFile()
+            ]);
+            
             return response()->json([
                 'status' => 'error',
                 'message' => $e->getMessage()
-            ], 404);
+            ], 500); // Trả về 500 thay vì 404 để phân biệt
         }
     }
 
