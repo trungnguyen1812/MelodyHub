@@ -250,7 +250,7 @@ class PartnersManagerController extends Controller
             $suspendedPartners = Partner::where('status', 'suspended')->count();
             $terminatedPartners = Partner::where('status', 'terminated')->count();
             
-            // 2. Tổng doanh thu từ bảng partner_revenues
+            // 2. Tổng doanh thu từ bảng partner_revenues (TẤT CẢ, không lọc tháng)
             $totalRevenueAll = PartnerRevenue::sum('total_revenue') ?? 0;
             $totalPaidAll = PartnerRevenue::where('status', 'paid')->sum('net_payout') ?? 0;
             $totalPendingPayoutAll = PartnerRevenue::where('status', 'calculated')->sum('net_payout') ?? 0;
@@ -258,47 +258,28 @@ class PartnersManagerController extends Controller
             // 3. Thống kê theo tháng (6 tháng gần nhất)
             $monthlyStats = $this->getMonthlyStatistics();
             
-            // 4. Top 10 partners theo doanh thu - FIXED: Chỉ lấy id, name, logo, revenue
-            $topPartnersRaw = Partner::select(
-                    'partners.id', 
-                    'partners.company_name', 
-                    'partners.logo_url'
-                )
-                ->selectRaw('COALESCE(SUM(partner_revenues.total_revenue), 0) as total_revenue')
+            // 4. Top 10 partners theo doanh thu - SỬA ĐÚNG CÁCH VIẾT
+            $topPartners = DB::table('partners')
                 ->leftJoin('partner_revenues', 'partners.id', '=', 'partner_revenues.partner_id')
+                ->select(
+                    'partners.id',
+                    'partners.company_name',
+                    'partners.logo_url',
+                    DB::raw('COALESCE(SUM(partner_revenues.total_revenue), 0) as total_revenue')
+                )
                 ->groupBy('partners.id', 'partners.company_name', 'partners.logo_url')
                 ->orderBy('total_revenue', 'desc')
                 ->limit(10)
-                ->get();
-            
-            // Format lại top_partners cho đúng cấu trúc FE cần
-            $topPartners = $topPartnersRaw->map(function($partner) {
-                return [
-                    'id' => $partner->id,
-                    'company_name' => $partner->company_name,
-                    'logo_url' => $partner->logo_url,
-                    'total_revenue' => round($partner->total_revenue, 2)
-                ];
-            });
-            
-            // Nếu chưa có dữ liệu, lấy từ songs_count
-            if ($topPartners->sum('total_revenue') == 0) {
-                $partners = Partner::withCount('songs')->get();
-                $totalSongs = $partners->sum('songs_count');
-                $totalRevenue = 22057240;
-                
-                $topPartners = $partners->sortByDesc('songs_count')->take(10)->map(function($partner) use ($totalSongs, $totalRevenue) {
-                    $ratio = $totalSongs > 0 ? $partner->songs_count / $totalSongs : 0;
+                ->get()
+                ->map(function($partner) {
                     return [
                         'id' => $partner->id,
                         'company_name' => $partner->company_name,
                         'logo_url' => $partner->logo_url,
-                        'total_revenue' => round($ratio * $totalRevenue, 2)
+                        'total_revenue' => round($partner->total_revenue, 2)
                     ];
-                })->values();
-            }
-            
-            // 5. Growth info
+                });
+            // 5. Tính growth rate
             $growthInfo = $this->calculateGrowth();
             
             // 6. Average revenue share
@@ -317,7 +298,7 @@ class PartnersManagerController extends Controller
                     'total_pending_payout_all' => round($totalPendingPayoutAll, 2),
                     'average_revenue_share' => round($avgRevenueShare, 2),
                     'monthly_stats' => $monthlyStats,
-                    'top_partners' => $topPartners,  // Đã format đúng
+                    'top_partners' => $topPartners,
                     'growth' => $growthInfo
                 ]
             ]);

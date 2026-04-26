@@ -38,6 +38,10 @@ import PartnerManagerView from '@/modules/admin/views/partners/PartnersManager.v
 import PartnerDetailView from '@/modules/admin/views/partners/PartnerDetailview.vue';
 // managerment advertising
 import AdvertisingManagerView from '@/modules/admin/views/advertising/AdvertisingManager.view.vue';
+import AdvertisingDetailView from '@/modules/admin/views/advertising/AvertisingDetail.view.vue';
+// managerment payment
+import PaymentManagerView from '@/modules/admin/views/payment/PaymentManager.view.vue';
+import PaymentDetailView from '@/modules/admin/views/payment/PaymentDetail.view.vue';
 // ĐẢM BẢO EXPORT ĐÚNG
 export const ROUTER_ADMIN = [
   {
@@ -331,6 +335,35 @@ export const ROUTER_ADMIN = [
         path: "advtising/",
         name: "admin.advtisingmanager",
         component: AdvertisingManagerView,
+        meta: {
+          requiresAuth: true,
+          requiresAdmin: true
+        }
+      },
+      {
+        path: "advertising/:id",
+        name: "admin.advtising.detail",
+        component: AdvertisingDetailView,
+        meta: {
+          requiresAuth: true,
+          requiresAdmin: true
+        }
+      },
+      /* ================================================ Payment ================================================*/
+      {
+        path: "payments",
+        name: "admin.payment.list",
+        component: PaymentManagerView,
+        meta: {
+          requiresAuth: true,
+          requiresAdmin: true
+        }
+      },
+      {
+        path: "payments/:id",
+        name: "admin.payment.detail",
+        component: PaymentDetailView,
+        props: true,
         meta: {
           requiresAuth: true,
           requiresAdmin: true

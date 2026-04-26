@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Advertisement;
 use App\Models\Partner;
+use App\Models\Payment;
 use Cloudinary\Cloudinary;
 use Cloudinary\Configuration\Configuration;
 use Illuminate\Http\Request;
@@ -39,16 +40,78 @@ class AdvertisingManagerController extends Controller
     {
         $user = $request->user();
         $partner = Partner::where('user_id', $user->id)->first();
-
+    
         if (!$partner) {
             return response()->json(['message' => 'Partner profile not found'], 404);
         }
-
+    
         $ads = Advertisement::where('partner_id', $partner->id)
             ->latest()
             ->get();
-
-        return response()->json($ads);
+    
+        // ── Tổng tiền partner đã nạp vào ví (topup completed) ────────────────────
+        $totalTopupRevenue = Payment::where('user_id', $partner->user_id)
+            ->where('payment_type', 'topup')
+            ->where('status', 'completed')
+            ->sum('amount');
+    
+        // ── Map từng ad ra object có đủ fields tính toán ──────────────────────────
+        $data = $ads->map(function ($ad) {
+            $budgetUsedPercent = $ad->budget_total > 0
+                ? round(($ad->budget_spent / $ad->budget_total) * 100, 2)
+                : 0;
+    
+            $daysRemaining = null;
+            $isExpired     = false;
+            if ($ad->end_date) {
+                $daysRemaining = now()->startOfDay()->diffInDays(
+                    \Carbon\Carbon::parse($ad->end_date)->startOfDay(),
+                    false
+                );
+                $isExpired = $daysRemaining < 0;
+            }
+    
+            return [
+                'id'                         => $ad->id,
+                'name'                       => $ad->name,
+                'type'                       => $ad->type,
+                'status'                     => $ad->status,
+                'advertiser_name'            => $ad->advertiser_name,
+                'advertiser_url'             => $ad->advertiser_url,
+                'media_url'                  => $ad->media_url,
+                'thumbnail_url'              => $ad->thumbnail_url,
+                'click_url'                  => $ad->click_url,
+                'duration'                   => $ad->duration,
+                'file_size'                  => $ad->file_size,
+                'budget_total'               => $ad->budget_total,
+                'budget_spent'               => $ad->budget_spent,
+                'budget_remaining'           => $ad->budget_total - $ad->budget_spent,
+                'budget_used_percent'        => $budgetUsedPercent,
+                'cost_per_play'              => $ad->cost_per_play,
+                'cost_per_click'             => $ad->cost_per_click,
+                'max_plays_per_user_per_day' => $ad->max_plays_per_user_per_day,
+                'frequency_cap'              => $ad->frequency_cap,
+                'priority'                   => $ad->priority,
+                'start_date'                 => $ad->start_date,
+                'end_date'                   => $ad->end_date,
+                'days_remaining'             => $daysRemaining,
+                'is_expired'                 => $isExpired,
+                'created_at'                 => $ad->created_at->toDateTimeString(),
+                'updated_at'                 => $ad->updated_at->toDateTimeString(),
+            ];
+        });
+    
+        return response()->json([
+            'data'    => $data,
+            'summary' => [
+                'total_campaigns'  => $ads->count(),
+                'active_campaigns' => $ads->where('status', 'active')->count(),
+                'paused_campaigns' => $ads->where('status', 'paused')->count(),
+                'total_budget'     => $ads->sum('budget_total'),
+                'total_spent'      => $ads->sum('budget_spent'),
+                'revenue_earned'   => $totalTopupRevenue,
+            ],
+        ]);
     }
 
     /**

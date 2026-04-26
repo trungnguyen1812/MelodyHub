@@ -77,10 +77,16 @@ export interface Partner {
     updated_at: string;
     deleted_at: string | null;
     
-    // Accessors (tính toán động)
+    // Counts từ withCount() của Laravel (tên thật backend trả về)
+    songs_count?: number;
+    artists_count?: number;
+    albums_count?: number;
+
+    // Alias cũ (giữ lại để tương thích với PartnerDetail nếu còn dùng)
     total_songs?: number;
     total_artists?: number;
     total_albums?: number;
+
     total_revenue?: number;
     total_paid?: number;
     pending_payout?: number;

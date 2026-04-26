@@ -697,9 +697,16 @@ onMounted(async () => {
 
       // Schedule (nested + format date)
       const schedule = data.schedule || {}
-      form.start_date = schedule.start_date ? schedule.start_date.split('T')[0] : ''
-      form.end_date = schedule.end_date ? schedule.end_date.split('T')[0] : ''
-      showDateRange.value = !!form.end_date
+      form.start_date = data.schedule?.start_date 
+        ? new Date(data.schedule.start_date).toISOString().split('T')[0]
+        : ''
+
+      form.end_date = data.schedule?.end_date 
+        ? new Date(data.schedule.end_date).toISOString().split('T')[0]
+        : ''
+
+      // Set showDateRange dựa trên end_date
+      showDateRange.value = !!(form.end_date && form.end_date.trim() !== '')
 
       console.log('✅ Campaign data loaded successfully', form)
     } catch (err) {
@@ -785,7 +792,15 @@ function formatBytes(bytes) {
 }
 function toggleDateRange() {
   showDateRange.value = !showDateRange.value
-  if (!showDateRange.value) form.end_date = ''
+  if (!showDateRange.value) {
+    form.end_date = ''
+  } else {
+    if (form.start_date && !form.end_date) {
+      const defaultEndDate = new Date(form.start_date)
+      defaultEndDate.setDate(defaultEndDate.getDate() + 7)
+      form.end_date = defaultEndDate.toISOString().split('T')[0]
+    }
+  }
 }
 function onThumbChange(e) {
   const file = e.target.files[0]
@@ -895,7 +910,7 @@ async function handleSubmit() {
 
     // Gọi API UPDATE
     await advertisingService.updateCampaign(campaignId.value, formData)   // ← Service phải có method updateCampaign(id, formData)
-
+    
     showToast('Campaign updated successfully!', 'success')
     setTimeout(() => {
       router.push({ name: 'client.partner.Advertisingd.dashboard' })

@@ -2,6 +2,7 @@
   <Notification />
   <component :is="layout">
     <router-view />
+    <VcAdModal />
   </component>
   <GlobalMiniPlayer/>
   <ShareModal /> 
@@ -18,6 +19,8 @@ import Notification from '@/components/common/VcNotification/Notification.vue';
 import GlobalMiniPlayer from '@/components/common/VcGlobalMiniPlayer/GlobalMiniPlayer.vue'
 import { useUserStore } from '@/modules/client/stores/users/UserStore';
 import ShareModal  from '@/components/common/VcBtnAction/ShareModal.vue';
+import VcAdModal from '@/components/common/VcAd/VcAdModal.vue'
+
 
 const route = useRoute();
 const authStore = useAuthStore();

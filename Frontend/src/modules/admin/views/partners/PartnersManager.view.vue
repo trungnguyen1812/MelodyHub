@@ -9,7 +9,21 @@
         </div>
 
         <!-- Stats Grid -->
-         <div class="stats-grid">
+        <!-- Skeleton: Stats -->
+        <div v-if="loading" class="stats-grid">
+          <div v-for="i in 5" :key="i" class="stat-card skeleton-card">
+            <div class="skel skel-icon"></div>
+            <div class="stat-info">
+              <div class="skel skel-label"></div>
+              <div class="skel skel-value"></div>
+              <div class="skel skel-change"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Real: Stats -->
+        <Transition name="fade-up">
+        <div v-if="!loading" class="stats-grid">
             <!-- 1. Tổng số Partner -->
             <div class="stat-card stat-card--purple">
             <div class="stat-icon">
@@ -46,7 +60,7 @@
             </div>
 
             <!-- 3. Tổng chi trả -->
-            <div class="stat-card stat-card--red">
+            <div class="stat-card stat-card--blue">
             <div class="stat-icon">
                 <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
                 <path d="M17 9V7a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2m2 4h10a2 2 0 0 0 2-2v-1a2 2 0 0 0-2-2H9a2 2 0 0 1-2-2v-1a2 2 0 0 1 2-2m0 0V9" />
@@ -96,6 +110,29 @@
                 </span>
             </div>
             </div>
+        </div>
+        </Transition>
+
+        <!-- Skeleton: Charts -->
+        <div v-if="loading" class="skeleton-charts">
+          <div class="skel-chart-card">
+            <div class="skel skel-chart-title"></div>
+            <div class="skel skel-chart-body"></div>
+          </div>
+          <div class="skel-chart-row">
+            <div class="skel-chart-card">
+              <div class="skel skel-chart-title"></div>
+              <div class="skel skel-chart-body small"></div>
+            </div>
+            <div class="skel-chart-card">
+              <div class="skel skel-chart-title"></div>
+              <div class="skel skel-chart-body small"></div>
+            </div>
+          </div>
+          <div class="skel-chart-card">
+            <div class="skel skel-chart-title"></div>
+            <div class="skel skel-chart-body donut"></div>
+          </div>
         </div>
 
         <!-- ==================== CHART 1: Line Chart - Xu hướng Doanh thu & Chi trả ==================== -->
@@ -152,7 +189,29 @@
 
             <!-- Table Section -->
             <div class="table-section">
-                <div class="table-wrapper">
+
+                <!-- Skeleton Rows -->
+                <div v-if="loading" class="skel-table">
+                  <div class="skel-thead">
+                    <div class="skel skel-th" v-for="c in 6" :key="c"></div>
+                  </div>
+                  <div v-for="r in 8" :key="r" class="skel-row">
+                    <div class="skel-td skel-td--user">
+                      <div class="skel skel-avatar"></div>
+                      <div style="display:flex;flex-direction:column;gap:6px;flex:1">
+                        <div class="skel skel-name"></div>
+                        <div class="skel skel-sub"></div>
+                      </div>
+                    </div>
+                    <div class="skel-td"><div class="skel skel-cell"></div></div>
+                    <div class="skel-td"><div class="skel skel-cell wide"></div></div>
+                    <div class="skel-td"><div class="skel skel-badge"></div></div>
+                    <div class="skel-td"><div class="skel skel-cell"></div></div>
+                    <div class="skel-td"><div class="skel skel-actions"></div></div>
+                  </div>
+                </div>
+
+                <div class="table-wrapper" v-show="!loading">
                     <table class="users-table">
                         <thead>
                             <tr>
@@ -213,7 +272,7 @@
                                                 <circle cx="6" cy="18" r="3" />
                                                 <circle cx="18" cy="16" r="3" />
                                             </svg>
-                                            {{ partner.total_songs ?? partner.total_songs ?? 0 }}
+                                            {{ partner.songs_count ?? partner.total_songs ?? 0 }}
                                         </span>
                                         <span class="stat-badge" title="Total Artists">
                                             <svg width="12" height="12" viewBox="0 0 24 24" fill="none"
@@ -221,7 +280,7 @@
                                                 <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
                                                 <circle cx="12" cy="7" r="4" />
                                             </svg>
-                                            {{ partner.total_artists ?? partner.total_artists ?? 0 }}
+                                            {{ partner.artists_count ?? partner.total_artists ?? 0 }}
                                         </span>
                                         <span class="stat-badge" title="Total Albums">
                                             <svg width="12" height="12" viewBox="0 0 24 24" fill="none"
@@ -230,7 +289,7 @@
                                                 <line x1="8" y1="2" x2="8" y2="22" />
                                                 <line x1="16" y1="2" x2="16" y2="22" />
                                             </svg>
-                                            {{ partner.total_albums ?? partner.total_albums ?? 0 }}
+                                            {{ partner.albums_count ?? partner.total_albums ?? 0 }}
                                         </span>
                                     </div>
                                 </td>
@@ -274,6 +333,7 @@
                         </tbody>
                     </table>
                 </div>
+                </div><!-- close table-wrapper -->
 
                 <!-- Empty state -->
                 <div v-if="!loading && paginatedPartners.length === 0" class="empty-state">
@@ -285,15 +345,8 @@
                     <p>No partners found</p>
                 </div>
 
-                <!-- Loading state inside table -->
-                <div v-if="loading" class="loading-overlay">
-                    <div class="spinner">
-                        <div class="dot"></div>
-                        <div class="dot"></div>
-                        <div class="dot"></div>
-                    </div>
-                    <span>Loading data...</span>
-                </div>
+                <!-- Progress bar at top of table section -->
+                <div v-if="loading" class="table-progress-bar"><div class="table-progress-fill"></div></div>
             </div>
 
             <!-- Pagination (Brief for Dashboard) -->
@@ -319,7 +372,6 @@
                 </div>
             </div>
         </div>
-    </div>
 </template>
 
 <script setup lang="ts">
@@ -463,10 +515,6 @@ const getAvatarColor = (name?: string) => {
   return colors[Math.abs(hash) % colors.length]
 }
 
-const ViewAllPartners = () => {
-    router.push({ name: "admin.partner.all" });
-}
-
 function viewDetailPartner(id: number) {
     router.push({
         name: "admin.partner.detail",
@@ -540,228 +588,206 @@ const paginatedPartners = computed(() => {
     return partners.value.slice(start, end);
 });
 
-// Chart options (giữ nguyên)
+// ─── SHARED helpers ────────────────────────────────────────────────────────
+/** Lấy danh sách tháng từ store (dùng chung cho cả 2 chart monthly) */
+const monthlyCategories = computed(() =>
+    (partnerStore.statistics?.monthly_stats ?? []).map(s => s.month)
+)
 
-const revenueChartOptions = ref({
+// ─── CHART: Revenue trend (Line) ───────────────────────────────────────────
+const revenueChartOptions = computed(() => ({
     chart: {
         type: 'line',
         height: 380,
         background: 'transparent',
         foreColor: '#cbd5e1',
         toolbar: { show: true },
+        animations: { enabled: true, speed: 600 },
     },
     colors: ['#22c55e', '#ef4444', '#60a5fa'],
-    stroke: {
-        curve: 'smooth',
-        width: 3,
-    },
+    stroke: { curve: 'smooth', width: 2.5 },
     grid: {
-        borderColor: 'rgba(148, 163, 184, 0.15)',
+        borderColor: 'rgba(148, 163, 184, 0.12)',
         strokeDashArray: 4,
     },
-   tooltip: {
+    tooltip: {
         theme: 'dark',
-        y: {
-            formatter: (val: number) => formatCurrency(val)
-        }
+        y: { formatter: (val: number) => formatCurrency(val) },
     },
     legend: {
         position: 'top',
         horizontalAlign: 'left',
-        labels: {
-            colors: '#e2e8f0'
-        },
-        itemMargin: {
-            horizontal: 15
-        }
+        labels: { colors: '#e2e8f0' },
+        itemMargin: { horizontal: 15 },
     },
     xaxis: {
-        categories: computed(() => {
-            const monthlyStats = partnerStore.statistics?.monthly_stats || [];
-            return monthlyStats.map(stat => stat.month);
-        }),
-        labels: {
-            style: { colors: '#94a3b8' }
-        }
+        categories: monthlyCategories.value,
+        labels: { style: { colors: '#94a3b8', fontSize: '12px' } },
     },
     yaxis: {
         labels: {
-            style: { colors: '#94a3b8' },
-            formatter: (val: number) => {
-                return (val / 1_000_000).toFixed(1) + 'M ₫'
-            }
-        }
-    }
-});
+            style: { colors: '#94a3b8', fontSize: '11px' },
+            formatter: (val: number) => formatCurrency(val),
+        },
+    },
+    markers: { size: 4, hover: { size: 6 } },
+}))
 
-const stackedChartOptions = ref({
+// ─── CHART: Revenue & Payment Stacked (Bar) ────────────────────────────────
+const stackedChartOptions = computed(() => ({
     chart: {
         type: 'bar',
         stacked: true,
         background: 'transparent',
-        foreColor: '#e5e7eb'
+        foreColor: '#e5e7eb',
+        animations: { enabled: true, speed: 600 },
+        toolbar: { show: false },
     },
     theme: { mode: 'dark' },
     plotOptions: {
-        bar: { horizontal: false, borderRadius: 6 }
+        bar: { horizontal: false, borderRadius: 5, columnWidth: '60%' },
     },
     colors: ['#10b981', '#ef4444'],
+    tooltip: {
+        theme: 'dark',
+        y: { formatter: (val: number) => formatCurrency(val) },
+    },
     xaxis: {
-        categories: computed(() => {
-            const monthlyStats = partnerStore.statistics?.monthly_stats || [];
-            return monthlyStats.map(stat => stat.month);
-        }),
-        labels: { style: { colors: '#9ca3af' } }
+        categories: monthlyCategories.value,
+        labels: { style: { colors: '#9ca3af', fontSize: '12px' } },
     },
     yaxis: {
-        labels: { style: { colors: '#9ca3af' } }
+        labels: {
+            style: { colors: '#9ca3af', fontSize: '11px' },
+            formatter: (val: number) => formatCurrency(val),
+        },
     },
-    grid: {
-        borderColor: '#374151'
-    },
-    legend: {
-        labels: { colors: '#e5e7eb' }
-    }
-});
+    grid: { borderColor: '#374151' },
+    legend: { labels: { colors: '#e5e7eb' } },
+}))
 
-const topPartnerCategories = computed(() => {
-    const topPartners = partnerStore.statistics?.top_partners || [];
-    return topPartners.map(p => p.company_name);
-});
-
-const topPartnerOptions = ref<ChartOptions>({
+// ─── CHART: Top Partners (Bar, horizontal) ─────────────────────────────────
+const topPartnerOptions = computed(() => ({
     chart: {
         type: 'bar',
         height: 350,
         background: 'transparent',
-        foreColor: '#e5e7eb'
+        foreColor: '#e5e7eb',
+        toolbar: { show: false },
+        animations: { enabled: true, speed: 600 },
     },
     theme: { mode: 'dark' },
     plotOptions: {
         bar: {
             horizontal: false,
-            borderRadius: 6,
-            dataLabels: {
-                position: 'top'
-            }
-        }
+            borderRadius: 5,
+            columnWidth: '55%',
+            dataLabels: { position: 'top' },
+        },
     },
     colors: ['#6366f1'],
     dataLabels: {
         enabled: true,
         formatter: (val: number) => formatCurrency(val),
-        offsetY: -20,
-        style: {
-            colors: ['#e5e7eb']
-        }
+        offsetY: -22,
+        style: { fontSize: '11px', colors: ['#c7d2fe'] },
+    },
+    tooltip: {
+        theme: 'dark',
+        y: { formatter: (val: number) => formatCurrency(val) },
     },
     xaxis: {
-        categories: [], // Bây giờ đã có type string[]
+        categories: (partnerStore.statistics?.top_partners ?? []).map(p => p.company_name),
         labels: {
-            rotate: -45,
-            style: {
-                colors: '#9ca3af'
-            }
-        }
+            rotate: -40,
+            style: { colors: '#9ca3af', fontSize: '11px' },
+        },
     },
     yaxis: {
         labels: {
-            formatter: (val: number) => formatCurrency(val)
-        }
-    }
-});
+            style: { colors: '#9ca3af', fontSize: '11px' },
+            formatter: (val: number) => formatCurrency(val),
+        },
+    },
+}))
 
-const statusPieOptions = ref({
+// ─── CHART: Partner Status Donut ───────────────────────────────────────────
+const statusPieOptions = computed(() => ({
     chart: {
         type: 'donut',
         background: 'transparent',
-        foreColor: '#e5e7eb'
+        foreColor: '#e5e7eb',
     },
     theme: { mode: 'dark' },
     labels: ['Active', 'Pending', 'Suspended', 'Terminated'],
     colors: ['#10b981', '#f59e0b', '#ef4444', '#6b7280'],
+    tooltip: {
+        theme: 'dark',
+        y: { formatter: (val: number) => `${val} partners` },
+    },
     legend: {
         position: 'bottom',
-        labels: { colors: '#e5e7eb' }
+        labels: { colors: '#e5e7eb' },
     },
-    stroke: {
-        colors: ['#111827']
-    }
-});
+    stroke: { colors: ['#0f1216'] },
+    plotOptions: {
+        pie: {
+            donut: {
+                size: '60%',
+                labels: {
+                    show: true,
+                    total: {
+                        show: true,
+                        label: 'Total',
+                        color: '#94a3b8',
+                        formatter: (w: any) =>
+                            w.globals.seriesTotals.reduce((a: number, b: number) => a + b, 0) + ' partners',
+                    },
+                },
+            },
+        },
+    },
+}))
 
-
-// Chart data
+// ─── Chart series (reactive) ────────────────────────────────────────────────
 const revenueChartSeries = computed(() => {
-  const monthlyStats = partnerStore.statistics?.monthly_stats || [];
-  
+  const s = partnerStore.statistics?.monthly_stats ?? []
   return [
-    {
-      name: 'Revenue',
-      data: monthlyStats.map(stat => stat.revenue)
-    },
-    {
-      name: 'Payment',
-      data: monthlyStats.map(stat => stat.paid)
-    },
-    {
-      name: 'Profit',
-      data: monthlyStats.map(stat => stat.profit)
-    }
-  ];
-});
+    { name: 'Revenue', data: s.map(x => x.revenue) },
+    { name: 'Payment', data: s.map(x => x.paid) },
+    { name: 'Profit',  data: s.map(x => x.profit) },
+  ]
+})
 
 const stackedChartSeries = computed(() => {
-  const monthlyStats = partnerStore.statistics?.monthly_stats || [];
-  
+  const s = partnerStore.statistics?.monthly_stats ?? []
   return [
-    { 
-      name: 'Revenue', 
-      data: monthlyStats.map(stat => stat.revenue) 
-    },
-    { 
-      name: 'Payment', 
-      data: monthlyStats.map(stat => stat.paid) 
-    }
-  ];
-});
+    { name: 'Revenue', data: s.map(x => x.revenue) },
+    { name: 'Payment', data: s.map(x => x.paid) },
+  ]
+})
 
-const topPartnerSeries = computed(() => {
-  const topPartners = partnerStore.statistics?.top_partners || [];
-  
-  return [{
-    name: 'Revenue',
-    data: topPartners.map(partner => partner.total_revenue)
-  }];
-});
+const topPartnerSeries = computed(() => [{
+  name: 'Revenue',
+  data: (partnerStore.statistics?.top_partners ?? []).map(p => p.total_revenue),
+}])
 
 const statusPieSeries = computed(() => [
-    partnerStore.statistics?.active_partners ?? 0,
-    partnerStore.statistics?.pending_partners ?? 0,
-    partnerStore.statistics?.suspended_partners ?? 0,
-    partnerStore.statistics?.terminated_partners ?? 0
-]);
+    partnerStore.statistics?.active_partners     ?? 0,
+    partnerStore.statistics?.pending_partners    ?? 0,
+    partnerStore.statistics?.suspended_partners  ?? 0,
+    partnerStore.statistics?.terminated_partners ?? 0,
+])
 
-// Fetch dữ liệu 
+// Fetch dữ liệu
 const fetchChartData = async () => {
     // Implement chart data fetching based on timeRange
 }
 
-watch(topPartnerCategories, (newCategories) => {
-    if (topPartnerOptions.value && newCategories.length) {
-        topPartnerOptions.value = {
-            ...topPartnerOptions.value,
-            xaxis: {
-                ...topPartnerOptions.value.xaxis,
-                categories: newCategories
-            }
-        };
-    }
-}, { immediate: true });
-
 onMounted(() => {
-    partnerStore.fetchPartners();
-    partnerStore.fetchStatistics();
-});
+    partnerStore.fetchPartners()
+    partnerStore.fetchStatistics()
+})
 </script>
 
 <style scoped>
@@ -1446,4 +1472,167 @@ onMounted(() => {
     justify-content: flex-start;
   }
 }
+
+/* ══════════════════════════════════════════
+   SKELETON LOADING SYSTEM
+══════════════════════════════════════════ */
+
+/* Shimmer keyframe */
+@keyframes shimmer {
+  0%   { background-position: -600px 0; }
+  100% { background-position: 600px 0; }
+}
+
+/* Base skeleton element */
+.skel {
+  border-radius: 6px;
+  background: linear-gradient(
+    90deg,
+    rgba(255,255,255,0.04) 25%,
+    rgba(255,255,255,0.10) 50%,
+    rgba(255,255,255,0.04) 75%
+  );
+  background-size: 600px 100%;
+  animation: shimmer 1.6s infinite linear;
+}
+
+/* ── Stat card skeletons ── */
+.skeleton-card {
+  border-top-color: rgba(255,255,255,0.06) !important;
+}
+
+.skel-icon {
+  width: 52px;
+  height: 52px;
+  border-radius: 12px;
+  flex-shrink: 0;
+}
+
+.skel-label  { width: 80px;  height: 10px; margin-bottom: 8px; }
+.skel-value  { width: 110px; height: 26px; border-radius: 8px; }
+.skel-change { width: 60px;  height: 10px; margin-top: 6px; }
+
+/* ── Chart skeletons ── */
+.skeleton-charts {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  margin-bottom: 24px;
+}
+
+.skel-chart-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+}
+
+.skel-chart-card {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 16px;
+  padding: 24px;
+}
+
+.skel-chart-title {
+  width: 220px;
+  height: 16px;
+  border-radius: 6px;
+  margin-bottom: 20px;
+}
+
+.skel-chart-body {
+  width: 100%;
+  height: 380px;
+  border-radius: 10px;
+}
+
+.skel-chart-body.small  { height: 350px; }
+.skel-chart-body.donut  { height: 320px; border-radius: 50%; width: 320px; margin: 0 auto; }
+
+/* ── Table skeleton ── */
+.skel-table {
+  padding: 0;
+}
+
+.skel-thead {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  padding: 12px 16px;
+  background: #1e2530;
+  border-bottom: 1px solid #252d3a;
+}
+
+.skel-th {
+  flex: 1;
+  height: 10px;
+  border-radius: 4px;
+}
+
+.skel-row {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  border-bottom: 1px solid #1a2030;
+  padding: 0;
+}
+
+.skel-td {
+  flex: 1;
+  padding: 14px 16px;
+}
+
+.skel-td--user {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1.6;
+}
+
+.skel-avatar  { width: 40px;  height: 40px;  border-radius: 50%;  flex-shrink: 0; }
+.skel-name    { width: 120px; height: 12px; }
+.skel-sub     { width: 80px;  height: 10px; }
+.skel-cell    { width: 80px;  height: 11px; }
+.skel-cell.wide { width: 120px; }
+.skel-badge   { width: 64px;  height: 22px; border-radius: 20px; }
+.skel-actions { width: 56px;  height: 24px; border-radius: 8px; }
+
+/* ── Table progress bar (top of table section while loading) ── */
+.table-progress-bar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: rgba(59, 130, 246, 0.15);
+  border-radius: 0;
+  overflow: hidden;
+  z-index: 20;
+}
+
+.table-progress-fill {
+  height: 100%;
+  width: 40%;
+  background: linear-gradient(90deg, #3b82f6, #60a5fa, #3b82f6);
+  background-size: 300% 100%;
+  border-radius: 2px;
+  animation: progress-slide 1.8s infinite ease-in-out;
+}
+
+@keyframes progress-slide {
+  0%   { transform: translateX(-150%); }
+  100% { transform: translateX(400%); }
+}
+
+/* ── Fade-up transition for real data ── */
+.fade-up-enter-active {
+  transition: opacity 0.4s ease, transform 0.4s ease;
+}
+.fade-up-enter-from {
+  opacity: 0;
+  transform: translateY(12px);
+}
+
+/* stat-card--emerald (missing earlier) */
+.stat-card--emerald { border-top-color: #10b981; }
 </style>

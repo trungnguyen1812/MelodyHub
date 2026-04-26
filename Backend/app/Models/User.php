@@ -144,11 +144,6 @@ class User extends Authenticatable
 		return $this->belongsTo(Country::class, 'country');
 	}
 
-	public function ad_impressions()
-	{
-		return $this->hasMany(AdImpression::class);
-	}
-
 	public function admin_activity_logs()
 	{
 		return $this->hasMany(AdminActivityLog::class, 'admin_id');

@@ -238,8 +238,9 @@
           </div>
 
           <!-- div2 chỉ render khi có lyrics -->
-          <div v-if="hasLyrics" class="div2">
-            <div class="lyrics-lines">
+          <div class="div2">
+            <!-- Có lyrics → show lyrics bình thường -->
+            <div v-if="hasLyrics" class="lyrics-lines">
               <div
                 v-for="(line, i) in currentLyrics"
                 :key="i"
@@ -252,6 +253,19 @@
               >
                 {{ line.text }}
               </div>
+            </div>
+          
+            <!-- Không có lyrics → show quảng cáo thay thế -->
+            <div v-else class="lyrics-ad-slot">
+              <p class="lyrics-ad-slot__label">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                  <circle cx="12" cy="12" r="10"/>
+                  <line x1="12" y1="8" x2="12" y2="12"/>
+                  <line x1="12" y1="16" x2="12.01" y2="16"/>
+                </svg>
+                No lyrics available
+              </p>
+              <VcAdBanner />
             </div>
           </div>
         </div>
@@ -269,6 +283,7 @@ import { useSongStore } from '@/modules/client/stores/songs/songsStore'
 import { getFullImageUrl } from '@/modules/client/stores/artists/artistsStore'
 import songsService from '@/modules/client/services/songs/songs.service'
 import ActionButton  from '@/components/common/VcBtnAction/ActionButton.vue';
+import VcAdBanner from '@/components/common/VcAd/VcAdBanner.vue'
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 interface LyricLine {
@@ -1583,5 +1598,19 @@ onUnmounted(() => lockScroll(false))
     font-size: 12px;
     color: #666;
     font-weight: normal;
+}
+
+.lyrics-ad-slot {
+  padding: 24px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.lyrics-ad-slot__label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.35);
 }
 </style>

@@ -74,44 +74,55 @@
         <div class="hidden sm:flex relative" ref="profileDropdownRef" v-else>
           <!-- Trigger dropdown -->
           <button @click.prevent="toggleProfileDropdown"
-            class="flex items-center space-x-2 text-white text-sm font-medium hover:text-cyan-400 drop-shadow-[0_0_10px_#22d3ee] transition-colors duration-200 focus:outline-none">
-            <div class="relative">
-              <div class="vip-frame" v-if="subscriptionStore.isVip">
-                <div class="vip-frame-inner">
-                  <img :src="authStore.user?.avatar || '/default-avatar.jpg'" alt="avatar"
-                    class="w-7 h-7 rounded-full object-cover" />
-                </div>
-                <div class="vip-crown-frame">
-                  👑
-                </div>
+              class="flex items-center space-x-2 text-white text-sm font-medium hover:text-cyan-400 drop-shadow-[0_0_10px_#22d3ee] transition-colors duration-200 focus:outline-none">
+              <div class="relative">
+                  <!-- Chỉ hiển thị 1 avatar, có frame VIP nếu là VIP -->
+                  <div class="relative" :class="{'vip-frame': subscriptionStore.isVip}">
+                      <div class="vip-frame-inner" v-if="subscriptionStore.isVip">
+                          <img
+                              :src="getFullImageUrl(authStore.user?.avatar_url || '/default-avatar.jpg')"
+                              alt="avatar"
+                              class="w-7 h-7 rounded-full object-cover"
+                          />
+                          <div class="vip-crown-frame">
+                              👑
+                          </div>
+                      </div>
+                      
+                      <!-- Avatar cho non-VIP hoặc fallback -->
+                      <img
+                          v-else
+                          :src="getFullImageUrl(authStore.user?.avatar_url || '/default-avatar.jpg')"
+                          alt="avatar"
+                          class="w-7 h-7 rounded-full object-cover"
+                      />
+                  </div>
               </div>
-
-              <img v-else :src="authStore.user?.avatar || '/default-avatar.jpg'" alt="avatar"
-                class="w-7 h-7 rounded-full object-cover" />
-            </div>
-
-            <span>{{ authStore.user?.name?.split(' ').pop() || 'User' }}</span>
-            <span class="ml-1 text-xs">▼</span>
+              <span>{{ authStore.user?.name?.split(' ').pop() || 'User' }}</span>
+              <span class="ml-1 text-xs">▼</span>
           </button>
 
 
           <!-- Dropdown menu -->
           <div v-show="dropdownProfileOpen"
-            class="absolute right-[-70px] mt-[48px] w-44 bg-[#161f2b]/90 text-white rounded-lg shadow-lg z-50 transition-all duration-200 origin-top ">
-            <button @click=""
-              class="block w-full text-left px-4 py-2 text-sm hover:text-white transition-colors duration-200 drop-shadow-[0_0_10px_#22d3ee]"
+            class="absolute right-[-70px] mt-[48px] w-44 bg-[#161f2b]/90 text-white rounded-lg shadow-lg z-50 transition-all duration-200 origin-top overflow-hidden"
+          >
+            <button @click="profilePage"
+              class="block w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-[#22d3ee] hover:bg-white/10 transition-all duration-200"
               role="menuitem">
               Profile
             </button>
-            <!-- From Uiverse.io by vinodjangid07 -->
+            
             <button v-if="authStore.permissionLoaded && authStore.isAdmin" @click="adminPage"
-              class="block w-full text-left px-4 py-2 text-sm hover:text-white transition-colors duration-200 drop-shadow-[0_0_10px_#22d3ee]"
+              class="block w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-[#22d3ee] hover:bg-white/10 transition-all duration-200"
               role="menuitem">
               Admin
             </button>
-            <hr>
+            
+            <hr class="border-gray-700 my-1">
+            
             <button @click="handleLogout"
-              class="block w-full text-left px-4 py-2 text-sm text-red-500 hover:text-white transition-colors duration-200 drop-shadow-[0_0_10px_#22d3ee]"
+              class="block w-full text-left px-4 py-2 text-sm text-red-400 hover:text-red-300 hover:bg-white/10 transition-all duration-200"
               role="menuitem">
               Logout
             </button>
@@ -201,7 +212,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted, onBeforeUnmount } from "vue";
-import { useAuthStore } from "@/store/authStore";
+import { useAuthStore , getFullImageUrl} from "@/store/authStore";
 import { useRouter } from "vue-router";
 import { useUserStore } from '@/modules/client/stores/users/UserStore';
 import { useCheckPermission } from '@/composables/useCheckPermission'
@@ -267,6 +278,12 @@ const handleClickOutside = (event: MouseEvent) => {
 const adminPage = () => {
   router.push({ name: "admin.dashboard" })
 }
+
+const profilePage = () => {
+  router.push({ name: "client.profile" })
+}
+
+
 
 onMounted(() => {
   document.addEventListener("click", handleClickOutside);

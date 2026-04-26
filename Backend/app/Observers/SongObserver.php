@@ -25,24 +25,26 @@ class SongObserver
     {
         $currentMonth = Carbon::now()->startOfMonth();
         $periodEnd = Carbon::now()->endOfMonth();
-        
-        // Giả sử 1 play = 10 VND, 1 download = 500 VND
-        $adRevenue = $song->total_plays * 10;
-        $subscriptionRevenue = $song->total_downloads * 500;
-        $totalRevenue = $adRevenue + $subscriptionRevenue;
-        
-        // Lấy partner share percentage
+
         $partner = $song->partner;
+
+        $songs = Song::where('partner_id', $song->partner_id)->get();
+
+        $totalPlays = $songs->sum('total_plays');
+        $totalDownloads = $songs->sum('total_downloads');
+
+        $adRevenue = $totalPlays * 10;
+        $subscriptionRevenue = $totalDownloads * 500;
+        $totalRevenue = $adRevenue + $subscriptionRevenue;
+
         $partnerSharePercent = $partner->revenue_share_percentage ?? 70;
-        
-        // Tính toán
+
         $partnerShareAmount = $totalRevenue * ($partnerSharePercent / 100);
         $platformShareAmount = $totalRevenue - $partnerShareAmount;
-        $taxAmount = $partnerShareAmount * 0.1; // 10% tax
+        $taxAmount = $partnerShareAmount * 0.1;
         $netPayout = $partnerShareAmount - $taxAmount;
-        
-        // Tìm hoặc tạo bản ghi doanh thu tháng hiện tại
-        $revenue = PartnerRevenue::firstOrCreate(
+
+        PartnerRevenue::updateOrCreate(
             [
                 'partner_id' => $song->partner_id,
                 'period_type' => 'monthly',
@@ -50,31 +52,17 @@ class SongObserver
                 'period_end' => $periodEnd,
             ],
             [
-                'total_plays' => 0,
-                'total_downloads' => 0,
-                'ad_revenue' => 0,
-                'subscription_revenue' => 0,
-                'total_revenue' => 0,
+                'total_plays' => $totalPlays,
+                'total_downloads' => $totalDownloads,
+                'ad_revenue' => $adRevenue,
+                'subscription_revenue' => $subscriptionRevenue,
+                'total_revenue' => $totalRevenue,
                 'partner_share_percentage' => $partnerSharePercent,
-                'partner_share_amount' => 0,
-                'platform_share_amount' => 0,
-                'tax_amount' => 0,
-                'net_payout' => 0,
-                'status' => 'pending',
+                'partner_share_amount' => $partnerShareAmount,
+                'platform_share_amount' => $platformShareAmount,
+                'tax_amount' => $taxAmount,
+                'net_payout' => $netPayout,
             ]
         );
-        
-        // Cập nhật tổng
-        $revenue->total_plays += $song->total_plays;
-        $revenue->total_downloads += $song->total_downloads;
-        $revenue->ad_revenue += $adRevenue;
-        $revenue->subscription_revenue += $subscriptionRevenue;
-        $revenue->total_revenue += $totalRevenue;
-        $revenue->partner_share_amount += $partnerShareAmount;
-        $revenue->platform_share_amount += $platformShareAmount;
-        $revenue->tax_amount += $taxAmount;
-        $revenue->net_payout += $netPayout;
-        
-        $revenue->save();
     }
 }

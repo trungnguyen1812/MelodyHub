@@ -45,14 +45,13 @@
           @click="navigateToAlbum(album.slug)"
         >
           <!-- Album Card -->
-          <div class="relative rounded-2xl overflow-hidden shadow-2xl bg-zinc-900 transition-all duration-300 group-hover:scale-[1.03] group-hover:shadow-purple-500/20">
-            
+          <div class="relative rounded-2xl overflow-hidden shadow-2xl bg-zinc-900 transition-all duration-300 group-hover:scale-[1.03] group-hover:shadow-purple-500/20 h-full flex flex-col">            
             <!-- Album Cover -->
-            <div class="relative aspect-square overflow-hidden">
+            <div class="relative w-full pt-[100%] overflow-hidden">
               <img
                 :src="getAlbumThumbnail(album)"
                 :alt="album.name"
-                class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                class="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                 @error="handleImageError"
               />
 
@@ -80,11 +79,8 @@
             </div>
 
             <!-- Info -->
-            <div class="p-4">
-              <p
-                class="font-semibold text-white text-base leading-tight line-clamp-2 group-hover:text-white-400 transition-colors duration-200"
-                :title="album.name"
-              >
+            <div class="p-4 flex-1 flex flex-col">
+              <p class="font-semibold text-white text-base leading-tight line-clamp-2 group-hover:text-white-400 transition-colors duration-200" :title="album.name">
                 {{ album.name }}
               </p>
               <p class="text-gray-400 text-sm mt-1.5 line-clamp-1" :title="album.artist?.name">

@@ -16,6 +16,7 @@ use App\Http\Controllers\Api\Admin\PartnersManagerController;
 use App\Http\Controllers\Api\Admin\SongsManagerController;
 use App\Http\Controllers\Api\Admin\AlbumsManagerController;
 use App\Http\Controllers\Api\Admin\TypePartnerController;
+use App\Http\Controllers\Api\Admin\PaymentManagerController;
 use App\Http\Controllers\Api\Client\ArtistInteractionController;
 use App\Http\Controllers\Api\Client\ClientArtistsController;
 use App\Http\Controllers\Api\Client\ClientGenresController;
@@ -28,6 +29,7 @@ use App\Http\Controllers\Api\Client\SongPlayController as ClientSongPlayControll
 use App\Http\Controllers\Api\Client\ClientAlbumsContronller;
 use App\Http\Controllers\Api\Client\ClientAdvertisingController;
 use App\Http\Controllers\Api\SongPlayController;
+use App\Http\Controllers\Api\Client\ClientAdImpressionController;
 use App\Models\Partner;
 use App\Models\Song;
 
@@ -85,7 +87,6 @@ Route::prefix('client')->group(function () {
         Route::post('/payment/create-topup-qr',  [PaymentController::class, 'create_TopUp_QR']);
         Route::post('/payment/webhook',          [PaymentController::class, 'webhook']);
         Route::get('/payments/check-status', [PaymentController::class, 'checkStatus']);
-
     });
 
     Route::middleware('auth:sanctum')->get(
@@ -207,8 +208,20 @@ Route::prefix('client')->group(function () {
         
         Route::put('/{album}/tracks',      [ClientAlbumsContronller::class, 'updateTracks']);
     });
-});
 
+    // avertising show all client 
+    Route::prefix('advertising')->group(function () {
+        Route::get('/allAdvertising', [ClientAdvertisingController::class, 'AllAdvertising']);
+    });
+    Route::prefix('advertising')->middleware('auth:sanctum')->group(function () {
+        Route::get('/allAdvertising', [ClientAdvertisingController::class, 'AllAdvertising']);
+        
+        // Tracking và statistics routes
+        Route::post('/{adId}/track', [ClientAdImpressionController::class, 'track']);
+        Route::get('/{adId}/statistics', [ClientAdImpressionController::class, 'statistics']);
+        Route::get('/{adId}/fraud-detection', [ClientAdImpressionController::class, 'fraudDetection']);
+    });
+});
 });
 
 
@@ -316,13 +329,6 @@ Route::prefix('admin')->middleware(['admin.token'])->group(function () {
     // type partner
     Route::prefix('partnerTypes')->group(function () {
         Route::get('/',         [TypePartnerController::class, 'getAllTypePartnar']);
-        // Route::get('/new',       [ClientSongsController::class, 'getNewSongs']);      
-        // Route::get('/popular',   [ClientSongsController::class, 'getPopularSongs']);  
-        // Route::post('/add',        [SongsManagerController::class, 'add']);
-        // Route::get('/{song}',     [ClientSongsController::class, 'show']);
-        // Route::delete('/delete/{song}', [SongsManagerController::class, 'delete']);
-        // Route::delete('/delete-multiple', [SongsManagerController::class, 'deleteMultiple']);
-        // Route::post('/update/{song}', [SongsManagerController::class, 'update']);
     });
 
      // Advertising
@@ -330,6 +336,18 @@ Route::prefix('admin')->middleware(['admin.token'])->group(function () {
         Route::get('/', [AdvertisingManagerController::class, 'index']);
         Route::get('/{advertisement}', [AdvertisingManagerController::class, 'show']);  
         Route::patch('/{advertisement}/toggle-status', [AdvertisingManagerController::class, 'toggleStatus']);
+    });
+
+    // =========================================================
+    // Payment Management
+    // =========================================================
+    Route::prefix('payments')->group(function () {
+        Route::get('/summary', [PaymentManagerController::class, 'summary']);
+        Route::get('/export',  [PaymentManagerController::class, 'export']);
+        Route::get('/',        [PaymentManagerController::class, 'index']);
+        Route::get('/{id}',    [PaymentManagerController::class, 'show']);
+        Route::post('/{id}/approve', [PaymentManagerController::class, 'approve']);
+        Route::post('/{id}/reject',  [PaymentManagerController::class, 'reject']);
     });
    
 });

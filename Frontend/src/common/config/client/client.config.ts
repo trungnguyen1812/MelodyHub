@@ -2,6 +2,8 @@ import ClientLayout from '@/layouts/ClientLayout.vue';
 
 // Dashboard
 import HomeView from '@/modules/client/views/dashboard/HomeView.vue';
+// user
+import UserProfileView from '@/modules/client/views/user/UserProfile.view.vue';
 // Artists
 import AllArtistsView from '@/modules/client/views/artists/AllArtistsView.vue';
 import ArtistSongsView from '@/modules/client/views/artists/ArtistSongsView.vue';
@@ -52,7 +54,12 @@ export const CLIENT_ROUTES = [
         name: 'client.home',
         component: HomeView
       },
-
+      // user
+      {
+        path: 'profile',
+        name: 'client.profile',
+        component: UserProfileView
+      },
       // 🎤 Artists
       {
         path: 'artists',

@@ -50,6 +50,9 @@ class UserService {
         const data = await api.get('/payments/check-status')
         return data;
     } 
+    async detailUser(id: number) {
+        return await api.get(`/users/${id}`);
+    }
 }
 
 export default new UserService();

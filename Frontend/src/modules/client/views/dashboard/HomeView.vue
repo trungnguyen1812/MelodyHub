@@ -17,6 +17,7 @@
     <div class="content-container pb-20">
       <VcCarouselArtists :artists="dataArtist" />
       <VcCarouselAlbums :albums="dataAlbums"/>
+      <VcAdBanner />
       <VcNewMusic :songs="dataNewSong" />
       <VcCarouselPopular :populars="PopularSong" />
      
@@ -48,10 +49,14 @@ import { useArtistStore, getFullImageUrl } from '@/modules/client/stores/artists
 import { useSongStore } from '@/modules/client/stores/songs/songsStore'
 import { useAlbumStore } from '@/modules/client/stores/albums/albumssStore';
 
+import VcAdBanner from '@/components/common/VcAd/VcAdBanner.vue'
+import { useAdManager } from '@/composables/useAdManager'
+
 import bg1 from "@/assets/images/bg-img/preview-page2.jpg";
 import bg2 from "@/assets/images/bg-img/preview-page1.jpg";
 import bg3 from "@/assets/images/bg-img/preview-page0.jpg";
 
+const { activeBanner, fetchAds, trackImpression, trackClick, trackDismiss } = useAdManager()
 const artistStore = useArtistStore()
 const dataArtist = computed(() =>
   artistStore.artists.map(a => ({
@@ -120,7 +125,6 @@ const refreshPropose = () => {
   songStore.fetchSuggestedSongs(9)
 }
 
-
 onMounted(async () => {
   // Synchronous-looking but parallel fetches
   await Promise.allSettled([
@@ -128,7 +132,8 @@ onMounted(async () => {
     albumStore.fetchAllAlbums(),
     songStore.fetchNewSongs(10),
     songStore.fetchPopularSongs(10),
-    songStore.fetchSuggestedSongs(9)
+    songStore.fetchSuggestedSongs(9),
+    fetchAds('banner')
   ])
   isInitialLoading.value = false
 })
@@ -261,5 +266,13 @@ const slideList = [
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: rgba(255, 255, 255, 0.35);
+}
+
+.flex-shrink-0 {
+  height: auto;
+}
+
+.group {
+  height: 100%;
 }
 </style>

@@ -27,14 +27,14 @@ class SongPlayController extends Controller
     {
         $data = $request->validate([
             'played_duration' => ['required', 'integer', 'min:0', 'max:86400'],
-            'play_percentage'  => ['required', 'numeric',  'min:0', 'max:100'],
+            'play_percentage'  => ['required', 'numeric', 'min:0', 'max:100'],
             'is_completed'     => ['boolean'],
             'playlist_id'      => ['nullable', 'integer', 'exists:playlists,id'],
         ]);
 
         // ── 1. Server-side validation: có đủ ngưỡng không? ──────────────────
-        $passedDuration    = $data['played_duration'] >= self::MIN_DURATION_SEC;
-        $passedPercentage  = $data['play_percentage']  >= self::MIN_PERCENTAGE;
+        $passedDuration   = $data['played_duration'] >= self::MIN_DURATION_SEC;
+        $passedPercentage = $data['play_percentage'] >= self::MIN_PERCENTAGE;
 
         if (!$passedDuration && !$passedPercentage) {
             return response()->json([
@@ -42,37 +42,56 @@ class SongPlayController extends Controller
             ], 422);
         }
 
-        // ── 2. Anti-spam: cùng user (hoặc IP) + bài trong N phút → bỏ qua ──
-        $userId    = Auth::id();          // null nếu guest
+        // ── 2. Lấy user_id chính xác ──────────────────────────────────────────
+        $userId = null;
+        $guard = 'sanctum'; // Hoặc 'api' tùy vào cấu hình của bạn
+        
+        if (Auth::guard($guard)->check()) {
+            $userId = Auth::guard($guard)->id();
+        } else {
+            // Thử với guard mặc định
+            if (Auth::check()) {
+                $userId = Auth::id();
+            }
+        }
+        
         $ipAddress = $request->ip();
+        $userAgent = $request->userAgent();
 
+        // ── 3. Anti-spam: cải thiện cho cả user và guest ──────────────────────
         $recentExists = SongPlay::where('song_id', $song->id)
-            ->where(function ($q) use ($userId, $ipAddress) {
+            ->where('played_at', '>=', now()->subMinutes(self::ANTI_SPAM_MINUTES))
+            ->where(function ($q) use ($userId, $ipAddress, $userAgent) {
                 if ($userId) {
+                    // Đã đăng nhập: check theo user_id
                     $q->where('user_id', $userId);
                 } else {
-                    // Guest: dùng IP thay thế
+                    // Guest: check theo IP + UserAgent + session_id (nếu có)
                     $q->whereNull('user_id')
-                      ->where('ip_address', $ipAddress);
+                    ->where('ip_address', $ipAddress)
+                    ->where('device_info', $userAgent); // Thêm check UserAgent
+                    
+                    // Optional: thêm session_id nếu có
+                    if (session()->getId()) {
+                        $q->where('session_id', session()->getId());
+                    }
                 }
             })
-            ->where('played_at', '>=', now()->subMinutes(self::ANTI_SPAM_MINUTES))
             ->exists();
 
         if ($recentExists) {
-            // Trả 200 để frontend không báo lỗi, nhưng không ghi thêm
             return response()->json([
                 'message'   => 'Play already recorded recently.',
                 'recorded'  => false,
             ]);
         }
 
-        // ── 3. Detect device & location ──────────────────────────────────────
+        // ── 4. Detect device & location ──────────────────────────────────────
         $deviceType = $this->detectDeviceType($request);
         $location   = $this->detectLocation($ipAddress);
 
-        // ── 4. Ghi vào DB ────────────────────────────────────────────────────
-        $play = SongPlay::create([
+        // ── 5. Ghi vào DB (thêm session_id cho guest) ─────────────────────────
+        $playData = [
             'user_id'         => $userId,
             'song_id'         => $song->id,
             'playlist_id'     => $data['playlist_id'] ?? null,
@@ -81,14 +100,20 @@ class SongPlayController extends Controller
             'is_completed'    => $data['is_completed'] ?? false,
             'played_at'       => now(),
             'device_type'     => $deviceType,
-            'device_info'     => $request->userAgent(),
+            'device_info'     => $userAgent,
             'ip_address'      => $ipAddress,
             'country'         => $location['country'],
             'city'            => $location['city'],
-        ]);
+        ];
+        
+        // Thêm session_id cho guest để chống spam tốt hơn
+        if (!$userId && session()->getId()) {
+            $playData['session_id'] = session()->getId();
+        }
+        
+        $play = SongPlay::create($playData);
 
-        // ── 5. Cập nhật counter trên bảng songs (nếu có cột play_count) ──────
-        // Dùng increment để tránh race condition (atomic update)
+        // ── 6. Cập nhật counter trên bảng songs ──────────────────────────────
         $song->increment('total_plays');
 
         return response()->json([

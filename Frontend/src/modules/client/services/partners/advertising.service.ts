@@ -33,17 +33,14 @@ class AdvertisingService {
      * Supports both PUT and PATCH (Laravel thường dùng PATCH cho partial update).
      */
     async updateCampaign(id: number | string, formData: FormData | object) {
-        // Nếu truyền FormData (có file) thì dùng multipart/form-data
         const isFormData = formData instanceof FormData;
-
+        console.log('📤 Updating campaign:', id, formData);
+        
         const config = isFormData
-            ? { headers: { 'Content-Type': 'multipart/form-data' } }
-            : {};
+            ? {}  // Để axios tự động set multipart/form-data với boundary
+            : { headers: { 'Content-Type': 'application/json' } };
 
-        // Laravel hỗ trợ cả PUT và PATCH cho cùng route
         return clientApi.put(`/partners/advertising/${id}`, formData, config);
-        // Hoặc dùng patch nếu bạn thích partial update:
-        // return clientApi.patch(`/partners/advertising/${id}`, formData, config);
     }
 
     /**

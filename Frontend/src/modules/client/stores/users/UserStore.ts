@@ -6,12 +6,14 @@ import { defineStore } from 'pinia';
 import router from "@/modules/router";
 import { useNotificationStore } from "@/store/notificationStore";
 import { Subscription } from '@/modules/client/interfaces/users/Subscription';
+import {UserInterface} from '@/modules/client/interfaces/users/user.interface';
 
 
 
 
 export const useUserStore = defineStore('client_user', {
   state: () => ({
+    profile: null as UserInterface | null,
     subscriptionPlans: [] as SubscriptionPlan[],
     userSubscriptions: [] as any[],
     loading: false,
@@ -45,6 +47,7 @@ export const useUserStore = defineStore('client_user', {
   },
 
   actions: {
+    
     async fetchSubscriptionPlans() {
       this.loading = true;
       this.error = null;
@@ -140,6 +143,9 @@ export const useUserStore = defineStore('client_user', {
       } finally {
         this.subscriptionLoaded = true;
       }
+    },
+    async fetchShow(id :number){
+        return await userService.detailUser(id);
     },
     startCheckSubscription() {
       if (this.checkingInterval) return;

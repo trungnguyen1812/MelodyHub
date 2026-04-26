@@ -11,6 +11,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Facades\DB;
+use Carbon\Carbon;
 
 class ClientAdvertisingController extends Controller
 {
@@ -518,5 +519,120 @@ class ClientAdvertisingController extends Controller
             return round($bytes / 1024, 2) . ' KB';
         }
         return $bytes . ' B';
+    }
+
+    
+
+    /**
+     * Get advertisements for client
+     */
+    public function AllAdvertising(Request $request)
+    {
+        $user = $request->user();
+        $today = now()->toDateString();
+        
+        $isVip = false;
+        if ($user) {
+            $isVip = $user->roles()
+                ->where('name', 'like', '%vip%')
+                ->where(function($q) {
+                    $q->whereNull('user_roles.expires_at')
+                    ->orWhere('user_roles.expires_at', '>', now());
+                })
+                ->exists();
+        }
+        
+        if ($user && $isVip) {
+            return response()->json([
+                'success' => true,
+                'data' => [],
+                'message' => 'VIP users do not see ads',
+                'is_vip' => true
+            ]);
+        }
+        // Tính tuổi từ date_of_birth nếu có
+        $userAge = $user && $user->date_of_birth 
+            ? Carbon::parse($user->date_of_birth)->age 
+            : null;
+        
+        $ads = Advertisement::query()
+            ->where('status', 'active')
+            ->where('start_date', '<=', $today)
+            ->where(function ($q) use ($today) {
+                $q->whereNull('end_date')->orWhere('end_date', '>=', $today);
+            })
+            ->where(function ($q) {
+                $q->whereNull('budget_spent')
+                ->orWhereColumn('budget_total', '>', 'budget_spent');
+            })
+            
+            // Filter theo độ tuổi
+            ->when($userAge, function ($q) use ($userAge) {
+                $q->where(function ($q) use ($userAge) {
+                    $q->whereNull('target_age_min')
+                    ->orWhere('target_age_min', '<=', $userAge);
+                })->where(function ($q) use ($userAge) {
+                    $q->whereNull('target_age_max')
+                    ->orWhere('target_age_max', '>=', $userAge);
+                });
+            })
+            
+            // Filter theo giới tính - FIXED
+            ->when($user && $user->gender, function ($q) use ($user) {
+                $q->where(function ($q) use ($user) {
+                    $q->whereNull('target_gender')
+                    ->orWhere('target_gender', 'all')
+                    ->orWhere('target_gender', $user->gender);
+                });
+            })
+            
+            // Filter theo quốc gia - FIXED
+            ->when($user && $user->country, function ($q) use ($user) {
+                $q->where(function ($q) use ($user) {
+                    $q->whereNull('target_location')
+                    ->orWhereRaw('JSON_CONTAINS(target_location, ?)', [json_encode($user->country)]);
+                });
+            })
+            
+            ->orderByDesc('priority')
+            ->get()
+            ->map(function ($ad) use ($user) {
+                $remainingBudget = $ad->budget_total - ($ad->budget_spent ?? 0);
+                
+                return [
+                    'id'          => $ad->id,
+                    'type'        => $ad->type,
+                    'title'       => $ad->name,
+                    'description' => $ad->advertiser_name,
+                    'media_url'   => $ad->media_url,
+                    'audio_url'   => $ad->type === 'audio' ? $ad->media_url : null,
+                    'thumbnail'   => $ad->thumbnail_url,
+                    'target_url'  => $ad->click_url ?: $ad->advertiser_url,
+                    'cta_text'    => $ad->advertiser_name ?: 'detail',
+                    'duration'    => $ad->duration,
+                    'skip_after'  => $ad->type === 'audio' ? 5 : null,
+                    'cost_per_play'  => $ad->cost_per_play,
+                    'cost_per_click' => $ad->cost_per_click,
+                    'remaining_budget' => $remainingBudget,
+                    'frequency_cap' => $ad->frequency_cap,
+                    'max_plays_per_user_per_day' => $ad->max_plays_per_user_per_day,
+                ];
+            });
+        
+        return response()->json($ads);
+    }
+
+    /**
+     * Post track for client
+     */
+    public function track(Request $request, $adId) 
+    {
+        Log::info('Ad tracking:', [
+            'ad_id' => $adId,
+            'event_type' => $request->event_type,
+            'timestamp' => $request->timestamp
+        ]);
+        
+        return response()->json(['success' => true]);
     }
 }

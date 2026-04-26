@@ -79,7 +79,12 @@
       <ul>
         <li><span class="icon-wrap"><img src="@/assets/images/icon/heart.png" alt="" /></span><span>Social Interaction</span></li>
         <li><span class="icon-wrap"><img src="@/assets/images/icon/playlist.svg" alt="" /></span><span>Playlists</span></li>
-        <li><span class="icon-wrap"><img src="@/assets/images/icon/payment.svg" alt="" /></span><span>Payment</span></li>
+        <router-link :to="{ name: 'admin.payment.list' }" custom v-slot="{ navigate, isActive }">
+          <li :class="{ active: isActive }" @click="navigate" @keyup.enter="navigate" role="link" tabindex="0">
+            <span class="icon-wrap"><img src="@/assets/images/icon/payment.svg" alt="" /></span>
+            <span>Payment</span>
+          </li>
+        </router-link>
         <router-link :to="{ name: 'admin.partnersmanager' }" custom v-slot="{ navigate, isActive }">
           <li :class="{ active: isActive }" @click="navigate" @keyup.enter="navigate" role="link" tabindex="0">
             <span class="icon-wrap"><img src="@/assets/images/icon/deal.png" alt="" /></span>
@@ -92,7 +97,6 @@
             <span>Advertising</span>
           </li>
         </router-link>
-        
       </ul>
     </div>
 

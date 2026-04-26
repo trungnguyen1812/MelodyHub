@@ -2,26 +2,73 @@ import { defineStore } from "pinia";
 import AuthService from "@/services/auth.service";
 import { data } from "autoprefixer";
 import authServices from "@/services/auth.service";
+import type {Partner} from '@/interfaces/partner.interface';
+import {Role} from '@/modules/client/interfaces/users/role.interface';
+
 import { ref} from "vue";
 
 interface User {
   id: number;
-  fullname: string;
+
+  name: string;
+  username: string;
   email: string;
-  avatar?: string;
-  name:string;
-  // thêm các trường khác nếu có
+  phone?: string;
+
+  roles: Role[];
+  role_display_name?: string;
+
+  password?: string; 
+
+  avatar_url?: string | null;
+
+  date_of_birth?: string | null;
+  gender?: "male" | "female" | "other" | null;
+  bio?: string | null;
+
+  country?: string | null;
+  timezone?: string | null;
+
+  status: "active" | "inactive" | "banned" | "pending";
+  published_at?: string | null;
+
+  play_count_last_24h?: number;
+  play_count_last_7d?: number;
+  play_count_last_30d?: number;
+  trending_score?: number;
+
+
+  seo_title?: string | null;
+  seo_description?: string | null;
+
+  has_used_trial: boolean;
+  is_vip: boolean;
+  vip_expires_at?: string | null;
+
+  created_at?: string;
+  updated_at?: string;
 }
 
 interface AuthState {
   isAuthenticated: boolean;
   user: User | null;
   token: string;
-
+  partners: Partner[]
   rolesFlags: Record<string, boolean> | null;
   isAdmin: boolean;
   permissionLoaded: boolean;
 }
+
+
+export const getFullImageUrl = (path?: string | null): string | undefined => {
+    if (!path || path.trim() === '') return undefined;
+    
+    if (path === 'null' || path === 'undefined') return undefined;
+
+    if (path.startsWith('http')) return path;
+
+    return `http://localhost:8000/storage/${path}`;
+};
 
 export const useAuthStore = defineStore("auth", {
   state: (): AuthState => ({
@@ -35,6 +82,7 @@ export const useAuthStore = defineStore("auth", {
       }
     })(),
     token: localStorage.getItem("client_token") || "",
+    partners: [] as Partner[],
     rolesFlags: null,
     isAdmin: false,
     permissionLoaded: false,
@@ -138,12 +186,31 @@ export const useAuthStore = defineStore("auth", {
 
         this.rolesFlags = data.roles_flags;
         this.isAdmin = data.is_admin;
+        
+        if (data.user) {
+          this.user = data.user;
+        }
+        
+        if (data.partner) {
+          this.partners = [data.partner];
+        } else if (data.partners) {
+          this.partners = data.partners;
+        }
+        
+        if (data.token) {
+          this.token = data.token;
+          localStorage.setItem("client_token", data.token);
+          this.isAuthenticated = true;
+        }
+        
         this.permissionLoaded = true;
 
         return data;
       } catch (err) {
         this.rolesFlags = null;
         this.isAdmin = false;
+        this.user = null;
+        this.partners = [];
         this.permissionLoaded = true;
         throw err;
       }
