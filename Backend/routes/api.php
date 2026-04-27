@@ -30,6 +30,7 @@ use App\Http\Controllers\Api\Client\ClientAlbumsContronller;
 use App\Http\Controllers\Api\Client\ClientAdvertisingController;
 use App\Http\Controllers\Api\SongPlayController;
 use App\Http\Controllers\Api\Client\ClientAdImpressionController;
+use App\Http\Controllers\Api\Client\PlaylistController;
 use App\Models\Partner;
 use App\Models\Song;
 
@@ -52,6 +53,8 @@ Route::prefix('client')->group(function () {
     // API admin → middleware checkrole
     Route::middleware(['authapi:sanctum'])->group(function() {
         Route::post('/logout', [AuthController::class, 'logout']);
+        Route::post('/user/profile', [AuthController::class, 'updateProfile']);
+        Route::post('/user/change-password', [AuthController::class, 'changePassword']);
     });
     Route::middleware(['authapi:sanctum'])->get('/check-permission', function (Request $request) {
         $user       = $request->user();
@@ -220,6 +223,18 @@ Route::prefix('client')->group(function () {
         Route::post('/{adId}/track', [ClientAdImpressionController::class, 'track']);
         Route::get('/{adId}/statistics', [ClientAdImpressionController::class, 'statistics']);
         Route::get('/{adId}/fraud-detection', [ClientAdImpressionController::class, 'fraudDetection']);
+    });
+
+    // ── Playlists (private per user) ─────────────────────────────────────────
+    Route::middleware('auth:sanctum')->prefix('playlists')->group(function () {
+        Route::get('/',                          [PlaylistController::class, 'index']);
+        Route::post('/',                         [PlaylistController::class, 'store']);
+        Route::get('/{id}',                      [PlaylistController::class, 'show']);
+        Route::post('/{id}',                     [PlaylistController::class, 'update']);   // POST for multipart
+        Route::delete('/{id}',                   [PlaylistController::class, 'destroy']);
+        Route::post('/{id}/songs',               [PlaylistController::class, 'addSong']);
+        Route::delete('/{id}/songs/{songId}',    [PlaylistController::class, 'removeSong']);
+        Route::post('/{id}/reorder',             [PlaylistController::class, 'reorder']);
     });
 });
 });

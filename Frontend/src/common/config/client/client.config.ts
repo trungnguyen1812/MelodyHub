@@ -4,6 +4,8 @@ import ClientLayout from '@/layouts/ClientLayout.vue';
 import HomeView from '@/modules/client/views/dashboard/HomeView.vue';
 // user
 import UserProfileView from '@/modules/client/views/user/UserProfile.view.vue';
+import EditProfileView from '@/modules/client/views/user/EditProfile.view.vue';
+import ChangePasswordView from '@/modules/client/views/user/ChangePassword.view.vue';
 // Artists
 import AllArtistsView from '@/modules/client/views/artists/AllArtistsView.vue';
 import ArtistSongsView from '@/modules/client/views/artists/ArtistSongsView.vue';
@@ -59,6 +61,16 @@ export const CLIENT_ROUTES = [
         path: 'profile',
         name: 'client.profile',
         component: UserProfileView
+      },
+      {
+        path: 'profile/edit',
+        name: 'client.profile.edit',
+        component: EditProfileView
+      },
+      {
+        path: 'profile/change-password',
+        name: 'client.profile.change-password',
+        component: ChangePasswordView
       },
       // 🎤 Artists
       {

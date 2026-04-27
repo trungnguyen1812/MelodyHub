@@ -72,6 +72,37 @@ class AuthService {
     const res = await adminAuthApi.post("/check-token");
     return res.data;
   }
+
+  async updateProfile(payload: {
+    name?: string;
+    phone?: string;
+    date_of_birth?: string;
+    gender?: string;
+    bio?: string;
+    avatar?: File | null;
+  }) {
+    const formData = new FormData();
+    if (payload.name !== undefined)          formData.append('name', payload.name);
+    if (payload.phone !== undefined)         formData.append('phone', payload.phone);
+    if (payload.date_of_birth !== undefined) formData.append('date_of_birth', payload.date_of_birth);
+    if (payload.gender !== undefined)        formData.append('gender', payload.gender);
+    if (payload.bio !== undefined)           formData.append('bio', payload.bio);
+    if (payload.avatar)                      formData.append('avatar', payload.avatar);
+
+    const res = await api.post("/user/profile", formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    return res.data;
+  }
+
+  async changePassword(payload: {
+    current_password: string;
+    new_password: string;
+    new_password_confirmation: string;
+  }) {
+    const res = await api.post("/user/change-password", payload);
+    return res.data;
+  }
 }
 
 export default new AuthService();

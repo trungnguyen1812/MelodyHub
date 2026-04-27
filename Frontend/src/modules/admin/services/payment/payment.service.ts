@@ -10,19 +10,19 @@ class PaymentService {
   }
 
   /** Chi tiết một giao dịch */
-  async getById(id: number) {
+  async getById(id: string) {
     const res = await adminApi.get(`/payments/${id}`)
     return res.data
   }
 
   /** Approve / process một payment (partner payout) */
-  async approve(id: number, note?: string) {
+  async approve(id: string, note?: string) {
     const res = await adminApi.post(`/payments/${id}/approve`, { note })
     return res.data
   }
 
   /** Từ chối / cancel */
-  async reject(id: number, reason: string) {
+  async reject(id: string, reason: string) {
     const res = await adminApi.post(`/payments/${id}/reject`, { reason })
     return res.data
   }

@@ -4,7 +4,7 @@ export type PaymentStatus = 'pending' | 'processing' | 'completed' | 'failed' | 
 export type PaymentType   = 'partner_payout' | 'subscription' | 'ad_payment' | 'refund'
 
 export interface Payment {
-  id: number
+  id: string                      // e.g. "83_payment" or "45_payout"
   reference_code: string          // e.g. PAY-20240426-00123
   type: PaymentType
   status: PaymentStatus

@@ -219,6 +219,23 @@ export const useAuthStore = defineStore("auth", {
     async checkAdminToken(){
       await authServices.checkAdminToken()
     },
+
+    async updateProfile(payload: {
+      name?: string;
+      phone?: string;
+      date_of_birth?: string;
+      gender?: string;
+      bio?: string;
+      avatar?: File | null;
+    }) {
+      const data = await authServices.updateProfile(payload);
+      // Merge updated fields into local user state
+      if (this.user) {
+        this.user = { ...this.user, ...data.user ?? payload };
+        localStorage.setItem('auth_user', JSON.stringify(this.user));
+      }
+      return data;
+    },
     
     initializeAuth() {
       const token = localStorage.getItem("client_token");

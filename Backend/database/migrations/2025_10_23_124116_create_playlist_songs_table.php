@@ -13,7 +13,17 @@ return new class extends Migration
     {
         Schema::create('playlist_songs', function (Blueprint $table) {
             $table->id();
-            $table->timestamps();
+            $table->unsignedBigInteger('playlist_id');
+            $table->unsignedBigInteger('song_id');
+            $table->unsignedBigInteger('added_by');
+            $table->unsignedInteger('position')->default(0);
+            $table->timestamp('added_at')->useCurrent();
+
+            $table->foreign('playlist_id')->references('id')->on('playlists')->onDelete('cascade');
+            $table->foreign('song_id')->references('id')->on('songs')->onDelete('cascade');
+            $table->foreign('added_by')->references('id')->on('users')->onDelete('cascade');
+
+            $table->unique(['playlist_id', 'song_id']);
         });
     }
 

@@ -26,11 +26,14 @@ class ClientSongsController extends Controller
         $query = Song::query()
             ->with(['artist', 'album', 'partner', 'genre']);
 
-        // ── Tìm kiếm theo title / slug ──
+        // ── Tìm kiếm theo title / slug / tên ca sĩ ──
         if ($search = $request->get('search')) {
             $query->where(function ($q) use ($search) {
                 $q->where('title', 'like', "%{$search}%")
-                ->orWhere('slug',  'like', "%{$search}%");
+                  ->orWhere('slug',  'like', "%{$search}%")
+                  ->orWhereHas('artist', function ($a) use ($search) {
+                      $a->where('name', 'like', "%{$search}%");
+                  });
             });
         }
 

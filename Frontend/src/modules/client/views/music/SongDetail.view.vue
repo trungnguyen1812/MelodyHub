@@ -227,8 +227,38 @@
                 </svg>
               </div>
               <h2 class="section-title">Lyrics</h2>
+              <!-- badge timed / plain -->
+              <span class="lyrics-type-badge" v-if="song.lyrics?.type === 'timed'">
+                <svg width="11" height="11" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+                </svg>
+                Synced
+              </span>
             </div>
-            <pre class="lyrics-block">{{ song.lyrics }}</pre>
+
+            <!-- Timed lyrics (có timestamp) -->
+            <div v-if="song.lyrics?.type === 'timed'" class="lyrics-timed">
+              <div
+                v-for="(seg, idx) in song.lyrics.segments"
+                :key="idx"
+                class="lyrics-line"
+                :class="{ 'lyrics-line--active': isActiveLine(seg) }"
+                @click="seekToLine(seg.start)"
+              >
+                <span class="lyrics-line__time">{{ formatTime(seg.start) }}</span>
+                <span class="lyrics-line__text">{{ seg.text }}</span>
+              </div>
+            </div>
+
+            <!-- Plain text lyrics -->
+            <div v-else-if="song.lyrics?.type === 'plain'" class="lyrics-plain">
+              <p v-for="(line, idx) in song.lyrics.text.split('\n')" :key="idx" class="lyrics-plain__line">
+                {{ line || '\u00A0' }}
+              </p>
+            </div>
+
+            <!-- Fallback: string thuần -->
+            <pre v-else class="lyrics-block">{{ song.lyrics }}</pre>
           </section>
         </div>
 
@@ -504,6 +534,22 @@ const onVolumeChange = () => {
   if (audio.value) audio.value.volume = volume.value
 }
 
+// ── Lyrics helpers ──
+const isActiveLine = (seg: { start: number; end: number }) => {
+  return currentTime.value >= seg.start && currentTime.value < seg.end
+}
+
+const seekToLine = (start: number) => {
+  if (audio.value) {
+    audio.value.currentTime = start
+    currentTime.value = start
+    if (!isPlaying.value) {
+      audio.value.play()
+      isPlaying.value = true
+    }
+  }
+}
+
 // ── Helpers ──
 const formatTime = (s: number) => {
   const m = Math.floor(s / 60)
@@ -658,6 +704,67 @@ onBeforeUnmount(() => destroyAudio())
 
 /* ── Lyrics ── */
 .lyrics-block { white-space: pre-wrap; font-size: 13.5px; line-height: 1.9; color: #94a3b8; font-family: inherit; background: #0f1117; border: 1px solid #1e2535; border-radius: 10px; padding: 16px; max-height: 400px; overflow-y: auto; }
+
+/* Timed lyrics */
+.lyrics-type-badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  margin-left: 8px;
+  font-size: 10px; font-weight: 600;
+  padding: 2px 8px; border-radius: 20px;
+  background: rgba(167,139,250,0.12); color: #a78bfa;
+  text-transform: uppercase; letter-spacing: 0.05em;
+}
+
+.lyrics-timed {
+  display: flex; flex-direction: column; gap: 2px;
+  max-height: 420px; overflow-y: auto;
+  padding-right: 4px;
+}
+.lyrics-timed::-webkit-scrollbar { width: 4px; }
+.lyrics-timed::-webkit-scrollbar-track { background: transparent; }
+.lyrics-timed::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
+
+.lyrics-line {
+  display: flex; align-items: baseline; gap: 14px;
+  padding: 8px 12px; border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+.lyrics-line:hover { background: rgba(255,255,255,0.04); }
+
+.lyrics-line--active {
+  background: rgba(167,139,250,0.1) !important;
+}
+.lyrics-line--active .lyrics-line__text {
+  color: #e2e8f0;
+  font-weight: 600;
+}
+.lyrics-line--active .lyrics-line__time {
+  color: #a78bfa;
+}
+
+.lyrics-line__time {
+  font-size: 11px; font-variant-numeric: tabular-nums;
+  color: rgba(255,255,255,0.2); min-width: 36px;
+  flex-shrink: 0; font-family: ui-monospace, monospace;
+  transition: color 0.15s;
+}
+.lyrics-line__text {
+  font-size: 14px; line-height: 1.6;
+  color: rgba(255,255,255,0.5);
+  transition: color 0.15s, font-weight 0.15s;
+}
+
+/* Plain lyrics */
+.lyrics-plain {
+  max-height: 420px; overflow-y: auto;
+  padding: 4px 0;
+}
+.lyrics-plain__line {
+  font-size: 14px; line-height: 1.9;
+  color: rgba(255,255,255,0.6);
+  margin: 0; padding: 2px 0;
+}
 
 /* ── Stats ── */
 .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }

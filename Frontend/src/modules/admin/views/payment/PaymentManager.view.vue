@@ -247,9 +247,9 @@ const goPage = (p: number) => {
 }
 
 // ── Actions ────────────────────────────────────────────────────────────────
-const viewDetail = (id: number) => router.push({ name: 'admin.payment.detail', params: { id } })
+const viewDetail = (id: string) => router.push({ name: 'admin.payment.detail', params: { id } })
 
-const handleApprove = async (id: number) => {
+const handleApprove = async (id: string) => {
   const { value: note } = await Swal.fire({
     title: 'Approve Payment',
     input: 'textarea',
@@ -272,7 +272,7 @@ const handleApprove = async (id: number) => {
   }
 }
 
-const handleReject = async (id: number) => {
+const handleReject = async (id: string) => {
   const { value: reason } = await Swal.fire({
     title: 'Reject Payment',
     input: 'textarea',

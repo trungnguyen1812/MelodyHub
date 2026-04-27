@@ -53,9 +53,113 @@
       </div>
 
       <!-- Center: Search Bar -->
-      <div class="flex-1 max-w-md mx-4 hidden sm:block">
-        <input type="text" placeholder="Search music..."
-          class="w-full px-4 py-2 bg-gray-800 text-white rounded-full focus:outline-none focus:ring-2 focus:ring-blue-400 text-sm" />
+      <div class="flex-1 max-w-md mx-4 hidden sm:block relative" ref="searchWrapRef">
+        <div class="search-box">
+          <svg class="search-icon" width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+          </svg>
+          <input
+            v-model="searchQuery"
+            type="text"
+            placeholder="Search songs, artists..."
+            class="search-input"
+            @focus="searchFocused = true"
+            @keydown.escape="closeSearch"
+            @keydown.enter="goToFirstResult"
+            autocomplete="off"
+          />
+          <button v-if="searchQuery" class="search-clear" @click="clearSearch">
+            <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+          </button>
+        </div>
+
+        <!-- Live search dropdown -->
+        <Transition name="search-drop">
+          <div
+            v-if="searchFocused && (searchQuery.length >= 1)"
+            class="search-dropdown"
+          >
+            <!-- Loading -->
+            <div v-if="searchLoading" class="search-state">
+              <div class="search-spinner" />
+              <span>Searching...</span>
+            </div>
+
+            <!-- No results -->
+            <div v-else-if="searchResults.length === 0 && searchQuery.length >= 2" class="search-state">
+              <svg width="32" height="32" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="opacity:0.3">
+                <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+              </svg>
+              <span>No results for "{{ searchQuery }}"</span>
+            </div>
+
+            <!-- Hint when only 1 char -->
+            <div v-else-if="searchQuery.length < 2" class="search-state search-state--hint">
+              <span>Type at least 2 characters...</span>
+            </div>
+
+            <!-- Results -->
+            <template v-else>
+              <div class="search-section-label">Songs · {{ searchResults.length }} found</div>
+              <div
+                v-for="song in searchResults"
+                :key="song.id"
+                class="search-item"
+                @click="goToSong(song)"
+              >
+                <!-- Cover -->
+                <div class="search-item__cover">
+                  <img
+                    v-if="song.cover_url"
+                    :src="getFullImageUrl(song.cover_url)"
+                    :alt="song.title"
+                    @error="(e) => ((e.target as HTMLImageElement).style.display='none')"
+                  />
+                  <div v-else class="search-item__cover-fallback">
+                    <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"/>
+                    </svg>
+                  </div>
+                </div>
+
+                <!-- Info -->
+                <div class="search-item__info">
+                  <span class="search-item__title" v-html="highlight(song.title, searchQuery)" />
+                  <div class="search-item__meta">
+                    <!-- Artist avatar -->
+                    <img
+                      v-if="song.artist?.avatar_url"
+                      :src="getFullImageUrl(song.artist.avatar_url)"
+                      class="search-item__artist-avatar"
+                      :alt="song.artist.name"
+                    />
+                    <span class="search-item__artist" v-html="highlight(song.artist?.name ?? 'Unknown', searchQuery)" />
+                    <span class="search-item__dot">·</span>
+                    <span class="search-item__duration">{{ song.duration_format }}</span>
+                  </div>
+                </div>
+
+                <!-- Play icon on hover -->
+                <div class="search-item__play">
+                  <svg width="12" height="12" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M8 5v14l11-7z"/>
+                  </svg>
+                </div>
+              </div>
+
+              <!-- View all -->
+              <div class="search-view-all" @click="viewAllResults">
+                View all results for "{{ searchQuery }}"
+                <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                </svg>
+              </div>
+            </template>
+          </div>
+        </Transition>
       </div>
 
       <!-- Right Side: Auth + Hamburger Menu -->
@@ -211,89 +315,120 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onBeforeUnmount } from "vue";
-import { useAuthStore , getFullImageUrl} from "@/store/authStore";
+import { ref, watch, onMounted, onBeforeUnmount } from "vue";
+import { useAuthStore, getFullImageUrl } from "@/store/authStore";
 import { useRouter } from "vue-router";
 import { useUserStore } from '@/modules/client/stores/users/UserStore';
 import { useCheckPermission } from '@/composables/useCheckPermission'
-
+import SongService from '@/modules/client/services/songs/songs.service'
 
 const subscriptionStore = useUserStore();
 const router = useRouter();
 const authStore = useAuthStore();
 const { goToCollaborations } = useCheckPermission()
-//hadle logout client 
+
+// ── Live Search ───────────────────────────────────────────────────────────────
+const searchQuery   = ref('')
+const searchResults = ref<any[]>([])
+const searchLoading = ref(false)
+const searchFocused = ref(false)
+const searchWrapRef = ref<HTMLElement | null>(null)
+
+let searchTimer: ReturnType<typeof setTimeout> | null = null
+
+watch(searchQuery, (val) => {
+  if (searchTimer) clearTimeout(searchTimer)
+  if (val.trim().length < 2) {
+    searchResults.value = []
+    return
+  }
+  searchLoading.value = true
+  searchTimer = setTimeout(async () => {
+    try {
+      const res = await SongService.getAllSongs({ search: val.trim(), limit: 8 })
+      searchResults.value = res.data?.data ?? []
+    } catch {
+      searchResults.value = []
+    } finally {
+      searchLoading.value = false
+    }
+  }, 300)
+})
+
+const highlight = (text: string, query: string): string => {
+  if (!query || !text) return text
+  const escaped = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+  return text.replace(new RegExp(`(${escaped})`, 'gi'), '<mark>$1</mark>')
+}
+
+const goToSong = (song: any) => {
+  closeSearch()
+  router.push({ name: 'client.song.detail', params: { id: song.id } })
+}
+
+const goToFirstResult = () => {
+  if (searchResults.value.length > 0) goToSong(searchResults.value[0])
+}
+
+const viewAllResults = () => {
+  closeSearch()
+  router.push({ name: 'client.music.new', query: { search: searchQuery.value } })
+}
+
+const clearSearch = () => {
+  searchQuery.value = ''
+  searchResults.value = []
+}
+
+const closeSearch = () => {
+  searchFocused.value = false
+}
+
+// ── Logout ────────────────────────────────────────────────────────────────────
 const handleLogout = async () => {
   await authStore.logout();
   router.push({ name: "Login" });
 };
 
-
 const ToUpgrade = () => {
   router.push({ name: "client.user.upgrade" });
 }
-const isDropdownOpen = ref(false);
-const isMobileMenuOpen = ref(false);
-const dropdownProfileOpen = ref(false);
-const profileDropdownRef = ref<HTMLElement | null>(null);
-const dropdown = ref<HTMLElement | null>(null);
 
+const isDropdownOpen      = ref(false);
+const isMobileMenuOpen    = ref(false);
+const dropdownProfileOpen = ref(false);
+const profileDropdownRef  = ref<HTMLElement | null>(null);
+const dropdown            = ref<HTMLElement | null>(null);
 
 const logo = new URL(
   "../assets/images/logo/melody-high-resolution-logo-white.png",
   import.meta.url
 ).href;
 
+const toggleDropdown        = () => { isDropdownOpen.value = !isDropdownOpen.value }
+const toggleMobileMenu      = () => { isMobileMenuOpen.value = !isMobileMenuOpen.value }
+const toggleProfileDropdown = () => { dropdownProfileOpen.value = !dropdownProfileOpen.value }
 
-const toggleDropdown = () => {
-  isDropdownOpen.value = !isDropdownOpen.value;
-};
-
-const toggleMobileMenu = () => {
-  isMobileMenuOpen.value = !isMobileMenuOpen.value;
-};
-
-const toggleProfileDropdown = () => {
-  dropdownProfileOpen.value = !dropdownProfileOpen.value;
-};
-
-
-const handleRegister = () => {
-  alert("Register clicked!");
-};
-
-const handleLogin = () => {
-  router.push({ name: "Login" });
-};
+const handleRegister = () => { alert("Register clicked!") }
+const handleLogin    = () => { router.push({ name: "Login" }) }
 
 const handleClickOutside = (event: MouseEvent) => {
   if (dropdown.value && !dropdown.value.contains(event.target as Node)) {
-    isDropdownOpen.value = false;
+    isDropdownOpen.value = false
   }
   if (profileDropdownRef.value && !profileDropdownRef.value.contains(event.target as Node)) {
-    dropdownProfileOpen.value = false;
+    dropdownProfileOpen.value = false
   }
-};
-
-const adminPage = () => {
-  router.push({ name: "admin.dashboard" })
+  if (searchWrapRef.value && !searchWrapRef.value.contains(event.target as Node)) {
+    searchFocused.value = false
+  }
 }
 
-const profilePage = () => {
-  router.push({ name: "client.profile" })
-}
+const adminPage   = () => { router.push({ name: "admin.dashboard" }) }
+const profilePage = () => { router.push({ name: "client.profile" }) }
 
-
-
-onMounted(() => {
-  document.addEventListener("click", handleClickOutside);
-});
-
-
-
-onBeforeUnmount(() => {
-  document.removeEventListener("click", handleClickOutside);
-});
+onMounted(() => { document.addEventListener("click", handleClickOutside) })
+onBeforeUnmount(() => { document.removeEventListener("click", handleClickOutside) })
 </script>
 
 <style scoped>
@@ -433,4 +568,220 @@ header {
       inset 0 0 15px rgba(255, 255, 255, 0.4);
   }
 }
+
+/* ── Live Search ─────────────────────────────────────────────────────────── */
+.search-box {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.search-icon {
+  position: absolute;
+  left: 14px;
+  color: rgba(255,255,255,0.35);
+  pointer-events: none;
+  flex-shrink: 0;
+}
+
+.search-input {
+  width: 100%;
+  background: rgba(255,255,255,0.07);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 24px;
+  padding: 9px 36px 9px 36px;
+  font-size: 13px;
+  color: rgba(255,255,255,0.9);
+  outline: none;
+  transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
+  font-family: inherit;
+}
+
+.search-input:focus {
+  border-color: rgba(0,198,255,0.5);
+  background: rgba(0,198,255,0.06);
+  box-shadow: 0 0 0 3px rgba(0,198,255,0.1);
+}
+
+.search-input::placeholder { color: rgba(255,255,255,0.28); }
+
+.search-clear {
+  position: absolute;
+  right: 12px;
+  background: rgba(255,255,255,0.1);
+  border: none;
+  color: rgba(255,255,255,0.5);
+  width: 18px; height: 18px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.search-clear:hover { background: rgba(255,255,255,0.2); color: #fff; }
+
+/* Dropdown */
+.search-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0; right: 0;
+  background: #111827;
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.6), 0 0 0 1px rgba(0,198,255,0.08);
+  z-index: 9999;
+  max-height: 420px;
+  overflow-y: auto;
+}
+
+.search-dropdown::-webkit-scrollbar { width: 4px; }
+.search-dropdown::-webkit-scrollbar-track { background: transparent; }
+.search-dropdown::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
+
+.search-section-label {
+  padding: 10px 16px 6px;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: rgba(255,255,255,0.3);
+}
+
+/* State (loading / empty / hint) */
+.search-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 28px 16px;
+  color: rgba(255,255,255,0.35);
+  font-size: 13px;
+}
+
+.search-state--hint { padding: 14px 16px; flex-direction: row; justify-content: center; }
+
+.search-spinner {
+  width: 20px; height: 20px;
+  border: 2px solid rgba(255,255,255,0.1);
+  border-top-color: #00c6ff;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* Result item */
+.search-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px;
+  cursor: pointer;
+  transition: background 0.15s;
+  position: relative;
+}
+
+.search-item:hover { background: rgba(255,255,255,0.05); }
+.search-item:hover .search-item__play { opacity: 1; }
+
+.search-item__cover {
+  width: 44px; height: 44px;
+  border-radius: 8px;
+  overflow: hidden;
+  flex-shrink: 0;
+  background: rgba(255,255,255,0.06);
+  display: flex; align-items: center; justify-content: center;
+}
+
+.search-item__cover img {
+  width: 100%; height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.search-item__cover-fallback {
+  color: rgba(255,255,255,0.2);
+  display: flex; align-items: center; justify-content: center;
+  width: 100%; height: 100%;
+}
+
+.search-item__info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.search-item__title {
+  font-size: 13px;
+  font-weight: 500;
+  color: rgba(255,255,255,0.9);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.search-item__title :deep(mark) {
+  background: transparent;
+  color: #00c6ff;
+  font-weight: 700;
+}
+
+.search-item__meta {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  color: rgba(255,255,255,0.38);
+}
+
+.search-item__artist-avatar {
+  width: 16px; height: 16px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.search-item__artist :deep(mark) {
+  background: transparent;
+  color: rgba(255,255,255,0.7);
+  font-weight: 600;
+}
+
+.search-item__dot { opacity: 0.4; }
+
+.search-item__duration { font-variant-numeric: tabular-nums; }
+
+.search-item__play {
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  background: rgba(0,198,255,0.15);
+  color: #00c6ff;
+  display: flex; align-items: center; justify-content: center;
+  opacity: 0;
+  transition: opacity 0.15s;
+  flex-shrink: 0;
+}
+
+/* View all */
+.search-view-all {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 12px 16px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #00c6ff;
+  cursor: pointer;
+  border-top: 1px solid rgba(255,255,255,0.06);
+  transition: background 0.15s;
+}
+.search-view-all:hover { background: rgba(0,198,255,0.06); }
+
+/* Transition */
+.search-drop-enter-active { transition: opacity 0.15s ease, transform 0.15s ease; }
+.search-drop-leave-active { transition: opacity 0.1s ease, transform 0.1s ease; }
+.search-drop-enter-from  { opacity: 0; transform: translateY(-6px); }
+.search-drop-leave-to    { opacity: 0; transform: translateY(-4px); }
 </style>

@@ -153,13 +153,24 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, onUnmounted } from 'vue'
+import { onMounted, onUnmounted, computed } from 'vue'
 import { usePaymentStore } from '@/modules/admin/stores/payment/paymentStore'
+import { useRoute } from 'vue-router'
 import router from '@/modules/router'
 import Swal from 'sweetalert2'
 
-const props = defineProps<{ id: string | number }>()
+const props = defineProps<{ id?: string | number }>()
+const route = useRoute()
 const store = usePaymentStore()
+
+// Lấy id từ props (khi dùng props:true) hoặc fallback sang route.params
+// id có dạng "83_payment" hoặc "45_payout" — giữ nguyên string
+const paymentId = computed<string | null>(() => {
+  const raw = props.id ?? route.params.id
+  if (!raw) return null
+  const str = String(raw).trim()
+  return str.length > 0 ? str : null
+})
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 const statusLabel: Record<string, string> = {
@@ -192,7 +203,7 @@ const handleApprove = async () => {
   })
   if (note !== undefined) {
     try {
-      await store.approve(Number(props.id), note)
+      await store.approve(paymentId.value!, note)
       Swal.fire({ title: 'Approved!', icon: 'success', background: '#181c22', color: '#f0f4f8', timer: 1500, showConfirmButton: false })
     } catch {
       Swal.fire({ title: 'Error', icon: 'error', background: '#181c22', color: '#f0f4f8' })
@@ -212,7 +223,7 @@ const handleReject = async () => {
   })
   if (reason) {
     try {
-      await store.reject(Number(props.id), reason)
+      await store.reject(paymentId.value!, reason)
       Swal.fire({ title: 'Rejected!', icon: 'info', background: '#181c22', color: '#f0f4f8', timer: 1500, showConfirmButton: false })
     } catch {
       Swal.fire({ title: 'Error', icon: 'error', background: '#181c22', color: '#f0f4f8' })
@@ -221,7 +232,13 @@ const handleReject = async () => {
 }
 
 // ── Lifecycle ──────────────────────────────────────────────────────────────
-onMounted(() => store.fetchById(Number(props.id)))
+onMounted(() => {
+  if (paymentId.value) {
+    store.fetchById(paymentId.value)
+  } else {
+    store.error = 'Invalid payment ID'
+  }
+})
 onUnmounted(() => store.clearCurrentPayment())
 </script>
 

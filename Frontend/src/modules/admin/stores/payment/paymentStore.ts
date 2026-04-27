@@ -60,7 +60,7 @@ export const usePaymentStore = defineStore('payment', {
       }
     },
 
-    async fetchById(id: number) {
+    async fetchById(id: string) {
       this.loadingDetail = true
       this.error = null
       try {
@@ -74,7 +74,7 @@ export const usePaymentStore = defineStore('payment', {
       }
     },
 
-    async approve(id: number, note?: string) {
+    async approve(id: string, note?: string) {
       this.actionLoading = true
       this.error = null
       try {
@@ -91,7 +91,7 @@ export const usePaymentStore = defineStore('payment', {
       }
     },
 
-    async reject(id: number, reason: string) {
+    async reject(id: string, reason: string) {
       this.actionLoading = true
       this.error = null
       try {

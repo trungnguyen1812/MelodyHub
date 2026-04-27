@@ -95,4 +95,66 @@ class AuthController extends Controller
     public function sendAdminOtp(){
         
     }
+
+    public function updateProfile(Request $request)
+    {
+        /** @var \App\Models\User $user */
+        $user = $request->user();
+
+        $validated = $request->validate([
+            'name'          => 'sometimes|string|max:255',
+            'phone'         => 'sometimes|nullable|string|max:20',
+            'date_of_birth' => 'sometimes|nullable|date',
+            'gender'        => 'sometimes|nullable|in:male,female,other',
+            'bio'           => 'sometimes|nullable|string|max:1000',
+            'avatar'        => 'sometimes|nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
+        ]);
+
+        if ($request->hasFile('avatar')) {
+            // Delete old avatar if it's a local file
+            if ($user->avatar_url && !str_starts_with($user->avatar_url, 'http')) {
+                \Illuminate\Support\Facades\Storage::disk('public')->delete($user->avatar_url);
+            }
+            $path = $request->file('avatar')->store('avatars', 'public');
+            $validated['avatar_url'] = $path;
+        }
+
+        unset($validated['avatar']);
+        $user->update($validated);
+
+        return response()->json([
+            'message' => 'Profile updated successfully',
+            'user'    => $user->fresh(),
+        ]);
+    }
+
+    public function changePassword(Request $request)
+    {
+        /** @var \App\Models\User $user */
+        $user = $request->user();
+
+        $validated = $request->validate([
+            'current_password' => 'required|string',
+            'new_password'     => 'required|string|min:8|confirmed',
+        ]);
+
+        if (!Hash::check($validated['current_password'], $user->password)) {
+            return response()->json([
+                'message' => 'Current password is incorrect',
+                'errors'  => ['current_password' => ['Current password is incorrect']],
+            ], 422);
+        }
+
+        $user->update([
+            'password' => Hash::make($validated['new_password']),
+        ]);
+
+        // Revoke all tokens except current so user stays logged in
+        $currentToken = $request->user()->currentAccessToken();
+        $user->tokens()->where('id', '!=', $currentToken->id)->delete();
+
+        return response()->json([
+            'message' => 'Password changed successfully',
+        ]);
+    }
 }
