@@ -390,7 +390,7 @@ onMounted(async () => {
     border-radius: 14px;
     margin-top: 7px;
     display: block;
-    background: rgba(255, 255, 255, 0.08);
+    background-color: #0f1216;
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
     display: flex;

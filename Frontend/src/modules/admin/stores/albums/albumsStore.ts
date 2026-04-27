@@ -21,7 +21,7 @@ export interface AlbumsStatisticsData {
     status: 'increase' | 'decrease';
 }
 
-export const useAlbumStore = defineStore("album", {
+export const useAlbumStore = defineStore("admin_album", {
     state: () => ({
         profile: null as AlbumInterface | null,
         albums: [] as AlbumInterface[],

@@ -741,7 +741,7 @@ onMounted(() => loadSongs())
 }
 
 .songs-management {
-  background-color: #1b2325;
+  background-color: #0f1216;
   min-height: 100vh;
   padding: 32px 36px;
   font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;

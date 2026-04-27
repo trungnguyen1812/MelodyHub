@@ -313,9 +313,11 @@ onMounted(() => store.fetch())
   padding: 24px 28px 48px;
   min-height: 100%;
   color: rgba(255,255,255,0.9);
+  background-color: #0f1216;
   font-family: 'DM Sans', system-ui, sans-serif;
   font-size: 14px;
   position: relative;
+
 }
 
 .dash__ambient {

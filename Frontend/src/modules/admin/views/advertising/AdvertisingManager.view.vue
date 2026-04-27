@@ -518,7 +518,7 @@ const shortName = (name: string | null | undefined): string =>
 .pa-page {
   padding: 28px;
   min-height: 100vh;
-  background: #181b1f;
+  background-color: #0f1216;
   color: #e2e8f0;
   font-family: 'DM Sans', 'Inter', sans-serif;
   font-size: 14px;

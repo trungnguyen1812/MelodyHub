@@ -38,7 +38,7 @@
 
           <div class="player-seek-area">
             <span class="player-time">{{ formatTime(player.currentTime) }}</span>
-            <div class="player-seek-wrap" @click="onSeekClick">
+            <div class="player-seek-wrap" @click.self="onSeekClick">
               <div class="player-seek-track">
                 <div class="player-seek-fill"
                   :style="{ width: player.duration > 0 ? (player.currentTime / player.duration * 100) + '%' : '0%' }">
@@ -48,7 +48,7 @@
                 </div>
               </div>
               <input type="range" min="0" :max="player.duration" :value="player.currentTime" step="0.1"
-                class="player-seek-input" @input="onSeek" />
+                    class="player-seek-input" @input="onSeek" @click.stop />
             </div>
             <span class="player-time">{{ formatTime(player.duration) }}</span>
           </div>
@@ -90,27 +90,72 @@
             </button>
           </div>
 
-          <div class="player-volume">
-            <button class="player-vol-icon" @click="player.toggleMute()">
-              <svg v-if="player.isMuted || player.volume === 0" width="16" height="16" viewBox="0 0 24 24" fill="none"
-                stroke="currentColor" stroke-width="2">
-                <path d="M11 5L6 9H2V15H6L11 19V5Z" />
-                <line x1="23" y1="9" x2="17" y2="15" />
-                <line x1="17" y1="9" x2="23" y2="15" />
-              </svg>
-              <svg v-else width="16" height="16" viewBox="0 0 24 24" fill="none"
-                stroke="currentColor" stroke-width="2">
-                <path d="M11 5L6 9H2V15H6L11 19V5Z" />
-                <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
-                <path v-if="player.volume > 0.5" d="M19.07 4.93a10 10 0 0 1 0 14.14" />
-              </svg>
-            </button>
-            <div class="player-vol-wrap">
-              <div class="player-vol-track">
-                <div class="player-vol-fill" :style="{ width: (player.isMuted ? 0 : player.volume * 100) + '%' }"></div>
+          <div class="player-volume" ref="volumePopupRef">
+              <button class="player-vol-icon" @click="toggleVolumePopup">
+                <!-- Icon mute -->
+                <svg v-if="player.isMuted || player.volume === 0" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="2">
+                  <path d="M11 5L6 9H2V15H6L11 19V5Z" />
+                  <line x1="23" y1="9" x2="17" y2="15" />
+                  <line x1="17" y1="9" x2="23" y2="15" />
+                </svg>
+                <!-- Icon có âm thanh -->
+                <svg v-else width="18" height="18" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="2">
+                  <path d="M11 5L6 9H2V15H6L11 19V5Z" />
+                  <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
+                  <path v-if="player.volume > 0.5" d="M19.07 4.93a10 10 0 0 1 0 14.14" />
+                </svg>
+              </button>
+
+              <!-- Popup volume - chỉ hiện khi showVolumePopup = true -->
+              <div v-if="showVolumePopup" class="player-vol-popup">
+                <div class="player-vol-wrap">
+                  <div class="player-vol-track">
+                    <div class="player-vol-fill" :style="{ width: (displayVolume * 100) + '%' }"></div>
+                  </div>
+                  <input 
+                    type="range" 
+                    min="0" 
+                    max="1" 
+                    step="0.05" 
+                    :value="displayVolume"
+                    class="player-vol-slider" 
+                    @input="onVolumeChange"
+                  />
+                </div>
               </div>
-              <input type="range" min="0" max="1" step="0.05" :value="player.isMuted ? 0 : player.volume"
-                class="player-vol-slider" @input="onVolumeChange" />
+          </div>
+
+          <div class="player-timer" ref="timerPopupRef">
+            <button class="player-timer-icon" @click="toggleTimerPopup" :class="{ active: timerRemaining > 0 }">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10" />
+                <polyline points="12 6 12 12 16 14" />
+              </svg>
+              <span v-if="timerRemaining > 0" class="timer-badge">{{ formatTimerDisplay }}</span>
+            </button>
+
+            <!-- Popup timer -->
+            <div v-if="showTimerPopup" class="player-timer-popup">
+              <div class="timer-header">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="10" />
+                  <polyline points="12 6 12 12 16 14" />
+                </svg>
+                <span>Hẹn giờ dừng</span>
+              </div>
+              <div class="timer-options">
+                <button v-for="opt in timerOptions" :key="opt.minutes" 
+                  class="timer-option" 
+                  :class="{ active: timerSelected === opt.minutes }"
+                  @click="setSleepTimer(opt.minutes)">
+                  {{ opt.label }}
+                </button>
+              </div>
+              <div v-if="timerRemaining > 0" class="timer-cancel" @click="cancelSleepTimer">
+                🗑️ Tắt hẹn giờ
+              </div>
             </div>
           </div>
         </div>
@@ -275,14 +320,14 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, onUnmounted, computed, nextTick } from 'vue'
+import { ref, watch, onUnmounted, computed, nextTick, onMounted } from 'vue'
 import { usePlayerStore } from '@/store/playerStore'
 import type { Song } from '@/interfaces/songs.interface'
 import { useRouter } from 'vue-router'
 import { useSongStore } from '@/modules/client/stores/songs/songsStore'
 import { getFullImageUrl } from '@/modules/client/stores/artists/artistsStore'
 import songsService from '@/modules/client/services/songs/songs.service'
-import ActionButton  from '@/components/common/VcBtnAction/ActionButton.vue';
+import ActionButton from '@/components/common/VcBtnAction/ActionButton.vue'
 import VcAdBanner from '@/components/common/VcAd/VcAdBanner.vue'
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -300,19 +345,42 @@ const songStore = useSongStore()
 // ─── State ───────────────────────────────────────────────────────────────────
 const isCollapsed = ref(false)
 const showLyrics = ref(false)
-
-// currentLyrics luôn là LyricLine[] — không bao giờ null/false
-// [] = chưa có / không có lyrics
-// [...] = có lyrics
 const currentLyrics = ref<LyricLine[]>([])
-
-// Tách riêng loading state để template không cần check null
 const isLoadingLyrics = ref(false)
+const lyricGradient = ref('linear-gradient(135deg, rgba(16, 16, 21, 0.95), rgba(10, 10, 15, 0.98))')
+
+// ─── Volume Popup State ──────────────────────────────────────────────────────
+const showVolumePopup = ref(false)
+const volumePopupRef = ref<HTMLElement | null>(null)
+
+// ─── Sleep Timer State ───────────────────────────────────────────────────────
+const showTimerPopup = ref(false)
+const timerPopupRef = ref<HTMLElement | null>(null)
+const timerRemaining = ref(0)
+const timerSelected = ref(0)
+let timerInterval: ReturnType<typeof setInterval> | null = null
+
+const timerOptions = [
+  { minutes: 15, label: '15 phút' },
+  { minutes: 30, label: '30 phút' },
+  { minutes: 45, label: '45 phút' },
+  { minutes: 60, label: '60 phút' },
+]
 
 // ─── Computed ─────────────────────────────────────────────────────────────────
 const hasLyrics = computed(() => currentLyrics.value.length > 0)
 
-const lyricGradient = ref('linear-gradient(135deg, rgba(16, 16, 21, 0.95), rgba(10, 10, 15, 0.98))')
+const displayVolume = computed(() => {
+  if (player.isMuted) return 0
+  return player.volume
+})
+
+const formatTimerDisplay = computed(() => {
+  if (timerRemaining.value <= 0) return ''
+  const mins = Math.floor(timerRemaining.value / 60)
+  const secs = timerRemaining.value % 60
+  return `${mins}:${secs.toString().padStart(2, '0')}`
+})
 
 // ─── Navigation ──────────────────────────────────────────────────────────────
 const goToDetail = () => {
@@ -367,46 +435,96 @@ const handleImageError = (event: Event) => {
   img.src = '/images/default-avatar.png'
 }
 
-
 const formatNumber = (n: number) =>
   n >= 1_000_000 ? (n / 1_000_000).toFixed(1) + 'M'
-  : n >= 1_000   ? (n / 1_000).toFixed(1) + 'K'
+  : n >= 1_000 ? (n / 1_000).toFixed(1) + 'K'
   : String(n)
-const formatDate = (iso: string) =>
-  new Date(iso).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
 
-
-// ─── Seek / Volume ────────────────────────────────────────────────────────────
+// ─── Seek / Volume ───────────────────────────────────────────────────────────
 const onSeek = (e: Event) => player.seek(parseFloat((e.target as HTMLInputElement).value))
+
 const onSeekClick = (e: MouseEvent) => {
   if (player.duration === 0) return
-  const rect = (e.currentTarget as HTMLElement).getBoundingClientRect()
-  player.seek((e.clientX - rect.left) / rect.width * player.duration)
+  const track = (e.currentTarget as HTMLElement).querySelector('.player-seek-track')
+  if (!track) return
+  const rect = track.getBoundingClientRect()
+  const ratio = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width))
+  player.seek(ratio * player.duration)
 }
-const onVolumeChange = (e: Event) => player.setVolume(parseFloat((e.target as HTMLInputElement).value))
+
+const onVolumeChange = (e: Event) => {
+  const newVolume = parseFloat((e.target as HTMLInputElement).value)
+  player.setVolume(newVolume)
+  if (player.isMuted && newVolume > 0) {
+    player.toggleMute()
+  }
+}
+
+// ─── Volume Popup ───────────────────────────────────────────────────────────
+const toggleVolumePopup = () => {
+  showVolumePopup.value = !showVolumePopup.value
+}
+
+// ─── Sleep Timer ─────────────────────────────────────────────────────────────
+const toggleTimerPopup = () => {
+  showTimerPopup.value = !showTimerPopup.value
+}
+
+const setSleepTimer = (minutes: number) => {
+  if (minutes === 0) {
+    cancelSleepTimer()
+    return
+  }
+
+  if (timerInterval) clearInterval(timerInterval)
+
+  timerSelected.value = minutes
+  timerRemaining.value = minutes * 60
+
+  timerInterval = setInterval(() => {
+    if (timerRemaining.value > 0) {
+      timerRemaining.value--
+
+      if (timerRemaining.value === 0) {
+        if (timerInterval) clearInterval(timerInterval)
+        timerInterval = null
+        player.stop()
+        timerSelected.value = 0
+      }
+    }
+  }, 1000)
+
+  showTimerPopup.value = false
+}
+
+const cancelSleepTimer = () => {
+  if (timerInterval) {
+    clearInterval(timerInterval)
+    timerInterval = null
+  }
+  timerRemaining.value = 0
+  timerSelected.value = 0
+  showTimerPopup.value = false
+}
 
 // ─── Lyrics: extract ─────────────────────────────────────────────────────────
-// Luôn trả về LyricLine[] — [] nếu không parse được
 const extractLyrics = (lyrics: any): LyricLine[] => {
   if (!lyrics) return []
 
-  // Unwrap Vue Proxy
   const raw = (lyrics as any)?.__v_raw ?? lyrics
-
   let parsed: any = raw
+
   if (typeof raw === 'string') {
     const trimmed = raw.trim()
     if (!trimmed || trimmed === '[object Object]') return []
     try { parsed = JSON.parse(trimmed) } catch { return [] }
   }
 
-  // Format: { type: "timed", segments: [{start, end, text}] }
   if (parsed?.type === 'timed' && Array.isArray(parsed.segments)) {
     const lines: LyricLine[] = parsed.segments.filter((s: any) => s?.text?.trim())
     if (lines.length > 0) return lines
   }
 
-  // Format: { plain_text: "line1\nline2\n..." }
   if (parsed?.plain_text?.trim()) {
     return parsed.plain_text
       .split('\n')
@@ -415,7 +533,6 @@ const extractLyrics = (lyrics: any): LyricLine[] => {
       .map((text: string): LyricLine => ({ start: 0, end: 0, text }))
   }
 
-  // Format: Array [{start, end, text}]
   if (Array.isArray(parsed)) {
     const lines: LyricLine[] = parsed.filter((s: any) => s?.text?.trim())
     return lines
@@ -447,7 +564,6 @@ const activeLyricIdx = computed(() => {
 const toggleLyrics = async () => {
   showLyrics.value = !showLyrics.value
 
-  // Chỉ fetch nếu mở panel VÀ chưa có lyrics VÀ không đang loading
   if (showLyrics.value && !hasLyrics.value && !isLoadingLyrics.value && player.currentSong?.id) {
     isLoadingLyrics.value = true
     try {
@@ -473,56 +589,9 @@ watch(activeLyricIdx, async (idx) => {
   }
 })
 
-// ─── Watch: đổi bài → reset lyrics + restore follow status ──────────────────
-watch(
-  () => player.currentSong,
-  async (newSong) => {
-    // Reset khi stop hoặc không có bài
-    if (!newSong?.id) {
-      currentLyrics.value = []
-      isLoadingLyrics.value = false
-      lyricGradient.value = 'linear-gradient(135deg, rgba(16, 16, 21, 0.95), rgba(10, 10, 15, 0.98))'
-      showLyrics.value = false   // đóng panel khi stop
-      return
-    }
-
-    // Restore follow status from cache when song loads
-    player.restoreFollowStatus(newSong.id)
-
-    lyricGradient.value = getLyricGradient(newSong)
-    currentLyrics.value = []     // reset lyrics khi đổi bài
-    isLoadingLyrics.value = true // bắt đầu loading
-
-    // Thử lấy lyrics từ object bài nhạc trước
-    if (newSong.lyrics) {
-      currentLyrics.value = extractLyrics(newSong.lyrics)
-      isLoadingLyrics.value = false
-      return
-    }
-
-    // Nếu không có → fetch từ API
-    try {
-      const { data } = await songsService.getLyrics(newSong.id)
-      currentLyrics.value = extractLyrics(data.lyrics)
-    } catch {
-      currentLyrics.value = []   // fetch lỗi → không có lyrics
-    } finally {
-      isLoadingLyrics.value = false
-    }
-  },
-  { immediate: true }
-)
-
-// ─── Watch: collapse → đóng lyrics panel ─────────────────────────────────────
-watch(isCollapsed, (collapsed) => {
-  if (collapsed) showLyrics.value = false
-})
-
 // ─── Follow Success Handler ──────────────────────────────────────────────────
 const onFollowSuccess = (result: any) => {
   if (!player.currentSong) return
-  
-  // Update current song follow status + cache for persistence across song resets
   player.updateFollowStatus(
     player.currentSong.id,
     result?.is_followed ?? false,
@@ -530,11 +599,17 @@ const onFollowSuccess = (result: any) => {
   )
 }
 
-onUnmounted(() => {
-  // Cleanup if needed
-})
+// ─── Click outside handler ───────────────────────────────────────────────────
+const handleClickOutside = (event: MouseEvent) => {
+  if (volumePopupRef.value && !volumePopupRef.value.contains(event.target as Node)) {
+    showVolumePopup.value = false
+  }
+  if (timerPopupRef.value && !timerPopupRef.value.contains(event.target as Node)) {
+    showTimerPopup.value = false
+  }
+}
 
-// ─── Body scroll lock ─────────────────────────────────────────────────────────
+// ─── Body scroll lock ────────────────────────────────────────────────────────
 const lockScroll = (isLocked: boolean) => {
   if (isLocked) {
     const scrollY = window.scrollY
@@ -554,8 +629,59 @@ const lockScroll = (isLocked: boolean) => {
   }
 }
 
+// ─── Watches ─────────────────────────────────────────────────────────────────
+watch(
+  () => player.currentSong,
+  async (newSong) => {
+    if (!newSong?.id) {
+      currentLyrics.value = []
+      isLoadingLyrics.value = false
+      lyricGradient.value = 'linear-gradient(135deg, rgba(16, 16, 21, 0.95), rgba(10, 10, 15, 0.98))'
+      showLyrics.value = false
+      cancelSleepTimer() // Tắt timer khi không có bài
+      return
+    }
+
+    player.restoreFollowStatus(newSong.id)
+
+    lyricGradient.value = getLyricGradient(newSong)
+    currentLyrics.value = []
+    isLoadingLyrics.value = true
+
+    if (newSong.lyrics) {
+      currentLyrics.value = extractLyrics(newSong.lyrics)
+      isLoadingLyrics.value = false
+      return
+    }
+
+    try {
+      const { data } = await songsService.getLyrics(newSong.id)
+      currentLyrics.value = extractLyrics(data.lyrics)
+    } catch {
+      currentLyrics.value = []
+    } finally {
+      isLoadingLyrics.value = false
+    }
+  },
+  { immediate: true }
+)
+
+watch(isCollapsed, (collapsed) => {
+  if (collapsed) showLyrics.value = false
+})
+
 watch(showLyrics, (isOpen) => lockScroll(isOpen))
-onUnmounted(() => lockScroll(false))
+
+// ─── Lifecycle ───────────────────────────────────────────────────────────────
+onMounted(() => {
+  document.addEventListener('click', handleClickOutside)
+})
+
+onUnmounted(() => {
+  document.removeEventListener('click', handleClickOutside)
+  if (timerInterval) clearInterval(timerInterval)
+  lockScroll(false)
+})
 </script>
 
 <style scoped>
@@ -721,6 +847,7 @@ onUnmounted(() => lockScroll(false))
     max-width 0.45s cubic-bezier(0.4, 0, 0.2, 1);
   max-width: 9999px;
   pointer-events: all;
+  overflow: visible !important;
 }
 
 .player-wrapper.collapsed .player-expandable {
@@ -937,53 +1064,99 @@ onUnmounted(() => lockScroll(false))
 
 /* ====================== VOLUME ====================== */
 .player-volume {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+   overflow: visible !important;
+}
+
+.player-vol-icon {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 50%;
   display: flex;
   align-items: center;
-  gap: 10px;
-  flex-shrink: 0;
-  margin-left: 8px;
+  justify-content: center;
+  color: #ccc;
+  transition: all 0.2s;
+}
+
+.player-vol-icon:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+
+/* POPUP - cái này mới là quan trọng */
+.player-vol-popup {
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  margin-bottom: 12px;
+  background: #1e1e2e;
+  backdrop-filter: blur(12px);
+  border-radius: 12px;
+  padding: 12px 16px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  z-index: 10000;
+  min-width: 100px;
+  display: block;  /* ← THÊM DÒNG NÀY */
+}
+
+/* Mũi tên chỉ xuống icon */
+.player-vol-popup::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border-width: 8px;
+  border-style: solid;
+  border-color: #1e1e2e transparent transparent transparent;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
 }
 
 .player-vol-wrap {
+  width: 100px;
+  height: 4px;
   position: relative;
-  width: 80px;
-  height: 24px;
-  display: flex;
-  align-items: center;
 }
 
 .player-vol-track {
-  position: absolute;
-  left: 0;
-  right: 0;
-  height: 3px;
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 3px;
+  width: 100%;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+  position: relative;
 }
 
 .player-vol-fill {
   height: 100%;
-  background: #3b82f6;
-  border-radius: 3px;
-}
-
-.player-vol-icon {
-  background: none;
-  border: none;
-  cursor: pointer;
-  color: #9ca3af;
-  padding: 4px;
+  background: linear-gradient(90deg, #3b82f6, #06b6d4);
+  border-radius: 4px;
+  position: absolute;
+  top: 0;
+  left: 0;
+  pointer-events: none;
 }
 
 .player-vol-slider {
-  width: 80px;
-  height: 4px;
-  -webkit-appearance: none;
-  appearance: none;
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 4px;
-  outline: none;
+  position: absolute;
+  top: -8px;
+  left: 0;
+  width: 100%;
+  height: 20px;
+  opacity: 0;
   cursor: pointer;
+  margin: 0;
+}
+
+/* Hover effect */
+.player-vol-popup:hover .player-vol-track {
+  height: 6px;
 }
 
 .player-vol-slider::-webkit-slider-thumb {
@@ -991,10 +1164,10 @@ onUnmounted(() => lockScroll(false))
   width: 12px;
   height: 12px;
   border-radius: 50%;
-  background: #d1d5db;
+  background: #fff;
   cursor: pointer;
+  box-shadow: 0 0 6px rgba(59, 130, 246, 0.6);
 }
-
 /* ====================== LYRICS PANEL ====================== */
 .lyrics-panel {
   position: fixed;
@@ -1612,5 +1785,135 @@ onUnmounted(() => lockScroll(false))
   gap: 6px;
   font-size: 12px;
   color: rgba(255, 255, 255, 0.35);
+}
+
+/* ====================== SLEEP TIMER ====================== */
+.player-timer {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  margin-left: 4px;
+}
+
+.player-timer-icon {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ccc;
+  transition: all 0.2s;
+  position: relative;
+}
+
+.player-timer-icon:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+
+.player-timer-icon.active {
+  color: #3b82f6;
+}
+
+.timer-badge {
+  position: absolute;
+  bottom: -2px;
+  right: -2px;
+  background: #3b82f6;
+  color: white;
+  font-size: 9px;
+  font-weight: bold;
+  padding: 2px 4px;
+  border-radius: 10px;
+  min-width: 28px;
+  text-align: center;
+}
+
+.player-timer-popup {
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  margin-bottom: 12px;
+  background: #1e1e2e;
+  backdrop-filter: blur(12px);
+  border-radius: 12px;
+  padding: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  z-index: 10000;
+  min-width: 140px;
+}
+
+.player-timer-popup::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border-width: 8px;
+  border-style: solid;
+  border-color: #1e1e2e transparent transparent transparent;
+}
+
+.timer-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding-bottom: 8px;
+  margin-bottom: 8px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  font-size: 12px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.timer-options {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.timer-option {
+  background: rgba(255, 255, 255, 0.05);
+  border: none;
+  padding: 8px 12px;
+  border-radius: 8px;
+  color: #ccc;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: center;
+}
+
+.timer-option:hover {
+  background: rgba(59, 130, 246, 0.3);
+  color: #fff;
+}
+
+.timer-option.active {
+  background: #3b82f6;
+  color: white;
+}
+
+.timer-cancel {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  text-align: center;
+  font-size: 12px;
+  color: #f87171;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.timer-cancel:hover {
+  color: #ef4444;
+  background: rgba(239, 68, 68, 0.1);
+  border-radius: 6px;
 }
 </style>
