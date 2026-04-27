@@ -143,7 +143,7 @@
                   <circle cx="12" cy="12" r="10" />
                   <polyline points="12 6 12 12 16 14" />
                 </svg>
-                <span>Hẹn giờ dừng</span>
+                <span>Timer stop</span>
               </div>
               <div class="timer-options">
                 <button v-for="opt in timerOptions" :key="opt.minutes" 
@@ -154,7 +154,7 @@
                 </button>
               </div>
               <div v-if="timerRemaining > 0" class="timer-cancel" @click="cancelSleepTimer">
-                🗑️ Tắt hẹn giờ
+                🗑️ Turn off the timer.
               </div>
             </div>
           </div>
@@ -361,10 +361,10 @@ const timerSelected = ref(0)
 let timerInterval: ReturnType<typeof setInterval> | null = null
 
 const timerOptions = [
-  { minutes: 15, label: '15 phút' },
-  { minutes: 30, label: '30 phút' },
-  { minutes: 45, label: '45 phút' },
-  { minutes: 60, label: '60 phút' },
+  { minutes: 15, label: '15 minutes' },
+  { minutes: 30, label: '30 minutes' },
+  { minutes: 45, label: '45 minutes' },
+  { minutes: 60, label: '60 minutes' },
 ]
 
 // ─── Computed ─────────────────────────────────────────────────────────────────
