@@ -21,6 +21,10 @@ class SongActionService {
   async FollowArtist(id: number, is_followed: boolean) {    
     return clientApi.post(`/artists/${id}/follow`, { is_followed : is_followed });
   }
+
+  async likeAlbum(id: number, isLiked: boolean) {    
+    return clientApi.post(`/albumLike/${id}/like`, { is_liked: isLiked });
+  }
 }
 
 export default new SongActionService();

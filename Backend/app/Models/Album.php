@@ -9,6 +9,7 @@ namespace App\Models;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 /**
@@ -49,6 +50,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 class Album extends Model
 {
 	protected $table = 'albums';
+	protected $appends = ['is_liked'];
 
 	protected $casts = [
 		'artist_id' => 'int',
@@ -134,5 +136,16 @@ class Album extends Model
         return $query->where('name', 'like', "%{$q}%")
             ->orWhere('slug', 'like', "%{$q}%")
             ->orWhere('description', 'like', "%{$q}%");
+    }
+
+	public function getIsLikedAttribute()
+    {
+        if (!Auth::check()) {
+            return false;
+        }
+        
+        return AlbumLike::where('user_id', Auth::id())
+            ->where('album_id', $this->id)
+            ->exists();
     }
 }

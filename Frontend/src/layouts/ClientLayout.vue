@@ -345,7 +345,7 @@ watch(searchQuery, (val) => {
   searchLoading.value = true
   searchTimer = setTimeout(async () => {
     try {
-      const res = await SongService.getAllSongs({ search: val.trim(), limit: 8 })
+      const res = await SongService.getAllSongs({ search: val.trim() })
       searchResults.value = res.data?.data ?? []
     } catch {
       searchResults.value = []

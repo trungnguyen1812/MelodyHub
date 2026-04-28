@@ -1,4 +1,5 @@
 <?php
+
 use Illuminate\Support\Facades\Route;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Api\Admin\AdminController;
@@ -7,7 +8,7 @@ use App\Http\Controllers\Api\Auth\AuthController;
 use App\Http\Controllers\Api\Auth\OTPController;
 use App\Http\Controllers\Api\Admin\AdminAuthController;
 use App\Http\Controllers\Api\Admin\AdvertisingManagerController;
-use App\Http\Controllers\Api\client\SubscriptionController; 
+use App\Http\Controllers\Api\client\SubscriptionController;
 use App\Http\Controllers\Api\Payment\PaymentController;
 use App\Http\Controllers\Api\Payment\UserSubscriptionController;
 use App\Http\Controllers\Api\Admin\ArtistsManagerController;
@@ -17,6 +18,7 @@ use App\Http\Controllers\Api\Admin\SongsManagerController;
 use App\Http\Controllers\Api\Admin\AlbumsManagerController;
 use App\Http\Controllers\Api\Admin\TypePartnerController;
 use App\Http\Controllers\Api\Admin\PaymentManagerController;
+use App\Http\Controllers\Api\Client\AlbumInteractionController;
 use App\Http\Controllers\Api\Client\ArtistInteractionController;
 use App\Http\Controllers\Api\Client\ClientArtistsController;
 use App\Http\Controllers\Api\Client\ClientGenresController;
@@ -49,9 +51,9 @@ Route::prefix('client')->group(function () {
     // API login
     Route::post('/login', [AuthController::class, 'login']);
     // API register
-    Route::post('/register',[AuthController::class,'register']);
+    Route::post('/register', [AuthController::class, 'register']);
     // API admin → middleware checkrole
-    Route::middleware(['authapi:sanctum'])->group(function() {
+    Route::middleware(['authapi:sanctum'])->group(function () {
         Route::post('/logout', [AuthController::class, 'logout']);
         Route::post('/user/profile', [AuthController::class, 'updateProfile']);
         Route::post('/user/change-password', [AuthController::class, 'changePassword']);
@@ -61,29 +63,29 @@ Route::prefix('client')->group(function () {
         $rolesFlags = $user->getRoleFlags();
 
         $isAdmin = $rolesFlags['is_admin']
-                || $rolesFlags['is_boss']
-                || $rolesFlags['is_content_manager'];
+            || $rolesFlags['is_boss']
+            || $rolesFlags['is_content_manager'];
 
         $partner = Partner::where('user_id', $user->id)
-                    ->whereIn('status', ['active', 'pending','suspended','terminated'])
-                    ->with('partnerType') 
-                    ->first();
+            ->whereIn('status', ['active', 'pending', 'suspended', 'terminated'])
+            ->with('partnerType')
+            ->first();
 
         $partnerTypeName = $partner?->partnerType?->name ?? null;
 
         return response()->json([
             'is_admin'              => $isAdmin,
             'is_partner'            => !is_null($partner),
-            'is_music_distribution' => $partnerTypeName === 'Music distribution partners',  
-            'is_advertising'        => $partnerTypeName === 'Advertising partners',  
-            'partner_type_name'     => $partnerTypeName,        
+            'is_music_distribution' => $partnerTypeName === 'Music distribution partners',
+            'is_advertising'        => $partnerTypeName === 'Advertising partners',
+            'partner_type_name'     => $partnerTypeName,
             'partner'               => $partner,
             'user'                  => $user,
             'roles_flags'           => $rolesFlags,
         ]);
     });
     // 
-    Route::get('/showsubcription', [SubscriptionController::class,'getAllSubscription']);
+    Route::get('/showsubcription', [SubscriptionController::class, 'getAllSubscription']);
     // payment
     Route::middleware('auth:sanctum')->group(function () {
         Route::post('/payment/create-qr',        [PaymentController::class, 'create_QR']);
@@ -98,8 +100,8 @@ Route::prefix('client')->group(function () {
     );
     // artists Client 
     Route::prefix('artists')->group(function () {
-        Route::get('/Artists', [ClientArtistsController::class,'getArtist']);
-        Route::get('/allArtists', [ClientArtistsController::class,'getAllArtists']);
+        Route::get('/Artists', [ClientArtistsController::class, 'getArtist']);
+        Route::get('/allArtists', [ClientArtistsController::class, 'getAllArtists']);
         Route::post('/add', [ClientArtistsController::class, 'add']);
         Route::post('/search', [ClientArtistsController::class, 'search']);
         Route::get('/statistics', [ClientArtistsController::class, 'statistics']);
@@ -108,27 +110,27 @@ Route::prefix('client')->group(function () {
         Route::post('/update/{artist:id}', [ClientArtistsController::class, 'update']);
         Route::middleware('auth:sanctum')->group(function () {
             Route::post('/{artist:id}/follow', [ArtistInteractionController::class, 'follow'])
-            ->where('artist', '[0-9]+');
+                ->where('artist', '[0-9]+');
         });
-        
+
         Route::get('/{artist}', [ClientArtistsController::class, 'show']);
     });
-    
+
     // Router songs manager
     Route::prefix('songs')->group(function () {
         Route::get('/{song}/lyrics', [ClientSongsController::class, 'getLyricsSong']);
         Route::get('/allSongs', [ClientSongsController::class, 'index']);
 
         Route::get('/new', [ClientSongsController::class, 'getNewSongs'])
-             ->middleware('optional.auth');
-             
+            ->middleware('optional.auth');
+
         Route::get('/popular', [ClientSongsController::class, 'getPopularSongs'])
             ->middleware('optional.auth');
-        
+
         Route::get('/top-liked', [ClientSongsController::class, 'getTopLikedSongs'])
             ->middleware('optional.auth');
 
-        
+
         Route::post('/add', [ClientSongsController::class, 'add']);
 
         Route::get('/by-slug/{slug}', [ClientSongsController::class, 'showBySlug']);
@@ -140,7 +142,7 @@ Route::prefix('client')->group(function () {
 
         // ─── Song Plays ───────────────────────────────────────────────────────
         Route::post('/{song}/play', [ClientSongPlayController::class, 'record']);
-        
+
         // Route::middleware('auth:sanctum')->group(function () {
         //     Route::get('/{song}/plays/stats', [SongPlayController::class, 'stats']);
         // });
@@ -170,8 +172,8 @@ Route::prefix('client')->group(function () {
             Route::prefix('advertising')->group(function () {
                 Route::get('/', [ClientAdvertisingController::class, 'index']);
                 Route::post('/store', [ClientAdvertisingController::class, 'store']);
-                Route::get('/{advertisement}', [ClientAdvertisingController::class, 'show']);  
-                Route::put('/{advertisement}', [ClientAdvertisingController::class, 'update']); 
+                Route::get('/{advertisement}', [ClientAdvertisingController::class, 'show']);
+                Route::put('/{advertisement}', [ClientAdvertisingController::class, 'update']);
                 Route::patch('/{advertisement}', [ClientAdvertisingController::class, 'update']);
                 Route::delete('/{advertisement}', [ClientAdvertisingController::class, 'destroy']);
                 Route::patch('/{advertisement}/toggle-status', [ClientAdvertisingController::class, 'toggleStatus']);
@@ -184,59 +186,64 @@ Route::prefix('client')->group(function () {
         Route::get('/',         [ClientGenresController::class, 'index']);
         Route::get('/{slug}',   [ClientGenresController::class, 'show']);
     });
-
+    // like song
     Route::middleware('auth:sanctum')->group(function () {
-    Route::prefix('songLike')->group(function () {
-        Route::post('/{song}/like',  [Songinteractioncontroller::class, 'like'])
-             ->where('song', '[0-9]+');
-        Route::post('/{song}/share', [SongInteractionController::class, 'share'])
-             ->where('song', '[0-9]+');
-    });
+        Route::prefix('songLike')->group(function () {
+            Route::post('/{song}/like',  [Songinteractioncontroller::class, 'like'])
+                ->where('song', '[0-9]+');
+            Route::post('/{song}/share', [SongInteractionController::class, 'share'])
+                ->where('song', '[0-9]+');
+        });
 
-    // Comments
-    Route::post('/comments/{comment}/like', [CommentInteractionController::class, 'like']);
+        // Comments
+        Route::post('/comments/{comment}/like', [CommentInteractionController::class, 'like']);
 
-    // Albums
-    Route::prefix('albums')->group(function () {
-        Route::get('/',         [ClientAlbumsContronller::class, 'index']);
-        Route::post('/search',  [ClientAlbumsContronller::class, 'search']);
-        Route::post('/add',     [ClientAlbumsContronller::class, 'add']);
-        
-        Route::get('/partner/{partnerId}', [ClientAlbumsContronller::class, 'showAlbumByPartner']);
-        Route::post('/update/{slug}',      [ClientAlbumsContronller::class, 'update']);
-        Route::delete('/delete/{album}',   [ClientAlbumsContronller::class, 'destroy']);
-        
-        Route::get('/{album}',             [ClientAlbumsContronller::class, 'show'])
-            ->where('album', '[a-z0-9-]+');
-        
-        Route::put('/{album}/tracks',      [ClientAlbumsContronller::class, 'updateTracks']);
-    });
+        // Albums
+        Route::prefix('albums')->group(function () {
+            Route::get('/',         [ClientAlbumsContronller::class, 'index']);
+            Route::post('/search',  [ClientAlbumsContronller::class, 'search']);
+            Route::post('/add',     [ClientAlbumsContronller::class, 'add']);
 
-    // avertising show all client 
-    Route::prefix('advertising')->group(function () {
-        Route::get('/allAdvertising', [ClientAdvertisingController::class, 'AllAdvertising']);
-    });
-    Route::prefix('advertising')->middleware('auth:sanctum')->group(function () {
-        Route::get('/allAdvertising', [ClientAdvertisingController::class, 'AllAdvertising']);
-        
-        // Tracking và statistics routes
-        Route::post('/{adId}/track', [ClientAdImpressionController::class, 'track']);
-        Route::get('/{adId}/statistics', [ClientAdImpressionController::class, 'statistics']);
-        Route::get('/{adId}/fraud-detection', [ClientAdImpressionController::class, 'fraudDetection']);
-    });
+            Route::get('/partner/{partnerId}', [ClientAlbumsContronller::class, 'showAlbumByPartner']);
+            Route::post('/update/{slug}',      [ClientAlbumsContronller::class, 'update']);
+            Route::delete('/delete/{album}',   [ClientAlbumsContronller::class, 'destroy']);
 
-    // ── Playlists (private per user) ─────────────────────────────────────────
-    Route::middleware('auth:sanctum')->prefix('playlists')->group(function () {
-        Route::get('/',                          [PlaylistController::class, 'index']);
-        Route::post('/',                         [PlaylistController::class, 'store']);
-        Route::get('/{id}',                      [PlaylistController::class, 'show']);
-        Route::post('/{id}',                     [PlaylistController::class, 'update']);   // POST for multipart
-        Route::delete('/{id}',                   [PlaylistController::class, 'destroy']);
-        Route::post('/{id}/songs',               [PlaylistController::class, 'addSong']);
-        Route::delete('/{id}/songs/{songId}',    [PlaylistController::class, 'removeSong']);
-        Route::post('/{id}/reorder',             [PlaylistController::class, 'reorder']);
+            Route::get('/{album}',             [ClientAlbumsContronller::class, 'show'])
+                ->where('album', '[a-z0-9-]+');
+
+            Route::put('/{album}/tracks',      [ClientAlbumsContronller::class, 'updateTracks']);
+        });
+
+        // avertising show all client 
+        Route::prefix('advertising')->group(function () {
+            Route::get('/allAdvertising', [ClientAdvertisingController::class, 'AllAdvertising']);
+        });
+        Route::prefix('advertising')->middleware('auth:sanctum')->group(function () {
+            Route::get('/allAdvertising', [ClientAdvertisingController::class, 'AllAdvertising']);
+
+            // Tracking và statistics routes
+            Route::post('/{adId}/track', [ClientAdImpressionController::class, 'track']);
+            Route::get('/{adId}/statistics', [ClientAdImpressionController::class, 'statistics']);
+            Route::get('/{adId}/fraud-detection', [ClientAdImpressionController::class, 'fraudDetection']);
+        });
+
+        // ── Playlists (private per user) ─────────────────────────────────────────
+        Route::middleware('auth:sanctum')->prefix('playlists')->group(function () {
+            Route::get('/',                          [PlaylistController::class, 'index']);
+            Route::post('/',                         [PlaylistController::class, 'store']);
+            Route::get('/{id}',                      [PlaylistController::class, 'show']);
+            Route::post('/{id}',                     [PlaylistController::class, 'update']);   // POST for multipart
+            Route::delete('/{id}',                   [PlaylistController::class, 'destroy']);
+            Route::post('/{id}/songs',               [PlaylistController::class, 'addSong']);
+            Route::delete('/{id}/songs/{songId}',    [PlaylistController::class, 'removeSong']);
+            Route::post('/{id}/reorder',             [PlaylistController::class, 'reorder']);
+        });
+        // like album
+        Route::prefix('albumLike')->group(function () {
+            Route::post('/{album}/like',  [AlbumInteractionController::class, 'like'])
+                ->where('album', '[0-9]+');
+        });
     });
-});
 });
 
 
@@ -251,11 +258,10 @@ Route::prefix('admin/auth')->group(function () {
     Route::post('/send-otp', [OTPController::class, 'sendOTP']);
     Route::post('/verify-otp', [OTPController::class, 'verifyOTP']);
     Route::post('/check-verification', [OTPController::class, 'checkVerification']);
-    
+
     // Token validation APIs (public)
     Route::post('/check-token', [AdminAuthController::class, 'checkAdminToken']);
     Route::get('/check-expiry', [AdminAuthController::class, 'checkTokenExpiry']);
-    
 });
 
 /**
@@ -299,7 +305,7 @@ Route::prefix('admin')->middleware(['admin.token'])->group(function () {
         Route::delete('/delete-multiple', [SongsManagerController::class, 'deleteMultiple']);
         Route::post('/update/{song}', [SongsManagerController::class, 'update']);
     });
-    
+
     // Router partners  manager
     Route::prefix('partners')->group(function () {
         // Xem dữ liệu
@@ -309,14 +315,14 @@ Route::prefix('admin')->middleware(['admin.token'])->group(function () {
         Route::get('/statistics', [PartnersManagerController::class, 'statistics']);
         Route::get('/export', [PartnersManagerController::class, 'export']);
         Route::get('/{id}', [PartnersManagerController::class, 'show']);
-        
+
         // Quản lý trạng thái (admin chỉ được làm cái này)
         Route::patch('/{id}/status', [PartnersManagerController::class, 'updateStatus']);
         Route::post('/bulk-update-status', [PartnersManagerController::class, 'bulkUpdateStatus']);
-        
+
         // Duyệt partner
         Route::post('/{id}/verify', [PartnersManagerController::class, 'verify']);
-        
+
         // Xóa (nếu cần)
         Route::delete('/{id}', [PartnersManagerController::class, 'destroy']);
     });
@@ -335,7 +341,7 @@ Route::prefix('admin')->middleware(['admin.token'])->group(function () {
         Route::get('/',                         [AlbumsManagerController::class, 'index']);
         Route::post('/search',                  [AlbumsManagerController::class, 'search']);
         Route::post('/add',                     [AlbumsManagerController::class, 'add']);
-        
+
         Route::get('/{album}',                  [AlbumsManagerController::class, 'show']);
         Route::post('/update/{album}',          [AlbumsManagerController::class, 'update']);
         Route::put('/{album}/tracks',           [AlbumsManagerController::class, 'updateTracks']);
@@ -346,10 +352,10 @@ Route::prefix('admin')->middleware(['admin.token'])->group(function () {
         Route::get('/',         [TypePartnerController::class, 'getAllTypePartnar']);
     });
 
-     // Advertising
+    // Advertising
     Route::prefix('advertising')->group(function () {
         Route::get('/', [AdvertisingManagerController::class, 'index']);
-        Route::get('/{advertisement}', [AdvertisingManagerController::class, 'show']);  
+        Route::get('/{advertisement}', [AdvertisingManagerController::class, 'show']);
         Route::patch('/{advertisement}/toggle-status', [AdvertisingManagerController::class, 'toggleStatus']);
     });
 
@@ -364,11 +370,10 @@ Route::prefix('admin')->middleware(['admin.token'])->group(function () {
         Route::post('/{id}/approve', [PaymentManagerController::class, 'approve']);
         Route::post('/{id}/reject',  [PaymentManagerController::class, 'reject']);
     });
-   
 });
 
 // Route 404 fallback
-Route::fallback(function() {
+Route::fallback(function () {
     return response()->json([
         'message' => 'Route not found'
     ], 404);

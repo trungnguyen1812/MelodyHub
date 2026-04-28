@@ -7,7 +7,7 @@ export interface AlbumInterface {
   slug: string
   partner_id: number | null
 
-  artist?: Pick<ArtistInterface, 'id' | 'name'>
+  artist?: Pick<ArtistInterface, 'id' | 'name' | 'slug'>
   
 
   cover_url: string | null
@@ -32,4 +32,7 @@ export interface AlbumInterface {
   updated_at: string | null
 
   tracks?: Song[]
+
+  is_liked: boolean
+  like_count: number
 }

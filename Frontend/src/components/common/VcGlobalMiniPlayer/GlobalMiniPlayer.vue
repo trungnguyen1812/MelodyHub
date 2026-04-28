@@ -82,12 +82,7 @@
                 <circle cx="18" cy="18" r="3" />
               </svg>
             </button>
-            <button class="player-btn player-btn--close" @click="player.stop()">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                <line x1="18" y1="6" x2="6" y2="18" />
-                <line x1="6" y1="6" x2="18" y2="18" />
-              </svg>
-            </button>
+           
           </div>
 
           <div class="player-volume" ref="volumePopupRef">
@@ -158,8 +153,25 @@
               </div>
             </div>
           </div>
-        </div>
 
+          <div class="player-playlist">
+            <button class="player-playlist-icon" @click="openPlaylistModal">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 12v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h6" />
+                <line x1="15" y1="6" x2="21" y2="6" />
+                <line x1="15" y1="12" x2="21" y2="12" />
+                <line x1="15" y1="18" x2="21" y2="18" />
+              </svg>
+            </button>
+          </div>
+
+          <button class="player-btn player-btn--close" @click="player.stop()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          </button>
+        </div>
       </div>
     </div>
 
@@ -317,6 +329,121 @@
       </div>
     </Transition>
   </Teleport>
+  <!-- MODAL ADD TO PLAYLIST -->
+  <Teleport to="body">
+    <Transition name="modal-fade">
+      <div v-if="showPlaylistModal" class="playlist-modal-overlay" @click.self="closePlaylistModal">
+        <div class="playlist-modal">
+          <div class="playlist-modal-header">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 12v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h6" />
+              <line x1="15" y1="6" x2="21" y2="6" />
+              <line x1="15" y1="12" x2="21" y2="12" />
+              <line x1="15" y1="18" x2="21" y2="18" />
+            </svg>
+            <h3>Thêm vào playlist</h3>
+            <button class="playlist-modal-close" @click="closePlaylistModal">×</button>
+          </div>
+
+          <div class="playlist-modal-body">
+            <!-- Thông tin bài hát đang chọn -->
+            <div class="current-song-info">
+              <div class="current-song-cover" :style="getCoverStyle(player.currentSong!)"></div>
+              <div class="current-song-details">
+                <p class="current-song-title">{{ player.currentSong?.title }}</p>
+                <p class="current-song-artist">{{ player.currentSong?.artist?.name }}</p>
+              </div>
+            </div>
+
+            <!-- Loading -->
+            <div v-if="isLoadingPlaylists" class="playlist-loading-modal">
+              <div class="loading-spinner"></div>
+              <p>Loading playlist...</p>
+            </div>
+
+            <!-- Danh sách playlist -->
+            <div v-else class="playlist-list">
+              <div 
+                v-for="playlist in myPlaylists" 
+                :key="playlist.id"
+                class="playlist-item"
+                :class="{ 'is-loading': addingPlaylistId === playlist.id }"
+                @click="addToPlaylist(playlist.id)"
+              >
+                <div class="playlist-item-cover" :style="playlist.cover_url ? { backgroundImage: `url(${playlist.cover_url})` } : {}">
+                  <svg v-if="!playlist.cover_url" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M21 12v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h6" />
+                    <line x1="15" y1="6" x2="21" y2="6" />
+                    <line x1="15" y1="12" x2="21" y2="12" />
+                    <line x1="15" y1="18" x2="21" y2="18" />
+                  </svg>
+                </div>
+                <div class="playlist-item-info">
+                  <span class="playlist-item-name">{{ playlist.name }}</span>
+                  <span class="playlist-item-count">{{ playlist.total_songs || 0 }} song</span>
+                </div>
+                <div class="playlist-item-check">
+                  <svg v-if="addingPlaylistId === playlist.id" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="spinner-icon">
+                    <circle cx="12" cy="12" r="10" />
+                    <polyline points="12 6 12 12 16 14" />
+                  </svg>
+                  <!-- Bỏ tick xanh đi, chỉ giữ lại icon mặc định -->
+                  <svg v-else width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2">
+                    <polyline points="20 6 9 17 4 12" />
+                  </svg>
+                </div>
+              </div>
+
+              <!-- Nút tạo playlist mới -->
+              <div class="playlist-divider"></div>
+              <div class="playlist-item create-new" @click="openCreatePlaylistModal">
+                <div class="playlist-item-cover">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10" />
+                    <line x1="12" y1="8" x2="12" y2="16" />
+                    <line x1="8" y1="12" x2="16" y2="12" />
+                  </svg>
+                </div>
+                <div class="playlist-item-info">
+                  <span class="playlist-item-name">Create a new playlist</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </Transition>
+
+    <!-- Sub-modal tạo playlist mới -->
+    <Transition name="modal-fade">
+      <div v-if="showCreatePlaylistModal" class="playlist-modal-overlay" @click.self="closeCreatePlaylistModal">
+        <div class="playlist-modal playlist-modal-small">
+          <div class="playlist-modal-header">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10" />
+              <line x1="12" y1="8" x2="12" y2="16" />
+              <line x1="8" y1="12" x2="16" y2="12" />
+            </svg>
+            <h3>Create a new playlist</h3>
+            <button class="playlist-modal-close" @click="closeCreatePlaylistModal">×</button>
+          </div>
+          <div class="playlist-modal-body">
+            <input 
+              v-model="newPlaylistName" 
+              type="text" 
+              class="playlist-name-input" 
+              placeholder="Enter name playlist..."
+              @keyup.enter="confirmCreatePlaylist"
+            />
+            <div class="playlist-modal-actions">
+              <button class="btn-cancel" @click="closeCreatePlaylistModal">Cancel</button>
+              <button class="btn-create" @click="confirmCreatePlaylist" :disabled="!newPlaylistName.trim()">Create</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </Transition>
+  </Teleport>
 </template>
 
 <script setup lang="ts">
@@ -329,6 +456,7 @@ import { getFullImageUrl } from '@/modules/client/stores/artists/artistsStore'
 import songsService from '@/modules/client/services/songs/songs.service'
 import ActionButton from '@/components/common/VcBtnAction/ActionButton.vue'
 import VcAdBanner from '@/components/common/VcAd/VcAdBanner.vue'
+import {usePlaylistStore} from '@/modules/client/stores/playlist/playlistStore';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 interface LyricLine {
@@ -348,6 +476,7 @@ const showLyrics = ref(false)
 const currentLyrics = ref<LyricLine[]>([])
 const isLoadingLyrics = ref(false)
 const lyricGradient = ref('linear-gradient(135deg, rgba(16, 16, 21, 0.95), rgba(10, 10, 15, 0.98))')
+
 
 // ─── Volume Popup State ──────────────────────────────────────────────────────
 const showVolumePopup = ref(false)
@@ -589,6 +718,82 @@ watch(activeLyricIdx, async (idx) => {
   }
 })
 
+// ─── Playlist Modal State ────────────────────────────────────────────────────
+const playlistStore = usePlaylistStore()
+const showPlaylistModal = ref(false)
+const showCreatePlaylistModal = ref(false)
+const addingPlaylistId = ref<number | null>(null)
+const newPlaylistName = ref('')
+const newPlaylistDescription = ref('')
+const isCreatingPlaylist = ref(false)
+const isLoadingPlaylists = ref(false)  // ← THÊM DÒNG NÀY
+
+// Computed lấy danh sách playlist từ store
+const myPlaylists = computed(() => playlistStore.playlists)
+
+// Open modal
+const openPlaylistModal = async () => {
+  showPlaylistModal.value = true
+  if (playlistStore.playlists.length === 0 && !playlistStore.loading) {
+    isLoadingPlaylists.value = true
+    await playlistStore.fetchAll()
+    isLoadingPlaylists.value = false
+  }
+}
+
+const closePlaylistModal = () => {
+  showPlaylistModal.value = false
+}
+
+// Thêm vào playlist (dùng store)
+const addToPlaylist = async (playlistId: number) => {
+  if (!player.currentSong) return
+  
+  addingPlaylistId.value = playlistId
+  try {
+    await playlistStore.addSong(playlistId, player.currentSong.id)
+    setTimeout(() => {
+      closePlaylistModal()
+      addingPlaylistId.value = null
+    }, 500)
+  } catch (error) {
+    console.error('Failed to add to playlist', error)
+    addingPlaylistId.value = null
+  }
+}
+
+// Tạo playlist mới
+const openCreatePlaylistModal = () => {
+  newPlaylistName.value = ''
+  newPlaylistDescription.value = ''
+  showCreatePlaylistModal.value = true
+}
+
+const closeCreatePlaylistModal = () => {
+  showCreatePlaylistModal.value = false
+  newPlaylistName.value = ''
+  newPlaylistDescription.value = ''
+}
+
+const confirmCreatePlaylist = async () => {
+  if (!newPlaylistName.value.trim()) return
+  
+  isCreatingPlaylist.value = true
+  try {
+    const newPlaylist = await playlistStore.create({
+      name: newPlaylistName.value.trim(),
+      description: newPlaylistDescription.value.trim() || undefined,
+      is_public: false
+    })
+    
+    closeCreatePlaylistModal()
+    await addToPlaylist(newPlaylist.id)
+  } catch (error) {
+    console.error('Failed to create playlist', error)
+  } finally {
+    isCreatingPlaylist.value = false
+  }
+}
 // ─── Follow Success Handler ──────────────────────────────────────────────────
 const onFollowSuccess = (result: any) => {
   if (!player.currentSong) return
@@ -1915,5 +2120,304 @@ onUnmounted(() => {
   color: #ef4444;
   background: rgba(239, 68, 68, 0.1);
   border-radius: 6px;
+}
+/* ====================== PLAYLIST ICON ====================== */
+.player-playlist {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  margin-left: 4px;
+}
+
+.player-playlist-icon {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ccc;
+  transition: all 0.2s;
+}
+
+.player-playlist-icon:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+
+/* ====================== PLAYLIST MODAL ====================== */
+.playlist-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100000;
+}
+
+.playlist-modal {
+  background: #1e1e2e;
+  border-radius: 20px;
+  width: 90%;
+  max-width: 400px;
+  max-height: 80vh;
+  overflow: hidden;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.playlist-modal-small {
+  max-width: 320px;
+}
+
+.playlist-modal-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.playlist-modal-header h3 {
+  flex: 1;
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #fff;
+}
+
+.playlist-modal-close {
+  background: none;
+  border: none;
+  font-size: 24px;
+  color: #9ca3af;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+  transition: color 0.2s;
+}
+
+.playlist-modal-close:hover {
+  color: #f87171;
+}
+
+.playlist-modal-body {
+  padding: 16px 20px;
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+/* Current song info */
+.current-song-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-bottom: 16px;
+  margin-bottom: 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.current-song-cover {
+  width: 48px;
+  height: 48px;
+  border-radius: 8px;
+  background-size: cover;
+  background-position: center;
+  background-color: #2a2a3e;
+}
+
+.current-song-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #fff;
+  margin: 0 0 4px 0;
+}
+
+.current-song-artist {
+  font-size: 12px;
+  color: #9ca3af;
+  margin: 0;
+}
+
+/* Playlist list */
+.playlist-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.playlist-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.playlist-item:hover {
+  background: rgba(59, 130, 246, 0.2);
+}
+
+.playlist-item.is-added {
+  opacity: 0.6;
+}
+
+.playlist-item.is-loading {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.playlist-item-cover {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.1);
+  background-size: cover;
+  background-position: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.playlist-item-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.playlist-item-name {
+  font-size: 13px;
+  font-weight: 500;
+  color: #fff;
+}
+
+.playlist-item-count {
+  font-size: 11px;
+  color: #9ca3af;
+}
+
+.playlist-item-check {
+  flex-shrink: 0;
+}
+
+.create-new {
+  border: 1px dashed rgba(59, 130, 246, 0.5);
+  justify-content: center;
+}
+
+.create-new:hover {
+  background: rgba(59, 130, 246, 0.15);
+  border-color: #3b82f6;
+}
+
+.playlist-divider {
+  height: 1px;
+  background: rgba(255, 255, 255, 0.08);
+  margin: 8px 0;
+}
+
+/* Loading */
+.playlist-loading-modal {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 32px;
+  color: #9ca3af;
+}
+
+.loading-spinner {
+  width: 32px;
+  height: 32px;
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  border-top-color: #3b82f6;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+.spinner-icon {
+  animation: spin 0.8s linear infinite;
+}
+
+/* Input tạo playlist */
+.playlist-name-input {
+  width: 100%;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 10px;
+  color: #fff;
+  font-size: 14px;
+  outline: none;
+  transition: all 0.2s;
+}
+
+.playlist-name-input:focus {
+  border-color: #3b82f6;
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.playlist-modal-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.btn-cancel,
+.btn-create {
+  flex: 1;
+  padding: 10px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: none;
+}
+
+.btn-cancel {
+  background: rgba(255, 255, 255, 0.08);
+  color: #9ca3af;
+}
+
+.btn-cancel:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.btn-create {
+  background: #3b82f6;
+  color: #fff;
+}
+
+.btn-create:hover:not(:disabled) {
+  background: #60a5fa;
+}
+
+.btn-create:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Modal transition */
+.modal-fade-enter-active,
+.modal-fade-leave-active {
+  transition: opacity 0.2s ease;
+}
+
+.modal-fade-enter-from,
+.modal-fade-leave-to {
+  opacity: 0;
 }
 </style>

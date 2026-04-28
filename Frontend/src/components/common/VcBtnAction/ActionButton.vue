@@ -41,7 +41,7 @@ import QRCode from 'qrcode'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-type ActionType = 'like' | 'download' | 'comment_like' | 'share' | 'follow'
+type ActionType = 'like' | 'download' | 'comment_like' | 'share' | 'follow' | 'likeAlbum'
 
 
 interface ItemProps {
@@ -173,6 +173,16 @@ const TYPE_CONFIG: Record<ActionType, TypeConfig> = {
     activeField: 'is_followed',
     countField: 'follower_count',
   },
+   likeAlbum: {
+    label: 'Like Album',
+    serviceFn: (id, newValue) => SongActionService.likeAlbum(Number(id), newValue),
+    invalidateKeys: [['albums'], ['album_likes']], 
+    behavior: 'toggle',
+    spamStrategy: 'debounce',
+    delay: 600,
+    activeField: 'isLiked', 
+    countField: 'likeCount', 
+  },
 }
 
 // ─── State ────────────────────────────────────────────────────────────────────
@@ -199,10 +209,8 @@ const { mutate, isLoading } = useMutation({
   rollbackSnapshot = { active: optimisticActive.value, count: optimisticCount.value }
   isPendingSync.value = true
 
-  // Nếu type === 'follow' thì cập nhật cache theo field của artist
   if (props.type === 'follow') {
-    // update artists list cache if exists
-    const artistsKey = typeConfig.value.invalidateKeys[0] // ['artists']
+    const artistsKey = typeConfig.value.invalidateKeys[0] 
     queryCache.setQueryData(artistsKey, (oldData: any) => {
       if (!oldData) return oldData
       if (Array.isArray(oldData)) {
@@ -212,7 +220,6 @@ const { mutate, isLoading } = useMutation({
             : it
         )
       }
-      // handle common paginated shape { data: [...] }
       if (oldData.data && Array.isArray(oldData.data)) {
         return { ...oldData, data: oldData.data.map((it: any) =>
           it.id === props.item.id
@@ -223,7 +230,6 @@ const { mutate, isLoading } = useMutation({
       return oldData
     })
 
-    // update songs cache where artist is nested (so mini-player or song lists reflect the change)
     queryCache.setQueryData(['songs'], (oldData: any) => {
       if (!oldData) return oldData
       if (Array.isArray(oldData)) {
@@ -252,6 +258,47 @@ const { mutate, isLoading } = useMutation({
         }
       }
       return oldData
+    })
+  }else if (props.type === 'likeAlbum') {
+    queryCache.setQueryData(['albums'], (oldData: any) => {
+      if (!oldData) return oldData
+      if (Array.isArray(oldData)) {
+        return oldData.map((album: any) => {
+          if (album.id === props.item.id) {
+            return {
+              ...album,
+              isLiked: optimisticActive.value,
+              likeCount: optimisticCount.value
+            }
+          }
+          return album
+        })
+      }
+      if (oldData.data && Array.isArray(oldData.data)) {
+        return {
+          ...oldData,
+          data: oldData.data.map((album: any) => {
+            if (album.id === props.item.id) {
+              return {
+                ...album,
+                isLiked: optimisticActive.value,
+                likeCount: optimisticCount.value
+              }
+            }
+            return album
+          })
+        }
+      }
+      return oldData
+    })
+    
+    queryCache.setQueryData(['album', props.item.id], (oldData: any) => {
+      if (!oldData) return oldData
+      return {
+        ...oldData,
+        isLiked: optimisticActive.value,
+        likeCount: optimisticCount.value
+      }
     })
   } else {
     // hiện tại xử lý cũ cho like (giữ nguyên)
@@ -373,6 +420,7 @@ const currentIcon = computed(() => {
   if (isLoading.value) return SpinnerIcon
   switch (props.type) {
     case 'like':         return optimisticActive.value ? HeartFilledIcon : HeartIcon
+    case 'likeAlbum':    return optimisticActive.value ? HeartFilledIcon : HeartIcon
     case 'download':     return DownloadIcon
     case 'comment_like': return optimisticActive.value ? ThumbFilledIcon : ThumbIcon
     case 'share':        return ShareIcon
@@ -486,6 +534,17 @@ const FollowedIcon = () => h('svg', {
   background: rgba(239, 68, 68, 0.12);
 }
 .action-btn--like:hover:not(:disabled) {
+  border-color: rgba(239, 68, 68, 0.3);
+  color: #ef4444;
+}
+
+.action-btn--likeAlbum.action-btn--active {
+  color: #ef4444;
+  border-color: rgba(239, 68, 68, 0.4);
+  background: rgba(239, 68, 68, 0.12);
+}
+
+.action-btn--likeAlbum:hover:not(:disabled) {
   border-color: rgba(239, 68, 68, 0.3);
   color: #ef4444;
 }

@@ -41,7 +41,7 @@ import AlbumDetailView from '@/modules/client/views/albums/AlbumsSongView.vue';
 import AlbumsManagerView from '@/modules/client/views/albums/AlbumsManager.view.vue'
 import AlbumAddView from '@/modules/client/views/albums/AlbumAdd.view.vue'
 import AlbumUpdateView from '@/modules/client/views/albums/AlbumsUpdate.view.vue'
-
+import AllListAlbumsView from '@/modules/client/views/albums/AllListAlbums.view.vue'
 // user
 import UserUpgradeView from '@/modules/client/views/user/UserUpgrade.view.vue';
 
@@ -220,7 +220,11 @@ export const CLIENT_ROUTES = [
         name: 'client.album.update',
         component: AlbumUpdateView
       },
-     
+      {
+        path: 'albums/allList',
+        name: 'client.album.allList',
+        component: AllListAlbumsView
+      },
     ]
   }
 ];

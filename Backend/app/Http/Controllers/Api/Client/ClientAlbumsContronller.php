@@ -22,7 +22,7 @@ class ClientAlbumsContronller extends Controller
         return response()->json($albums);
     }
 
-   public function showAlbumByPartner($partnerId)
+    public function showAlbumByPartner($partnerId)
     {
         try {
             // Debug xem partnerId nhận được là gì

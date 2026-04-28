@@ -131,7 +131,7 @@ const scrollRight = () => {
 }
 
 // Helpers
-const goToAllAlbums = () => router.push({ name: 'client.albums' })
+const goToAllAlbums = () => router.push({ name: 'client.album.allList' })
 
 const navigateToAlbum = (slug: string) =>
   router.push({ name: 'client.album.detail', params: { slug } })

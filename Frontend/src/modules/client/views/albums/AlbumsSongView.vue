@@ -57,8 +57,12 @@
             <ActionButton 
               v-if="album?.id"
               class="follow-btn"
-              type="like" 
-              :item="{ id: album.id, isActive: album.is_liked ?? false }"
+              type="likeAlbum" 
+              :item="{ 
+                id: album.id, 
+                isActive: album.is_liked ?? false,
+                count: album.like_count ?? 0
+              }"
               @success="onLikeSuccess"
             />
           </div>
@@ -205,7 +209,7 @@ const formatTotalDuration = () => {
 
 const goToArtist = () => {
   if (album.value?.artist?.slug) {
-    router.push({ name: 'client.artist.detail', params: { slug: album.value.artist.slug } })
+    router.push({ name: 'client.artist.songs', params: { slug: album.value.artist.slug } })
   }
 }
 
