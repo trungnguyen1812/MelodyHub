@@ -103,6 +103,11 @@ class AuthService {
     const res = await api.post("/user/change-password", payload);
     return res.data;
   }
+
+  async forgotPassword(email: string) {
+    const res = await api.post("/forgot-password", { email });
+    return res.data;
+  }
 }
 
 export default new AuthService();

@@ -1,6 +1,7 @@
 import LoginView from "@/modules/client/views/auth/login.vue";
 import RegisterView from "@/modules/client/views/auth/register.vue";
 import LoginSuccessView from '@/modules/client/views/auth/LoginSuccess.vue';
+import ForgotPasswordView from '@/modules/client/views/auth/ForgotPassword.vue';
 
 // ========================== ROUTER =============================
 export const ROUTER_AUTH = [
@@ -25,5 +26,12 @@ export const ROUTER_AUTH = [
     meta: {
       layout: "none",
     },
+  },
+
+  {
+    path: "/forgot-password",
+    name: "ForgotPassword",
+    component: ForgotPasswordView,
+    meta: { layout: "none" },
   },
 ];

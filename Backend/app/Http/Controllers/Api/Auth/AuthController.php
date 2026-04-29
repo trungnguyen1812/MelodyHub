@@ -4,11 +4,13 @@ namespace App\Http\Controllers\Api\auth;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\User\LoginUserRequest;
 use App\Http\Requests\User\RegisterUserRequest;
+use App\Mail\ForgotPasswordMail;
 use App\Models\Role;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
 
@@ -155,6 +157,60 @@ class AuthController extends Controller
 
         return response()->json([
             'message' => 'Password changed successfully',
+        ]);
+    }
+
+    // ── POST /forgot-password ────────────────────────────────────────────────
+    public function forgotPassword(Request $request)
+    {
+        $request->validate([
+            'email' => 'required|email',
+        ]);
+
+        // Rate limit: 3 attempts per 10 minutes per IP
+        $throttleKey = 'forgot-password|' . $request->ip();
+        if (RateLimiter::tooManyAttempts($throttleKey, 3)) {
+            $seconds = RateLimiter::availableIn($throttleKey);
+            return response()->json([
+                'message' => "Too many attempts. Please try again in {$seconds} seconds.",
+            ], 429);
+        }
+
+        $user = User::where('email', $request->email)->first();
+
+        // Always return success to prevent email enumeration
+        if (!$user) {
+            RateLimiter::hit($throttleKey, 600);
+            return response()->json([
+                'message' => 'If that email exists, a new password has been sent.',
+            ]);
+        }
+
+        // Generate a secure random password (12 chars: letters + numbers)
+        $newPassword = Str::random(6) . rand(100, 999) . Str::upper(Str::random(2));
+
+        // Update user password
+        $user->update([
+            'password' => Hash::make($newPassword),
+        ]);
+
+        // Revoke all existing tokens so user must log in again
+        $user->tokens()->delete();
+
+        // Send email
+        try {
+            Mail::to($user->email)->send(new ForgotPasswordMail($newPassword, $user->name));
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('ForgotPassword mail failed: ' . $e->getMessage());
+            return response()->json([
+                'message' => 'Failed to send email. Please try again later.',
+            ], 500);
+        }
+
+        RateLimiter::hit($throttleKey, 600);
+
+        return response()->json([
+            'message' => 'A new password has been sent to your email address.',
         ]);
     }
 }

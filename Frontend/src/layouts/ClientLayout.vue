@@ -38,7 +38,7 @@
                 role="menuitem">
                 Music
               </router-link>
-              <router-link to="/albums/allList"
+              <router-link to="/playlist/allList"
                 class="block px-4 py-2 text-sm hover:text-cyan-400 drop-shadow-[0_0_10px_#22d3ee] hover:text-white transition-colors duration-200"
                 role="menuitem">
                 Playlist

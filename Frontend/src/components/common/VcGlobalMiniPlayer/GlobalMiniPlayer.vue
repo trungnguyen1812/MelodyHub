@@ -341,7 +341,7 @@
               <line x1="15" y1="12" x2="21" y2="12" />
               <line x1="15" y1="18" x2="21" y2="18" />
             </svg>
-            <h3>Thêm vào playlist</h3>
+            <h3>Add to playlist</h3>
             <button class="playlist-modal-close" @click="closePlaylistModal">×</button>
           </div>
 

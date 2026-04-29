@@ -61,7 +61,7 @@
             <input type="checkbox" :disabled="isLoading" />
             <label> Remember me </label>
           </div>
-          <span class="span">Forgot password?</span>
+          <span class="span" @click="goToForgotPassword">Forgot password?</span>
         </div>
         
        
@@ -120,6 +120,11 @@ const RegisterView = () => {
   router.push({
     name: "Register",
   });
+};
+
+const goToForgotPassword = () => {
+  if (isLoading.value) return;
+  router.push({ name: 'ForgotPassword' });
 };
 
 const email = ref("");

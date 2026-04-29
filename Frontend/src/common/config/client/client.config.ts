@@ -44,6 +44,9 @@ import AlbumUpdateView from '@/modules/client/views/albums/AlbumsUpdate.view.vue
 import AllListAlbumsView from '@/modules/client/views/albums/AllListAlbums.view.vue'
 // user
 import UserUpgradeView from '@/modules/client/views/user/UserUpgrade.view.vue';
+// playlist
+import AllListPlaylist from '@/modules/client/views/playlists/AllListPlaylist.view.vue';
+import PlaylistDetail from '@/modules/client/views/playlists/PlaylistDetail.view.vue';
 
 
 export const CLIENT_ROUTES = [
@@ -224,6 +227,17 @@ export const CLIENT_ROUTES = [
         path: 'albums/allList',
         name: 'client.album.allList',
         component: AllListAlbumsView
+      },
+      // Playlist
+      {
+        path: 'playlist/allList',
+        name: 'client.playlist.allList',
+        component: AllListPlaylist
+      },
+      {
+        path: 'Playlist/:slug',
+        name: 'client.Playlist.detail',
+        component: PlaylistDetail
       },
     ]
   }

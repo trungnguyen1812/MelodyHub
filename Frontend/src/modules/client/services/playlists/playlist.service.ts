@@ -8,12 +8,25 @@ export interface PlaylistPayload {
 }
 
 class PlaylistService {
+  // Tất cả public playlists + own (nếu login)
   async getAll() {
     const res = await api.get('/playlists')
     return res.data
   }
 
-  async getById(id: number) {
+  // Chỉ playlists của mình (cần login)
+  async getMyPlaylists() {
+    const res = await api.get('/playlists/my')
+    return res.data
+  }
+
+  // Playlists public của 1 user cụ thể
+  async getUserPlaylists(userId: number) {
+    const res = await api.get(`/users/${userId}/playlists`)
+    return res.data
+  }
+
+  async getById(id: number | string) {
     const res = await api.get(`/playlists/${id}`)
     return res.data
   }
@@ -36,6 +49,8 @@ class PlaylistService {
     if (payload.description !== undefined) form.append('description', payload.description ?? '')
     if (payload.is_public !== undefined)   form.append('is_public', payload.is_public ? '1' : '0')
     if (payload.cover)                     form.append('cover', payload.cover)
+    // Backend dùng PUT, thêm _method spoofing cho FormData
+    form.append('_method', 'PUT')
     const res = await api.post(`/playlists/${id}`, form, {
       headers: { 'Content-Type': 'multipart/form-data' },
     })
