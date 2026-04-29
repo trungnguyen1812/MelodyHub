@@ -70,6 +70,11 @@
                 <rect x="3" y="17" width="18" height="3" rx="1"/>
               </svg>
             </button>
+            <button :class="{ active: showLikedAlbums }" @click="showLikedAlbums = !showLikedAlbums" title="Liked albums">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+              </svg>
+            </button>
           </div>
         </div>
       </header>
@@ -164,15 +169,15 @@
 
         <!-- Empty State -->
         <div v-else class="empty-state">
-          <div class="empty-icon">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1" stroke="currentColor" width="64" height="64">
-              <path stroke-linecap="round" stroke-linejoin="round" d="m9 9 10.5-3m0 6.553v3.75a2.25 2.25 0 0 1-1.632 2.163l-1.32.377a1.803 1.803 0 1 1-2.8-1.452l.328-.094a1.125 1.125 0 0 0 .764-1.235V5.11a.75.75 0 0 0-.272-.578l-7.5 5.75a.75.75 0 0 0-.228.531V16.65c0 .543-.321 1.03-.815 1.235l-1.32.378a1.803 1.803 0 1 1-2.8-1.452l.328-.094a1.125 1.125 0 0 0 .764-1.235V10.5c0-.621.504-1.125 1.125-1.125h1.5" />
-            </svg>
-          </div>
+          <div class="empty-icon">...</div>
           <h3>No albums found</h3>
-          <p v-if="searchQuery">No results for <em>"{{ searchQuery }}"</em></p>
+          <p v-if="showLikedAlbums && !searchQuery">You haven't liked any albums yet.</p> 
+          <p v-else-if="searchQuery">No results for <em>"{{ searchQuery }}"</em></p>
           <p v-else>There are no albums available at the moment.</p>
-          <button v-if="searchQuery" class="reset-btn" @click="searchQuery = ''">Clear Search</button>
+          <div style="display:flex; gap:8px; justify-content:center;">
+            <button v-if="showLikedAlbums" class="reset-btn" @click="showLikedAlbums = false">Show All</button> 
+            <button v-if="searchQuery" class="reset-btn" @click="searchQuery = ''">Clear Search</button>
+          </div>
         </div>
       </template>
     </div>
@@ -198,7 +203,7 @@ const emit = defineEmits<{
 const searchQuery = ref('')
 const sortBy = ref<'default' | 'name_asc' | 'name_desc' | 'artist'>('default')
 const viewMode = ref<'grid' | 'list'>('grid')
-
+const showLikedAlbums = ref(false)
 // ── Computed ───────────────────────────────────────────────────────────────
 const latestAlbumCover = computed(() => {
   if (albumStore.albums?.length > 0) {
@@ -209,6 +214,10 @@ const latestAlbumCover = computed(() => {
 
 const filteredAlbums = computed(() => {
   let list = [...(albumStore.albums ?? [])]
+
+   if (showLikedAlbums.value) {
+    list = list.filter(a => a.is_liked === true)
+  }
 
   if (searchQuery.value.trim()) {
     const q = searchQuery.value.toLowerCase()
@@ -434,7 +443,7 @@ onMounted(async () => {
 }
 
 .sort-select {
-  background: rgba(255,255,255,0.05);
+  background: rgb(0, 0, 0);
   border: 1px solid rgba(255,255,255,0.08);
   border-radius: 10px;
   color: #e5e7eb;
@@ -791,5 +800,9 @@ onMounted(async () => {
 
 @media (max-width: 480px) {
   .albums-grid { grid-template-columns: repeat(2, 1fr); }
+}
+.view-toggle button.active:last-child {
+  background: rgba(239, 68, 68, 0.2);
+  color: #ef4444;
 }
 </style>

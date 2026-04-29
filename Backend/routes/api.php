@@ -187,61 +187,57 @@ Route::prefix('client')->group(function () {
         Route::get('/',         [ClientGenresController::class, 'index']);
         Route::get('/{slug}',   [ClientGenresController::class, 'show']);
     });
-    // like song
+    // ── PUBLIC routes (không cần login) ─────────────────────────────────────────
+    Route::prefix('albums')->group(function () {
+        Route::get('/',                            [ClientAlbumsContronller::class, 'index']);
+        Route::post('/search',                     [ClientAlbumsContronller::class, 'search']);
+        Route::get('/partner/{partnerId}',         [ClientAlbumsContronller::class, 'showAlbumByPartner']);
+        Route::get('/{album}',                     [ClientAlbumsContronller::class, 'show'])
+            ->where('album', '[a-z0-9-]+');
+    });
+
+    Route::prefix('advertising')->group(function () {
+        Route::get('/allAdvertising',              [ClientAdvertisingController::class, 'AllAdvertising']);
+    });
+
+    // ── PRIVATE routes (cần login) ───────────────────────────────────────────────
     Route::middleware('auth:sanctum')->group(function () {
+
         Route::prefix('songLike')->group(function () {
-            Route::post('/{song}/like',  [Songinteractioncontroller::class, 'like'])
+            Route::post('/{song}/like',            [SongInteractionController::class, 'like'])
                 ->where('song', '[0-9]+');
-            Route::post('/{song}/share', [SongInteractionController::class, 'share'])
+            Route::post('/{song}/share',           [SongInteractionController::class, 'share'])
                 ->where('song', '[0-9]+');
         });
 
-        // Comments
-        Route::post('/comments/{comment}/like', [CommentInteractionController::class, 'like']);
+        Route::post('/comments/{comment}/like',    [CommentInteractionController::class, 'like']);
 
-        // Albums
         Route::prefix('albums')->group(function () {
-            Route::get('/',         [ClientAlbumsContronller::class, 'index']);
-            Route::post('/search',  [ClientAlbumsContronller::class, 'search']);
-            Route::post('/add',     [ClientAlbumsContronller::class, 'add']);
-
-            Route::get('/partner/{partnerId}', [ClientAlbumsContronller::class, 'showAlbumByPartner']);
-            Route::post('/update/{slug}',      [ClientAlbumsContronller::class, 'update']);
-            Route::delete('/delete/{album}',   [ClientAlbumsContronller::class, 'destroy']);
-
-            Route::get('/{album}',             [ClientAlbumsContronller::class, 'show'])
-                ->where('album', '[a-z0-9-]+');
-
-            Route::put('/{album}/tracks',      [ClientAlbumsContronller::class, 'updateTracks']);
+            Route::post('/add',                    [ClientAlbumsContronller::class, 'add']);
+            Route::post('/update/{slug}',          [ClientAlbumsContronller::class, 'update']);
+            Route::delete('/delete/{album}',       [ClientAlbumsContronller::class, 'destroy']);
+            Route::put('/{album}/tracks',          [ClientAlbumsContronller::class, 'updateTracks']);
         });
 
-        // avertising show all client 
         Route::prefix('advertising')->group(function () {
-            Route::get('/allAdvertising', [ClientAdvertisingController::class, 'AllAdvertising']);
-        });
-        Route::prefix('advertising')->middleware('auth:sanctum')->group(function () {
-            Route::get('/allAdvertising', [ClientAdvertisingController::class, 'AllAdvertising']);
-
-            // Tracking và statistics routes
-            Route::post('/{adId}/track', [ClientAdImpressionController::class, 'track']);
-            Route::get('/{adId}/statistics', [ClientAdImpressionController::class, 'statistics']);
-            Route::get('/{adId}/fraud-detection', [ClientAdImpressionController::class, 'fraudDetection']);
+            Route::post('/{adId}/track',           [ClientAdImpressionController::class, 'track']);
+            Route::get('/{adId}/statistics',       [ClientAdImpressionController::class, 'statistics']);
+            Route::get('/{adId}/fraud-detection',  [ClientAdImpressionController::class, 'fraudDetection']);
         });
 
-        // ── Playlists (private per user) ─────────────────────────────────────────
-        Route::middleware('auth:sanctum')->prefix('playlists')->group(function () {
-            Route::get('/',                          [PlaylistController::class, 'index']);
-            Route::post('/',                         [PlaylistController::class, 'store']);
-            Route::get('/{id}',                      [PlaylistController::class, 'show']);
-            Route::post('/{id}',                     [PlaylistController::class, 'update']);   // POST for multipart
-            Route::delete('/{id}',                   [PlaylistController::class, 'destroy']);
-            Route::post('/{id}/songs',               [PlaylistController::class, 'addSong']);
-            Route::delete('/{id}/songs/{songId}',    [PlaylistController::class, 'removeSong']);
-            Route::post('/{id}/reorder',             [PlaylistController::class, 'reorder']);
+        Route::prefix('playlists')->group(function () {
+            Route::get('/',                        [PlaylistController::class, 'index']);
+            Route::post('/',                       [PlaylistController::class, 'store']);
+            Route::get('/{id}',                    [PlaylistController::class, 'show']);
+            Route::post('/{id}',                   [PlaylistController::class, 'update']);
+            Route::delete('/{id}',                 [PlaylistController::class, 'destroy']);
+            Route::post('/{id}/songs',             [PlaylistController::class, 'addSong']);
+            Route::delete('/{id}/songs/{songId}',  [PlaylistController::class, 'removeSong']);
+            Route::post('/{id}/reorder',           [PlaylistController::class, 'reorder']);
         });
-        // like album
+
         Route::prefix('albumLike')->group(function () {
-            Route::post('/{album}/like',  [AlbumInteractionController::class, 'like'])
+            Route::post('/{album}/like',           [AlbumInteractionController::class, 'like'])
                 ->where('album', '[0-9]+');
         });
     });
