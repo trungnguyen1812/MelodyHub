@@ -46,6 +46,7 @@
           <p class="page-desc">Stay ahead of the curve with the latest tracks on MelodyHub.</p>
         </div>
 
+        <!-- ← gom lại -->
         <div class="header-actions">
           <button class="play-all-btn" @click="playAll" :disabled="!filteredSongs.length">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
@@ -53,6 +54,25 @@
             </svg>
             Play All
           </button>
+
+          <div class="view-toggle">
+            <button :class="{ active: viewMode === 'grid' }" @click="viewMode = 'grid'" title="Grid view">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor">
+                <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/>
+                <rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>
+              </svg>
+            </button>
+            <button
+              :class="{ active: showLikedSongs }"
+              @click="showLikedSongs = !showLikedSongs"
+              title="Liked songs"
+              :style="showLikedSongs ? 'color: #ef4444;' : ''"
+            >
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+              </svg>
+            </button>
+          </div>
         </div>
       </header>
 
@@ -127,14 +147,15 @@
 
         <!-- Empty State -->
         <div v-else class="empty-state">
-          <div class="empty-icon">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1" stroke="currentColor" width="64" height="64">
-              <path stroke-linecap="round" stroke-linejoin="round" d="m9 9 10.5-3m0 6.553v3.75a2.25 2.25 0 0 1-1.632 2.163l-1.32.377a1.803 1.803 0 1 1-2.8-1.452l.328-.094a1.125 1.125 0 0 0 .764-1.235V5.11a.75.75 0 0 0-.272-.578l-7.5 5.75a.75.75 0 0 0-.228.531V16.65c0 .543-.321 1.03-.815 1.235l-1.32.378a1.803 1.803 0 1 1-2.8-1.452l.328-.094a1.125 1.125 0 0 0 .764-1.235V10.5c0-.621.504-1.125 1.125-1.125h1.5" />
-            </svg>
-          </div>
+          <div class="empty-icon">...</div>
           <h3>No new releases found</h3>
-          <p>We couldn't find any songs matching your search. Try different keywords or check back later!</p>
-          <button class="reset-btn" @click="searchQuery = ''">Clear Search</button>
+          <p v-if="showLikedSongs && !searchQuery">You haven't liked any songs yet.</p>
+          <p v-else-if="searchQuery">No results for <em>"{{ searchQuery }}"</em></p>
+          <p v-else>We couldn't find any songs matching your search.</p>
+          <div style="display:flex; gap:8px; justify-content:center;">
+            <button v-if="showLikedSongs" class="reset-btn" @click="showLikedSongs = false">Show All</button>
+            <button v-if="searchQuery" class="reset-btn" @click="searchQuery = ''">Clear Search</button>
+          </div>
         </div>
       </template>
 
@@ -156,6 +177,8 @@ const player = usePlayerStore();
 
 const searchQuery = ref('');
 const loading = ref(true);
+const viewMode = ref<'grid' | 'list'>('grid')
+const showLikedSongs = ref(false)
 
 // Computed: Latest cover for background
 const latestSongCover = computed(() => {
@@ -167,13 +190,22 @@ const latestSongCover = computed(() => {
 
 // Computed: Filtered songs
 const filteredSongs = computed(() => {
-  if (!searchQuery.value.trim()) return songStore.newSongs;
-  const q = searchQuery.value.toLowerCase();
-  return songStore.newSongs.filter(s => 
-    s.title.toLowerCase().includes(q) || 
-    s.artist?.name.toLowerCase().includes(q)
-  );
-});
+  let list = [...songStore.newSongs]
+
+  if (showLikedSongs.value) {
+    list = list.filter(s => s.is_liked === true)
+  }
+
+  if (searchQuery.value.trim()) {
+    const q = searchQuery.value.toLowerCase()
+    list = list.filter(s =>
+      s.title.toLowerCase().includes(q) ||
+      s.artist?.name.toLowerCase().includes(q)
+    )
+  }
+
+  return list
+})
 
 // Format: MM:SS
 const formatDuration = (seconds: number) => {
@@ -575,5 +607,40 @@ onMounted(async () => {
   .header-actions { display: none; }
   .section-header { flex-direction: column; align-items: flex-start; gap: 20px; }
   .content-container { padding: 20px; }
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.view-toggle {
+  display: flex;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 10px;
+  padding: 4px;
+  gap: 2px;
+}
+
+.view-toggle button {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: transparent;
+  border: none;
+  color: #6b7280;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.view-toggle button.active {
+  background: rgba(0, 170, 255, 0.2);
+  color: #00aaff;
 }
 </style>

@@ -33,16 +33,16 @@
                 role="menuitem">
                 Albums
               </router-link>
-              <a href="#"
+              <router-link to="/music/new"
                 class="block px-4 py-2 text-sm hover:text-cyan-400 drop-shadow-[0_0_10px_#22d3ee] hover:text-white transition-colors duration-200"
                 role="menuitem">
                 Music
-              </a>
-              <a href="#"
+              </router-link>
+              <router-link to="/albums/allList"
                 class="block px-4 py-2 text-sm hover:text-cyan-400 drop-shadow-[0_0_10px_#22d3ee] hover:text-white transition-colors duration-200"
                 role="menuitem">
                 Playlist
-              </a>
+              </router-link>
             </div>
           </div>
           <button @click="goToCollaborations"
