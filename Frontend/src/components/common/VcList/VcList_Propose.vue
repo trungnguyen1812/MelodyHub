@@ -168,22 +168,6 @@
             </svg>
           </button>
 
-          <button
-            @click.stop="toggleFavorite(song)"
-            :class="[
-              'btn-action p-2 rounded-full transition-all duration-200 hover:scale-110',
-              song.isFavorite
-                ? 'bg-red-500/20 text-red-400 hover:bg-red-500/30'
-                : 'bg-white/10 hover:bg-red-500/20 text-white hover:text-red-400',
-            ]"
-            title="Add to favorites"
-          >
-            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-              <path
-                d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"
-              ></path>
-            </svg>
-          </button>
         </div>
       </div>
     </div>
@@ -196,6 +180,7 @@
 import { ref, onMounted, computed, watch } from "vue";
 import { toRefs } from "vue";
 import { usePlayerStore } from '@/store/playerStore';
+import ActionButton from '@/components/common/VcBtnAction/ActionButton.vue'
 
 const props = defineProps({
   songs: {
@@ -304,5 +289,27 @@ const emit = defineEmits(["play", "pause", "songChange", "favorite", "refresh"])
 /* Refresh button animation */
 .refresh-btn:hover {
   box-shadow: 0 10px 25px rgba(34, 211, 238, 0.3);
+}
+
+:deep(.action-btn) {
+  padding: 6px 12px !important;
+  min-width: 70px;
+}
+
+:deep(.action-btn__inner) {
+  gap: 4px;
+}
+
+:deep(.action-btn__icon svg) {
+  width: 16px;
+  height: 16px;
+}
+
+:deep(.action-btn__label) {
+  font-size: 12px;
+}
+
+:deep(.action-btn__count) {
+  font-size: 11px;
 }
 </style>

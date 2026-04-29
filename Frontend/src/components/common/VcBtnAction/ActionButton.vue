@@ -133,7 +133,7 @@ const TYPE_CONFIG: Record<ActionType, TypeConfig> = {
     spamStrategy: 'debounce',
     delay: 600,
     activeField: 'isLiked',
-    countField: 'likeCount',
+    countField: 'total_likes',
   },
   share: {
     label: 'Share',
@@ -268,7 +268,7 @@ const { mutate, isLoading } = useMutation({
             return {
               ...album,
               isLiked: optimisticActive.value,
-              likeCount: optimisticCount.value
+              total_likes: optimisticCount.value
             }
           }
           return album
@@ -311,7 +311,7 @@ const { mutate, isLoading } = useMutation({
             return {
               ...item,
               isLiked: optimisticActive.value,
-              likeCount: optimisticCount.value
+              total_likes: optimisticCount.value
             }
           }
           return item

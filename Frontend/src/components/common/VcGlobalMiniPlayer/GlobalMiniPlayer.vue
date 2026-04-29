@@ -268,7 +268,7 @@
                   :item="{ 
                     id: player.currentSong!.id,
                     isActive: player.currentSong!.is_liked,   
-                    count:    player.currentSong!.like_count  
+                    count:    player.currentSong!.total_likes  
                   }" 
                 />
                 <ActionButton 
@@ -693,11 +693,16 @@ const activeLyricIdx = computed(() => {
 const toggleLyrics = async () => {
   showLyrics.value = !showLyrics.value
 
-  if (showLyrics.value && !hasLyrics.value && !isLoadingLyrics.value && player.currentSong?.id) {
+  if (showLyrics.value && player.currentSong?.id) {
     isLoadingLyrics.value = true
     try {
-      const song = await songStore.fetchSong(player.currentSong.id).catch(() => null)
+      const song = await songStore.fetchSong(player.currentSong.id)
       currentLyrics.value = song?.lyrics ? extractLyrics(song.lyrics) : []
+      
+      if (song && player.currentSong) {
+        player.currentSong.is_liked = song.is_liked
+        player.currentSong.total_likes = song.total_likes
+      }
     } finally {
       isLoadingLyrics.value = false
     }

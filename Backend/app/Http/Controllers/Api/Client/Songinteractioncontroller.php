@@ -25,29 +25,31 @@ class Songinteractioncontroller  extends Controller
         $request->validate([
             'is_liked' => ['required', 'boolean'],
         ]);
-  
+
         $userId = Auth::id();
- 
+
         if ($request->boolean('is_liked')) {
             SongLike::firstOrCreate([
                 'user_id' => $userId,
                 'song_id' => $song->id,
             ]);
- 
-            $song->total_likes = SongLike::where('song_id', $song->id)->count();
-            $song->save();
         } else {
             SongLike::where('user_id', $userId)
                     ->where('song_id', $song->id)
                     ->delete();
- 
-            $song->like_count = SongLike::where('song_id', $song->id)->count();
-            $song->save();
         }
- 
+
+        // Đếm số lượng likes hiện tại
+        $likeCount = SongLike::where('song_id', $song->id)->count();
+
+        // Cập nhật cột total_likes (không phải like_count)
+        $song->total_likes = $likeCount;
+        $song->save();
+
         return response()->json([
-            'is_liked'   => $request->boolean('is_liked'),
-            'like_count' => $song->like_count,
+            'is_liked'    => $request->boolean('is_liked'),
+            'total_likes' => $likeCount,  // ← Trả về total_likes
+            'like_count'  => $likeCount,  // ← Thêm dòng này nếu frontend cần like_count
         ]);
     }
     // =========================================================================

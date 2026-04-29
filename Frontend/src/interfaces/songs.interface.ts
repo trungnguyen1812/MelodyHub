@@ -73,7 +73,7 @@ export interface Song {
   updated_at:      string
   total_plays:      number | null
   is_liked:         boolean
-  like_count  :     number
+  total_likes  :     number
   is_followed:         boolean
   follower_count  :     number
 }

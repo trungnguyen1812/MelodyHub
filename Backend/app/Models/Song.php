@@ -5,6 +5,7 @@ namespace App\Models;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Auth;
 
 /**
  * Class Song
@@ -73,6 +74,8 @@ use Illuminate\Database\Eloquent\Model;
 class Song extends Model
 {
     protected $table = 'songs';
+
+    protected $appends = ['is_liked']; 
 
     protected $casts = [
         'id' => 'int',
@@ -312,5 +315,15 @@ class Song extends Model
                 Partner::find($song->partner_id)?->clearCache();
             }
         });
+    }
+    public function getIsLikedAttribute()
+    {
+        if (!Auth::check()) {
+            return false;
+        }
+        
+        return $this->song_likes()
+            ->where('user_id', Auth::id())
+            ->exists();
     }
 }

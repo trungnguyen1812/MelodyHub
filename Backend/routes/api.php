@@ -134,7 +134,8 @@ Route::prefix('client')->group(function () {
         Route::post('/add', [ClientSongsController::class, 'add']);
 
         Route::get('/by-slug/{slug}', [ClientSongsController::class, 'showBySlug']);
-        Route::get('/{id}', [ClientSongsController::class, 'show'])->where('id', '[0-9]+');
+        Route::get('/{id}', [ClientSongsController::class, 'show'])->where('id', '[0-9]+')
+                                                                ->middleware('auth:sanctum');
 
         Route::delete('/delete/{song}', [ClientSongsController::class, 'delete']);
         Route::delete('/delete-multiple', [ClientSongsController::class, 'deleteMultiple']);

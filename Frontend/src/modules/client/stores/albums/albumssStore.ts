@@ -163,54 +163,54 @@ export const useAlbumStore = defineStore("album", {
         
 
         async fetchUpdate(slug: string, payload: CreateAlbumPayload) {
-          try {
-              this.loading = true;
-              this.error = null;
-              
-              const res = await AlbumService.updateAlbum(slug, payload);
-              
-              const index = this.albums.findIndex(u => u.slug === slug);
-              if (index !== -1) {
-                  this.albums[index] = {
-                      ...this.albums[index],
-                      ...res.data.data
-                  };
-              }
-              
-              return res.data;
-          } catch (err: any) {
-              this.error = err?.response?.data?.message || "Update album failed";
-              throw err;
-          } finally {
-              this.loading = false;
-          }
-      },
+            try {
+                this.loading = true;
+                this.error = null;
+                
+                const res = await AlbumService.updateAlbum(slug, payload);
+                
+                const index = this.albums.findIndex(u => u.slug === slug);
+                if (index !== -1) {
+                    this.albums[index] = {
+                        ...this.albums[index],
+                        ...res.data.data
+                    };
+                }
+                
+                return res.data;
+            } catch (err: any) {
+                this.error = err?.response?.data?.message || "Update album failed";
+                throw err;
+            } finally {
+                this.loading = false;
+            }
+        },
 
-      async fetchAlbumByPartner(partnerId: number) {
-          try {
-              this.loading = true;
-              this.error = null;
+        async fetchAlbumByPartner(partnerId: number) {
+            try {
+                this.loading = true;
+                this.error = null;
 
-              const res = await albumsService.getAlbumByPartner(partnerId);
+                const res = await albumsService.getAlbumByPartner(partnerId);
 
-              const rawAlbums = Array.isArray(res.data)
-                  ? res.data
-                  : Array.isArray(res.data?.data)
-                  ? res.data.data
-                  : [];
+                const rawAlbums = Array.isArray(res.data)
+                    ? res.data
+                    : Array.isArray(res.data?.data)
+                    ? res.data.data
+                    : [];
 
-              this.albumsByPartner = rawAlbums;
+                this.albumsByPartner = rawAlbums;
 
-              return this.albumsByPartner;
-          } catch (err: any) {
-              this.error = err?.response?.data?.message || "Failed to fetch albums by partner";
-              this.albumsByPartner = [];
-              throw err;
-          } finally {
-              this.loading = false;
-          }
-      },
-        
+                return this.albumsByPartner;
+            } catch (err: any) {
+                this.error = err?.response?.data?.message || "Failed to fetch albums by partner";
+                this.albumsByPartner = [];
+                throw err;
+            } finally {
+                this.loading = false;
+            }
+        },
+            
         async fetchShowStatistic() {
             this.loading = true;
             this.error = null;

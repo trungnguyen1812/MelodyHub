@@ -28,23 +28,17 @@ class CommentInteractionController extends Controller
         $userId   = Auth::id();
         $isLiked  = $request->boolean('is_liked');
         $cacheKey = "comment_like:{$userId}:{$comment->id}";
-
-        // Kiểm tra trạng thái like hiện tại qua cache (tránh query nặng)
-        // Nếu có bảng comment_likes thì thay bằng DB query
         $alreadyLiked = cache()->get($cacheKey, false);
 
         if ($isLiked && !$alreadyLiked) {
-            // Like: tăng total_likes, lưu cache
             $comment->increment('total_likes');
             cache()->put($cacheKey, true, now()->addDays(7));
 
         } elseif (!$isLiked && $alreadyLiked) {
-            // Unlike: giảm total_likes, xóa cache
             $comment->decrement('total_likes');
             cache()->forget($cacheKey);
         }
 
-        // Reload để lấy giá trị mới nhất
         $comment->refresh();
 
         return response()->json([

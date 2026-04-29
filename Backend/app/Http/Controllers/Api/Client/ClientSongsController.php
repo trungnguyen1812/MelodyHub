@@ -94,8 +94,18 @@ class ClientSongsController extends Controller
     {
         Log::info('Fetching song with:', ['idOrSlug' => $idOrSlug]);
         
+        $userId = Auth::id();
+        Log::info('User ID in song show:', ['user_id' => $userId]);
         if (is_numeric($idOrSlug)) {
             $song = Song::with(['artist', 'album', 'partner', 'genre'])
+                ->withCount(['song_likes as like_count'])  
+                ->withExists([                       
+                    'song_likes as is_liked' => function ($query) use ($userId) {
+                        if ($userId) {
+                            $query->where('user_id', $userId);
+                        }
+                    }
+                ])
                 ->find($idOrSlug);
             
             if (!$song) {
@@ -106,6 +116,14 @@ class ClientSongsController extends Controller
             }
         } else {
             $song = Song::with(['artist', 'album', 'partner', 'genre'])
+                ->withCount(['song_likes as like_count'])  
+                ->withExists([                             
+                    'song_likes as is_liked' => function ($query) use ($userId) {
+                        if ($userId) {
+                            $query->where('user_id', $userId);
+                        }
+                    }
+                ])
                 ->where('slug', $idOrSlug)
                 ->first();
             

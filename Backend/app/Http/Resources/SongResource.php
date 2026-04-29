@@ -3,7 +3,6 @@
 namespace App\Http\Resources;
 
 use Illuminate\Http\Request;
-use App\Http\Resources\SongResource;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 class SongResource extends JsonResource
@@ -97,7 +96,7 @@ class SongResource extends JsonResource
                 'total_shares'    => $this->total_shares,
                 'total_downloads' => $this->total_downloads,
             ],
-            'like_count' => $this->song_likes_count ?? 0, 
+            'like_count' => $this->like_count ?? 0, 
             'is_liked'   => (bool) ($this->is_liked ?? false),
             'created_at' => $this->created_at?->toISOString(),
             'updated_at' => $this->updated_at?->toISOString(),
