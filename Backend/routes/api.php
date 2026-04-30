@@ -140,7 +140,7 @@ Route::prefix('client')->group(function () {
 
         Route::get('/by-slug/{slug}', [ClientSongsController::class, 'showBySlug']);
         Route::get('/{id}', [ClientSongsController::class, 'show'])->where('id', '[0-9]+')
-                                                                ->middleware('auth:sanctum');
+                                                                ->middleware('optional.auth');
 
         Route::delete('/delete/{song}', [ClientSongsController::class, 'delete']);
         Route::delete('/delete-multiple', [ClientSongsController::class, 'deleteMultiple']);
@@ -185,11 +185,13 @@ Route::prefix('client')->group(function () {
     
     // ── PUBLIC routes (không cần login) ─────────────────────────────────────────
     Route::prefix('albums')->group(function () {
-        Route::get('/', [ClientAlbumsContronller::class, 'index']);
+        Route::get('/', [ClientAlbumsContronller::class, 'index'])
+            ->middleware('optional.auth');
         Route::post('/search', [ClientAlbumsContronller::class, 'search']);
         Route::get('/partner/{partnerId}', [ClientAlbumsContronller::class, 'showAlbumByPartner']);
         Route::get('/{album}', [ClientAlbumsContronller::class, 'show'])
-            ->where('album', '[a-z0-9-]+');
+            ->where('album', '[a-z0-9-]+')
+            ->middleware('optional.auth');
     });
 
     Route::prefix('advertising')->group(function () {

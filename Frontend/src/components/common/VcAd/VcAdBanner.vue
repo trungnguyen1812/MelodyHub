@@ -90,17 +90,21 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useAdManager } from '@/composables/useAdManager'
+import { useUserStore } from '@/modules/client/stores/users/UserStore'
 
 const ROTATE_INTERVAL = 7000
 
 const { bannerAds, trackImpression, trackClick, trackDismiss } = useAdManager()
+const userStore = useUserStore()
 
 // ─── Dismissed tracking (local) ───────────────────────────────────────────────
 const dismissedIds = ref<Set<string | number>>(new Set())
 
-const visibleAds = computed(() =>
-  bannerAds.value.filter(ad => !dismissedIds.value.has(ad.id))
-)
+const visibleAds = computed(() => {
+  // VIP users never see ads
+  if (userStore.isVip) return []
+  return bannerAds.value.filter(ad => !dismissedIds.value.has(ad.id))
+})
 
 // ─── Active index within visibleAds ──────────────────────────────────────────
 const activeIdx = ref(0)

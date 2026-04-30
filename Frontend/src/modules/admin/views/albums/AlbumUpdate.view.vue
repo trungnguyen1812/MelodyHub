@@ -79,7 +79,7 @@
               </svg>
               <select v-model="filterArtistId" class="artist-filter-select">
                 <option value="">All artists</option>
-                <option v-for="a in artists" :key="a.id" :value="a.id">
+                <option v-for="a in partnerArtists" :key="a.id" :value="a.id">
                   {{ a.name || `Artist #${a.id}` }}
                 </option>
               </select>
@@ -97,7 +97,7 @@
               @click="filterArtistId = ''"
             >All</button>
             <button
-              v-for="a in artists"
+              v-for="a in partnerArtists"
               :key="a.id"
               class="artist-pill"
               :class="{ active: filterArtistId === a.id }"
@@ -220,7 +220,7 @@
                   <label class="field-label required">Artist</label>
                   <select v-model="form.artist_id" class="field-control" disabled>
                     <option value="" disabled>Select artist</option>
-                        <option v-for="a in artists" :key="a.id" :value="a.id">
+                        <option v-for="a in partnerArtists" :key="a.id" :value="a.id">
                             {{ a.name || `Artist #${a.id}` }}
                         </option>
                     </select>
@@ -416,13 +416,14 @@ import { useNotificationStore } from '@/store/notificationStore'
 import { useArtistStore } from '@/modules/admin/stores/artists/artistsStore'
 import { usePartnerStore } from '@/modules/admin/stores/partners/partnersStore'
 import { useSongStore } from '@/modules/admin/stores/songs/songsStore';
+import type { SongFilterParams } from '@/interfaces/songs.interface'
 
 const notificationStore = useNotificationStore()
 const albumStore = useAlbumStore()
 const artistStore = useArtistStore()
 const partnerStore = usePartnerStore()
 const songStore = useSongStore()
-const { artists } = storeToRefs(artistStore)
+const { artists, partnerArtists } = storeToRefs(artistStore)
 const { partners } = storeToRefs(partnerStore)
 
 const loading = ref(false)
@@ -469,7 +470,7 @@ const formatDuration = (seconds?: number) => {
 
 const activeArtistName = computed(() => {
   if (!filterArtistId.value) return ''
-  return artists.value.find((a: any) => a.id === filterArtistId.value)?.name || ''
+  return partnerArtists.value.find((a: any) => a.id === filterArtistId.value)?.name || ''
 })
 
 const filteredTracks = computed(() =>
@@ -537,7 +538,7 @@ const form = reactive<any>({
 
 const selectedArtistName = computed(() => {
   if (!form.artist_id) return ''
-  return artists.value.find((a: any) => a.id === form.artist_id)?.name || ''
+  return partnerArtists.value.find((a: any) => a.id === form.artist_id)?.name || ''
 })
 
 const generateSlug = () => {
@@ -545,10 +546,8 @@ const generateSlug = () => {
   form.slug = form.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
 }
 
-// Watchers
-watch(filterArtistId, (val) => {
-  form.artist_id = val === '' ? null : val
-})
+// Watchers — filterArtistId chỉ dùng để lọc danh sách track, không liên quan form.artist_id
+// watch(filterArtistId) đã bị xóa để tránh ghi đè form.artist_id
 
 // Initialize Data
 const loadAlbumData = async () => {
@@ -581,7 +580,7 @@ const loadAlbumData = async () => {
         }
       }
 
-      // Load existing tracks
+      // Load existing tracks — đánh dấu các track đang thuộc album là selected
       if (data.tracks && Array.isArray(data.tracks)) {
         selectedTracks.value = data.tracks.map((t: any) => ({
           id: t.id,
@@ -593,10 +592,8 @@ const loadAlbumData = async () => {
         }));
       }
 
-      // Preselect the artist filter to the album's artist
-      if (data.artist_id) {
-        filterArtistId.value = data.artist_id;
-      }
+      // Không tự set filterArtistId — để show toàn bộ songs của partner
+      // User có thể tự filter nếu muốn
     }
   } catch (err: any) {
     const status = err?.response?.status;
@@ -614,11 +611,24 @@ const loadAlbumData = async () => {
 onMounted(async () => {
   pageLoading.value = true
   await Promise.all([
-    artistStore.fetchArtists(),
     partnerStore.fetchPartners(),
-    songStore.fetchSongs()
   ])
   await loadAlbumData()
+
+  // Fetch artists và songs chỉ của partner thuộc album này
+  const fetchParams: SongFilterParams = { per_page: 200 }
+  if (form.partner_id) {
+    fetchParams.partner_id = form.partner_id
+    await artistStore.fetchArtistsByPartner(form.partner_id)
+  } else {
+    // Fallback: không có partner thì load tất cả artists
+    await artistStore.fetchArtists()
+    if (form.artist_id) {
+      fetchParams.artist_id = form.artist_id
+    }
+  }
+  await songStore.fetchSongs(fetchParams)
+
   pageLoading.value = false
 })
 

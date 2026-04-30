@@ -1,5 +1,6 @@
 import { ref, computed } from 'vue'
 import AdvertisingService, { Ad } from '@/modules/client/services/ad/advertising.service'
+import { useUserStore } from '@/modules/client/stores/users/UserStore'
 
 const PLAYS_BEFORE_AUDIO_AD = 3
 
@@ -15,6 +16,14 @@ const currentBannerIdx = ref(0) // ← moved out to stay consistent with other r
 export const useAdManager = () => {
   // ─── Fetch ────────────────────────────────────────────────────────────────
   const fetchAds = async (type: 'banner' | 'audio' | 'all' = 'all') => {
+    // VIP users never see ads — clear and skip fetch
+    const userStore = useUserStore()
+    if (userStore.isVip) {
+      bannerAds.value = []
+      audioAds.value  = []
+      return
+    }
+
     isLoading.value = true
     try {
       const data: Ad[] = await AdvertisingService.getCampaigns()
@@ -45,6 +54,10 @@ export const useAdManager = () => {
 
   // ─── Audio ad logic ───────────────────────────────────────────────────────
   const onSongPlayed = (): boolean => {
+    // VIP users never get audio ads
+    const userStore = useUserStore()
+    if (userStore.isVip) return false
+
     playCount.value++
 
     if (playCount.value % PLAYS_BEFORE_AUDIO_AD === 0 && audioAds.value.length > 0) {

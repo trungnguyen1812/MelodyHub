@@ -70,7 +70,7 @@
                 <rect x="3" y="17" width="18" height="3" rx="1"/>
               </svg>
             </button>
-            <button :class="{ active: showLikedAlbums }" @click="showLikedAlbums = !showLikedAlbums" title="Liked albums">
+            <button :class="{ active: showLikedAlbums }" @click="toggleLikedFilter" title="Liked albums">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
               </svg>
@@ -175,7 +175,7 @@
           <p v-else-if="searchQuery">No results for <em>"{{ searchQuery }}"</em></p>
           <p v-else>There are no albums available at the moment.</p>
           <div style="display:flex; gap:8px; justify-content:center;">
-            <button v-if="showLikedAlbums" class="reset-btn" @click="showLikedAlbums = false">Show All</button> 
+          <button v-if="showLikedAlbums" class="reset-btn" @click="toggleLikedFilter">Show All</button> 
             <button v-if="searchQuery" class="reset-btn" @click="searchQuery = ''">Clear Search</button>
           </div>
         </div>
@@ -204,6 +204,13 @@ const searchQuery = ref('')
 const sortBy = ref<'default' | 'name_asc' | 'name_desc' | 'artist'>('default')
 const viewMode = ref<'grid' | 'list'>('grid')
 const showLikedAlbums = ref(false)
+
+// Toggle liked filter và refetch nếu cần
+const toggleLikedFilter = async () => {
+  showLikedAlbums.value = !showLikedAlbums.value
+  // Luôn refetch để đảm bảo is_liked được tính với token hiện tại
+  await albumStore.fetchAllAlbums()
+}
 // ── Computed ───────────────────────────────────────────────────────────────
 const latestAlbumCover = computed(() => {
   if (albumStore.albums?.length > 0) {
@@ -262,9 +269,8 @@ const playAlbum = (album: AlbumInterface) => emit('playAlbum', album)
 
 // ─── Lifecycle ─────────────────────────────────────────────────────────────
 onMounted(async () => {
-  if (!albumStore.albums?.length) {
-    await albumStore.fetchAllAlbums()
-  }
+  // Luôn refetch để is_liked được tính đúng với token hiện tại
+  await albumStore.fetchAllAlbums()
 })
 </script>
 

@@ -25,6 +25,7 @@ export const useArtistStore = defineStore("artist", {
     state: () => ({
         profile: null as ArtistInterface | null,
         artists: [] as ArtistInterface[],
+        partnerArtists: [] as ArtistInterface[], // artists filtered by partner
         loading: false,
         error: null as string | null,
         statistics: null as ArtistStatistics | null,
@@ -94,6 +95,32 @@ export const useArtistStore = defineStore("artist", {
 
             } catch (err: any) {
                 this.error = err?.message || "Failed to fetch artist";
+            } finally {
+                this.loading = false;
+            }
+        },
+
+        async fetchArtistsByPartner(partnerId: number) {
+            try {
+                this.loading = true;
+                this.error = null;
+
+                const data = await ArtistService.getAllArtistByPartner(partnerId);
+
+                const rawArtists = Array.isArray(data)
+                    ? data
+                    : Array.isArray(data?.data)
+                    ? data.data
+                    : Object.values(data ?? {});
+
+                this.partnerArtists = rawArtists
+                    .filter((u: any) => !u.deleted_at)
+                    .sort((a: any, b: any) => a.name.localeCompare(b.name));
+
+                return this.partnerArtists;
+            } catch (err: any) {
+                this.error = err?.message || "Failed to fetch artists by partner";
+                this.partnerArtists = [];
             } finally {
                 this.loading = false;
             }

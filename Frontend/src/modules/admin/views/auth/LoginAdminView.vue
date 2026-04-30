@@ -109,9 +109,13 @@
             type="button" 
             class="resend-link" 
             @click="handleResend"
-            :disabled="isLoading"
+            :disabled="isLoading || isResending"
           >
-            Resend OTP code
+            <span v-if="isResending" class="resend-loading">
+              <span class="resend-spinner"></span>
+              Sending...
+            </span>
+            <span v-else>Resend OTP code</span>
           </button>
         </div>
 
@@ -137,6 +141,7 @@ const errors = ref({
   general: "",
 });
 const isLoading = ref(false);
+const isResending = ref(false);
 const isSuccess = ref(false);
 
 onMounted(() => {
@@ -244,16 +249,19 @@ const handleVerification = async () => {
 
 
 const handleResend = async () => {
+  if (isResending.value) return;
   try {
-     const auth = useAuthStore();
+    isResending.value = true;
+    const auth = useAuthStore();
     otp.value = ['', '', '', '', '', ''];
     errors.value.otp = "";
     errors.value.general = "";
-    inputRefs.value[0]?.focus();
     await auth.sendEmail(email.value);
-    console.log('Resending OTP...');
+    nextTick(() => inputRefs.value[0]?.focus());
   } catch (error: any) {
     errors.value.general = error.response?.data?.message || "Unable to resend the code. Please try again.";
+  } finally {
+    isResending.value = false;
   }
 };
 </script>
@@ -772,6 +780,23 @@ const handleResend = async () => {
 .resend-link:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+.resend-loading {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.resend-spinner {
+  display: inline-block;
+  width: 13px;
+  height: 13px;
+  border: 2px solid rgba(0, 255, 255, 0.3);
+  border-top: 2px solid #00ffff;
+  border-radius: 50%;
+  animation: spin-loader 0.8s linear infinite;
+  flex-shrink: 0;
 }
 
 .expire-text {

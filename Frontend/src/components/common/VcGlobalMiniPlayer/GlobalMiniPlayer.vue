@@ -858,16 +858,27 @@ watch(
     currentLyrics.value = []
     isLoadingLyrics.value = true
 
-    if (newSong.lyrics) {
-      currentLyrics.value = extractLyrics(newSong.lyrics)
-      isLoadingLyrics.value = false
-      return
-    }
-
+    // ← FIX: Fetch song detail để lấy is_liked mới nhất
     try {
-      const { data } = await songsService.getLyrics(newSong.id)
-      currentLyrics.value = extractLyrics(data.lyrics)
-    } catch {
+      const { data } = await songsService.getSong(newSong.id)
+      const freshSong = data.data || data
+      
+      // Cập nhật is_liked và total_likes từ server
+      if (player.currentSong && player.currentSong.id === newSong.id) {
+        player.currentSong.is_liked = freshSong.is_liked ?? false
+        player.currentSong.total_likes = freshSong.total_likes ?? 0
+        player.currentSong.is_followed = freshSong.is_followed ?? false
+        player.currentSong.follower_count = freshSong.follower_count ?? 0
+      }
+
+      // Xử lý lyrics
+      if (freshSong.lyrics) {
+        currentLyrics.value = extractLyrics(freshSong.lyrics)
+      } else {
+        currentLyrics.value = []
+      }
+    } catch (err) {
+      console.warn('[GlobalMiniPlayer] Failed to fetch song detail:', err)
       currentLyrics.value = []
     } finally {
       isLoadingLyrics.value = false

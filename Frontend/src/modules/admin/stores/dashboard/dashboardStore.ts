@@ -23,6 +23,18 @@ interface RecentPartner {
   created_at: string
 }
 
+export interface DashboardNotification {
+  id: string
+  type: 'partner_pending' | 'payment_pending'
+  title: string
+  message: string
+  meta: string
+  link_id: number
+  route: string
+  created_at: string
+  priority: 'high' | 'medium' | 'low'
+}
+
 interface DashboardStats {
   total_users: number
   new_users_month: number
@@ -45,6 +57,8 @@ interface DashboardState {
   revenueTrend: TrendPoint[]
   recentUsers: RecentUser[]
   recentPartners: RecentPartner[]
+  notifications: DashboardNotification[]
+  dismissedIds: Set<string>
   loading: boolean
   error: string | null
 }
@@ -56,9 +70,18 @@ export const useDashboardStore = defineStore('dashboard', {
     revenueTrend: [],
     recentUsers: [],
     recentPartners: [],
+    notifications: [],
+    dismissedIds: new Set<string>(),
     loading: false,
     error: null,
   }),
+
+  getters: {
+    activeNotifications: (state) =>
+      state.notifications.filter(n => !state.dismissedIds.has(n.id)),
+    notificationCount: (state) =>
+      state.notifications.filter(n => !state.dismissedIds.has(n.id)).length,
+  },
 
   actions: {
     async fetch() {
@@ -71,11 +94,20 @@ export const useDashboardStore = defineStore('dashboard', {
         this.revenueTrend   = data.revenue_trend   ?? []
         this.recentUsers    = data.recent_users    ?? []
         this.recentPartners = data.recent_partners ?? []
+        this.notifications  = data.notifications   ?? []
       } catch (err: any) {
         this.error = err?.response?.data?.message ?? 'Failed to load dashboard'
       } finally {
         this.loading = false
       }
+    },
+
+    dismiss(id: string) {
+      this.dismissedIds.add(id)
+    },
+
+    dismissAll() {
+      this.notifications.forEach(n => this.dismissedIds.add(n.id))
     },
   },
 })

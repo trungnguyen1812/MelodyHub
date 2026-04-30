@@ -18,8 +18,10 @@ class ClientAlbumsContronller extends Controller
 {
     public function index()
     {
-        $albums = Album::with(['artist', 'album_tracks'])->get();
-        return response()->json($albums);
+        $albums = Album::with(['artist', 'album_tracks'])
+            ->where('status', 'published')
+            ->get();
+        return \App\Http\Resources\AlbumResource::collection($albums);
     }
 
     public function showAlbumByPartner($partnerId)
@@ -180,7 +182,8 @@ class ClientAlbumsContronller extends Controller
 
     public function show(Album $album)
     {
-        return response()->json($album->load('artist', 'tracks.artist'));
+        $album->load('artist', 'tracks.artist');
+        return new \App\Http\Resources\AlbumResource($album);
     }
     
 

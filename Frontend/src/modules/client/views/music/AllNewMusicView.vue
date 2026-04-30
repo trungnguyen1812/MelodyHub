@@ -64,7 +64,7 @@
             </button>
             <button
               :class="{ active: showLikedSongs }"
-              @click="showLikedSongs = !showLikedSongs"
+              @click="toggleLikedFilter"
               title="Liked songs"
               :style="showLikedSongs ? 'color: #ef4444;' : ''"
             >
@@ -153,7 +153,7 @@
           <p v-else-if="searchQuery">No results for <em>"{{ searchQuery }}"</em></p>
           <p v-else>We couldn't find any songs matching your search.</p>
           <div style="display:flex; gap:8px; justify-content:center;">
-            <button v-if="showLikedSongs" class="reset-btn" @click="showLikedSongs = false">Show All</button>
+            <button v-if="showLikedSongs" class="reset-btn" @click="toggleLikedFilter">Show All</button>
             <button v-if="searchQuery" class="reset-btn" @click="searchQuery = ''">Clear Search</button>
           </div>
         </div>
@@ -179,6 +179,17 @@ const searchQuery = ref('');
 const loading = ref(true);
 const viewMode = ref<'grid' | 'list'>('grid')
 const showLikedSongs = ref(false)
+
+// Toggle liked filter và refetch để đảm bảo is_liked đúng với token hiện tại
+const toggleLikedFilter = async () => {
+  showLikedSongs.value = !showLikedSongs.value
+  loading.value = true
+  try {
+    await songStore.fetchNewSongs(50)
+  } finally {
+    loading.value = false
+  }
+}
 
 // Computed: Latest cover for background
 const latestSongCover = computed(() => {

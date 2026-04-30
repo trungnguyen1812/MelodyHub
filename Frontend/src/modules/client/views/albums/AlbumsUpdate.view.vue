@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="wizard-shell">
     <div v-if="pageLoading" class="loading-overlay">
        <span class="btn-spinner" style="border-width: 3px; width: 24px; height: 24px;"></span>
@@ -296,7 +296,7 @@
             <!-- Status & partner -->
             <div class="vis-section">
               <h3 class="vis-section-title">Publishing</h3>
-              <div class="field-row two-col">
+              <div class="field-row">
                 <div class="field">
                   <label class="field-label">Status</label>
                   <select v-model="form.status" class="field-control">
@@ -305,13 +305,6 @@
                     <option value="pending">Pending</option>
                     <option value="rejected">Rejected</option>
                     <option value="archived">Archived</option>
-                  </select>
-                </div>
-                <div class="field">
-                  <label class="field-label">Partner</label>
-                  <select v-model="form.partner_id" class="field-control">
-                    <option value="">None</option>
-                    <option v-for="p in partners" :key="p.id" :value="p.id">{{ p.company_name || `Partner #${p.id}` }}</option>
                   </select>
                 </div>
               </div>
@@ -538,9 +531,12 @@ const form = reactive<any>({
 })
 
 const selectedArtistName = computed(() => {
-  if (!form.artist_id) return ''
-  return artists.value.find((a: any) => a.id === form.artist_id)?.name || ''
+  if (!form.artist_id) return artistName.value
+  return artists.value.find((a: any) => a.id == form.artist_id)?.name 
+    || artistName.value 
+    || ''
 })
+
 
 
 
@@ -549,34 +545,33 @@ const generateSlug = () => {
   form.slug = form.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
 }
 
-// Watchers
-watch(filterArtistId, (val) => {
-  form.artist_id = val === '' ? null : val
-})
+// filterArtistId chỉ dùng để lọc track list, không ghi đè form.artist_id
+
+
+
 
 // Initialize Data
 const loadAlbumData = async () => {
   try {
     const res = await albumStore.fetchShow(albumSlug.value);
     if (res) {
-      const data = res.data || res;
+      const data = res.data?.data || res.data || res;
       
       form.name = data.name || '';
       form.slug = data.slug || '';
-      form.artist_id = data.artist_id || null;
-      artistName.value = data.artist?.name || ''
+      form.artist_id = data.artist_id || data.artist?.id || null;
+      artistName.value = data.artist?.name || '';
       form.description = data.description || '';
       form.release_date = data.release_date ? data.release_date.substring(0, 10) : '';
       form.album_type = data.album_type || 'album';
       form.label = data.label || '';
       form.is_featured = !!data.is_featured;
       form.is_premium = !!data.is_premium;
-      form.partner_id = data.partner_id || null;
+      form.partner_id = data.partner_id || data.partner?.id || null;
       form.status = data.status || 'draft';
       form.seo_title = data.seo_title || '';
       form.seo_description = data.seo_description || '';
       
-      // Load existing cover
       if (data.cover_url) {
         if (typeof data.cover_url === 'string' && data.cover_url.startsWith('http')) {
           coverPreview.value = data.cover_url;
@@ -585,7 +580,13 @@ const loadAlbumData = async () => {
         }
       }
 
-      // Load existing tracks
+      if (form.partner_id) {
+        const partner = partners.value.find((p: any) => p.id === form.partner_id);
+        form.company_name = partner?.company_name || '';
+      } else {
+        form.company_name = '';
+      }
+
       if (data.tracks && Array.isArray(data.tracks)) {
         selectedTracks.value = data.tracks.map((t: any) => ({
           id: t.id,
@@ -596,40 +597,41 @@ const loadAlbumData = async () => {
           cover: t.cover_url ? getFullImageUrl(t.cover_url) : defaultCover
         }));
       }
-
-      // Preselect the artist filter to the album's artist
-      if (data.artist_id) {
-        filterArtistId.value = data.artist_id;
-      }
     }
   } catch (err: any) {
     const status = err?.response?.status;
-    if (status === 404) {
-      router.push('/404');
-    } else if (status === 401) {
-      router.push('/login');
-    } else {
+    if (status === 404) router.push('/404');
+    else if (status === 401) router.push('/login');
+    else {
       notificationStore.notify('Failed to load album details', 'error');
       router.push({ name: 'client.albumsmanager.all' });
     }
   }
 }
 
-const loadArtists = async () => { 
-  const partner_id = partnerStore.partner?.id 
-  await artistStore.fetchAllArtists(partner_id) 
-}
+watch(() => form.partner_id, (newPartnerId) => {
+  if (newPartnerId) {
+    const partner = partners.value.find(p => p.id === newPartnerId);
+    form.company_name = partner?.company_name || '';
+  } else {
+    form.company_name = '';
+  }
+}, { immediate: true });
+
 
 onMounted(async () => {
   pageLoading.value = true
-  await Promise.all([
-    loadArtists(),
-    partnerStore.fetchPartners(),
-    songStore.fetchSongs()
-  ])
+  try { await partnerStore.fetchPartners() } catch { /* ignore */ }
+  try { await partnerStore.fetchPartnerInfo() } catch { /* ignore */ }
+
   await loadAlbumData()
+  const partnerId = form.partner_id || partnerStore.partner?.id
+  await artistStore.fetchAllArtists(partnerId ?? undefined)
+  await songStore.fetchSongs({ per_page: 200, partner_id: partnerId })
+
   pageLoading.value = false
 })
+
 
 const submitForm = async () => {
   try {
@@ -650,7 +652,14 @@ const submitForm = async () => {
       return
     }
     
-    const payload = { ...form }
+    const resolvedArtistId = form.artist_id || null
+
+    if (!resolvedArtistId) {
+      notificationStore.notify('Artist is required', 'error')
+      return
+    }
+
+    const payload = { ...form ,  artist_id: resolvedArtistId}
     
     if (!(payload.cover_url instanceof File)) {
       delete payload.cover_url;

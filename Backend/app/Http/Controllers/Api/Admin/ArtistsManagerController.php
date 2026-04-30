@@ -13,9 +13,19 @@ use App\Services\ArtistSlugService;
 
 class ArtistsManagerController extends Controller
 {
-    public function getAllArtist()
+    public function getAllArtist(Request $request)
     {
-        $artists = Artist::all();
+        $query = Artist::query();
+
+        if ($request->filled('partner_id')) {
+            $query->where('partner_id', $request->partner_id);
+        }
+
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
+        $artists = $query->orderBy('name')->get();
 
         return response()->json($artists);
     }

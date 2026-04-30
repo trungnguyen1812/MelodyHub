@@ -71,12 +71,14 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, watch } from 'vue'
 import { useAdManager } from '@/composables/useAdManager'
+import { useUserStore } from '@/modules/client/stores/users/UserStore'
 
 const SKIP_DELAY = 5000
 const SHOW_DELAY = 1500
 const SESSION_KEY = 'ad_modal_shown'
 
 const { bannerAds, trackImpression, trackClick } = useAdManager()
+const userStore = useUserStore()
 
 const visible = ref(false)
 const countdown = ref(Math.ceil(SKIP_DELAY / 1000))
@@ -121,6 +123,8 @@ const startCountdown = () => {
 
 // ─── Core: show modal ─────────────────────────────────────────────────────────
 const tryShow = () => {
+  // VIP users never see ad modals
+  if (userStore.isVip) return
   if (sessionStorage.getItem(SESSION_KEY)) return
   if (bannerAds.value.length === 0) return
 
@@ -133,6 +137,8 @@ const tryShow = () => {
 }
 
 onMounted(() => {
+  // VIP users skip entirely
+  if (userStore.isVip) return
   if (sessionStorage.getItem(SESSION_KEY)) return
 
   // Ads đã có sẵn → show sau delay

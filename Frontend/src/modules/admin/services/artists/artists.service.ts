@@ -8,6 +8,11 @@ class ArtistService {
         return res.data;
     }
 
+    async getAllArtistByPartner(partnerId: number) {
+        const res = await adminApi.get("/artists", { params: { partner_id: partnerId } });
+        return res.data;
+    }
+
     async searchArtist(keyword: string) {
         const res = await adminApi.post("/artists/search", {
             q: keyword  

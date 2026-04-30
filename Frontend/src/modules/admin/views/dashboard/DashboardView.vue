@@ -151,6 +151,103 @@
       </div>
     </div>
 
+    <!-- ── Notifications / Pending Approvals ─────────────────────────────── -->
+    <div class="notif-section" v-if="!store.loading">
+      <div class="notif-header">
+        <div class="notif-header__left">
+          <span class="notif-title">Pending Approvals</span>
+          <span v-if="store.notificationCount > 0" class="notif-badge">{{ store.notificationCount }}</span>
+          <span v-else class="notif-badge notif-badge--empty">0</span>
+        </div>
+        <button
+          v-if="store.notificationCount > 0"
+          class="notif-dismiss-all"
+          @click="store.dismissAll()"
+        >
+          Mark all as read
+        </button>
+      </div>
+
+      <!-- Empty state -->
+      <div v-if="store.notificationCount === 0" class="notif-empty">
+        <svg width="40" height="40" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="opacity:0.2">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+            d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+        <p>All caught up! No pending items.</p>
+      </div>
+
+      <!-- Notification list -->
+      <div v-else class="notif-list">
+        <TransitionGroup name="notif-item">
+          <div
+            v-for="n in store.activeNotifications"
+            :key="n.id"
+            class="notif-item"
+            :class="['notif-item--' + n.priority, 'notif-item--' + n.type]"
+          >
+            <!-- Icon -->
+            <div class="notif-icon" :class="'notif-icon--' + n.type">
+              <!-- Partner pending -->
+              <svg v-if="n.type === 'partner_pending'" width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+              </svg>
+              <!-- Payment pending -->
+              <svg v-else-if="n.type === 'payment_pending'" width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+              </svg>
+            </div>
+
+            <!-- Content -->
+            <div class="notif-content">
+              <div class="notif-content__top">
+                <span class="notif-item-title">{{ n.title }}</span>
+                <span class="notif-meta-badge">{{ n.meta }}</span>
+              </div>
+              <p class="notif-message">{{ n.message }}</p>
+              <span class="notif-time">{{ timeAgo(n.created_at) }}</span>
+            </div>
+
+            <!-- Actions -->
+            <div class="notif-actions">
+              <router-link
+                :to="{ name: n.route }"
+                class="notif-btn notif-btn--review"
+              >
+                Review
+                <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                </svg>
+              </router-link>
+              <button class="notif-btn notif-btn--dismiss" @click="store.dismiss(n.id)" title="Dismiss">
+                <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+        </TransitionGroup>
+      </div>
+    </div>
+
+    <!-- Notification skeleton -->
+    <div v-else class="notif-section">
+      <div class="notif-header">
+        <div class="skel" style="width:160px;height:18px;border-radius:6px" />
+      </div>
+      <div class="notif-list">
+        <div v-for="i in 3" :key="i" class="notif-item notif-item--skel">
+          <div class="skel" style="width:40px;height:40px;border-radius:10px;flex-shrink:0" />
+          <div style="flex:1;display:flex;flex-direction:column;gap:8px">
+            <div class="skel" style="width:55%;height:13px;border-radius:5px" />
+            <div class="skel" style="width:80%;height:11px;border-radius:5px" />
+          </div>
+        </div>
+      </div>
+    </div>
+
   </div>
 </template>
 
@@ -169,6 +266,17 @@ const adminName = computed(() => authStore.user?.name ?? 'Admin')
 // ── Helpers ──────────────────────────────────────────────────────────────────
 const initial = (name?: string | null) =>
   (name ?? '?').trim().charAt(0).toUpperCase()
+
+const timeAgo = (iso: string): string => {
+  const diff = Date.now() - new Date(iso).getTime()
+  const mins  = Math.floor(diff / 60000)
+  const hours = Math.floor(diff / 3600000)
+  const days  = Math.floor(diff / 86400000)
+  if (mins < 1)   return 'just now'
+  if (mins < 60)  return `${mins}m ago`
+  if (hours < 24) return `${hours}h ago`
+  return `${days}d ago`
+}
 
 const fmtVND = (val: number | null | undefined) => {
   if (!val) return '₫0'
@@ -719,4 +827,231 @@ onMounted(() => store.fetch())
   .stat-grid    { grid-template-columns: 1fr; }
   .mini-stat-row { grid-template-columns: repeat(2, 1fr); }
 }
+
+/* ── Notifications ──────────────────────────────────────────────────────────── */
+.notif-section {
+  margin-top: 20px;
+  position: relative;
+  z-index: 1;
+}
+
+.notif-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.notif-header__left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.notif-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: rgba(255,255,255,0.9);
+}
+
+.notif-badge {
+  background: rgba(251,191,36,0.2);
+  color: #fbbf24;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 20px;
+  min-width: 22px;
+  text-align: center;
+}
+
+.notif-badge--empty {
+  background: rgba(255,255,255,0.06);
+  color: rgba(255,255,255,0.3);
+}
+
+.notif-dismiss-all {
+  font-size: 12px;
+  color: rgba(255,255,255,0.4);
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: color 0.2s;
+  padding: 0;
+}
+.notif-dismiss-all:hover { color: rgba(255,255,255,0.8); }
+
+.notif-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 40px 20px;
+  background: rgba(255,255,255,0.02);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 16px;
+  color: rgba(255,255,255,0.25);
+  font-size: 13px;
+}
+
+.notif-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.notif-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 16px 18px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 14px;
+  transition: border-color 0.2s, background 0.2s;
+  position: relative;
+  overflow: hidden;
+}
+
+.notif-item::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 3px;
+  border-radius: 3px 0 0 3px;
+}
+
+.notif-item--high::before   { background: #f87171; }
+.notif-item--medium::before { background: #fbbf24; }
+.notif-item--low::before    { background: #60a5fa; }
+
+.notif-item:hover {
+  background: rgba(255,255,255,0.05);
+  border-color: rgba(255,255,255,0.12);
+}
+
+.notif-item--skel {
+  pointer-events: none;
+}
+
+/* Icon */
+.notif-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.notif-icon--partner_pending {
+  background: rgba(167,139,250,0.12);
+  color: #a78bfa;
+}
+
+.notif-icon--payment_pending {
+  background: rgba(251,191,36,0.12);
+  color: #fbbf24;
+}
+
+/* Content */
+.notif-content {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.notif-content__top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.notif-item-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: rgba(255,255,255,0.9);
+}
+
+.notif-meta-badge {
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 20px;
+  background: rgba(255,255,255,0.07);
+  color: rgba(255,255,255,0.45);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.notif-message {
+  font-size: 12px;
+  color: rgba(255,255,255,0.45);
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.notif-time {
+  font-size: 11px;
+  color: rgba(255,255,255,0.25);
+}
+
+/* Actions */
+.notif-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.notif-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 6px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s;
+  text-decoration: none;
+  border: none;
+}
+
+.notif-btn--review {
+  background: rgba(0,198,255,0.12);
+  color: #00c6ff;
+  border: 1px solid rgba(0,198,255,0.2);
+}
+.notif-btn--review:hover {
+  background: rgba(0,198,255,0.2);
+}
+
+.notif-btn--dismiss {
+  background: rgba(255,255,255,0.05);
+  color: rgba(255,255,255,0.35);
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  justify-content: center;
+  border: 1px solid rgba(255,255,255,0.08);
+}
+.notif-btn--dismiss:hover {
+  background: rgba(248,113,113,0.12);
+  color: #f87171;
+  border-color: rgba(248,113,113,0.2);
+}
+
+/* TransitionGroup */
+.notif-item-enter-active { transition: all 0.25s ease; }
+.notif-item-leave-active { transition: all 0.2s ease; }
+.notif-item-enter-from   { opacity: 0; transform: translateY(-8px); }
+.notif-item-leave-to     { opacity: 0; transform: translateX(20px); }
+.notif-item-move         { transition: transform 0.25s ease; }
 </style>

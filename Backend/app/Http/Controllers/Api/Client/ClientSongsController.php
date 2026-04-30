@@ -96,16 +96,20 @@ class ClientSongsController extends Controller
         
         $userId = Auth::id();
         Log::info('User ID in song show:', ['user_id' => $userId]);
+
+        // Nếu không có userId thì không cần withExists (luôn false)
+        $withIsLiked = function ($query) use ($userId) {
+            if ($userId) {
+                $query->where('user_id', $userId);
+            } else {
+                $query->whereRaw('1 = 0'); // Không có user → is_liked luôn false
+            }
+        };
+
         if (is_numeric($idOrSlug)) {
             $song = Song::with(['artist', 'album', 'partner', 'genre'])
                 ->withCount(['song_likes as like_count'])  
-                ->withExists([                       
-                    'song_likes as is_liked' => function ($query) use ($userId) {
-                        if ($userId) {
-                            $query->where('user_id', $userId);
-                        }
-                    }
-                ])
+                ->withExists(['song_likes as is_liked' => $withIsLiked])
                 ->find($idOrSlug);
             
             if (!$song) {
@@ -117,13 +121,7 @@ class ClientSongsController extends Controller
         } else {
             $song = Song::with(['artist', 'album', 'partner', 'genre'])
                 ->withCount(['song_likes as like_count'])  
-                ->withExists([                             
-                    'song_likes as is_liked' => function ($query) use ($userId) {
-                        if ($userId) {
-                            $query->where('user_id', $userId);
-                        }
-                    }
-                ])
+                ->withExists(['song_likes as is_liked' => $withIsLiked])
                 ->where('slug', $idOrSlug)
                 ->first();
             

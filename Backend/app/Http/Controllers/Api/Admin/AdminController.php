@@ -128,6 +128,58 @@ class AdminController extends Controller
                 'created_at'   => $p->created_at,
             ]);
 
+        // ── Notifications (pending items needing action) ──────────────────────
+        $pendingPartnerItems = Partner::with('partnerType')
+            ->where('status', 'pending')
+            ->orderByDesc('created_at')
+            ->limit(10)
+            ->get(['id', 'company_name', 'company_email', 'created_at', 'partner_type_id'])
+            ->map(fn($p) => [
+                'id'         => 'partner_' . $p->id,
+                'type'       => 'partner_pending',
+                'title'      => 'New partner registration',
+                'message'    => ($p->company_name ?? 'Unknown') . ' is waiting for approval',
+                'meta'       => $p->partnerType?->name ?? 'Partner',
+                'link_id'    => $p->id,
+                'route'      => 'admin.partnersmanager',
+                'created_at' => $p->created_at,
+                'priority'   => 'high',
+            ]);
+
+        $pendingPaymentItems = collect([]);
+        try {
+            $pendingPaymentItems = DB::table('payments')
+                ->join('users', 'payments.user_id', '=', 'users.id')
+                ->where('payments.status', 'pending')
+                ->orderByDesc('payments.created_at')
+                ->limit(10)
+                ->select(
+                    'payments.id',
+                    'payments.amount',
+                    'payments.payment_type',
+                    'payments.created_at',
+                    'users.name as user_name'
+                )
+                ->get()
+                ->map(fn($p) => [
+                    'id'         => 'payment_' . $p->id,
+                    'type'       => 'payment_pending',
+                    'title'      => 'Payment awaiting approval',
+                    'message'    => ($p->user_name ?? 'User') . ' — ' . number_format($p->amount, 0, '.', ',') . ' VND',
+                    'meta'       => ucfirst(str_replace('_', ' ', $p->payment_type ?? 'payment')),
+                    'link_id'    => $p->id,
+                    'route'      => 'admin.payment.list',
+                    'created_at' => $p->created_at,
+                    'priority'   => 'medium',
+                ]);
+        } catch (\Exception $e) {}
+
+        $notifications = $pendingPartnerItems
+            ->concat($pendingPaymentItems)
+            ->sortByDesc('created_at')
+            ->values()
+            ->toArray();
+
         return response()->json([
             'user' => [
                 'id'    => $user->id,
@@ -153,10 +205,11 @@ class AdminController extends Controller
                 'revenue_last_month' => $revenueLastMonth,
                 'revenue_growth'     => $revenueGrowth,
             ],
-            'user_trend'     => $userTrend,
-            'revenue_trend'  => $revenueTrend,
-            'recent_users'   => $recentUsers,
-            'recent_partners'=> $recentPartners,
+            'user_trend'      => $userTrend,
+            'revenue_trend'   => $revenueTrend,
+            'recent_users'    => $recentUsers,
+            'recent_partners' => $recentPartners,
+            'notifications'   => $notifications,
         ]);
     }
 }
