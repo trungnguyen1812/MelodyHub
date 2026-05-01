@@ -45,6 +45,9 @@ import PaymentDetailView from '@/modules/admin/views/payment/PaymentDetail.view.
 // management playlists
 import PlaylistsManagerView from '@/modules/admin/views/playlists/PlaylistsManager.view.vue';
 import PlaylistAdminDetailView from '@/modules/admin/views/playlists/PlaylistDetail.view.vue';
+
+// setting manager
+import SettingManagerView  from '@/modules/admin/views/setting/SettingManager.view.vue';
 // ĐẢM BẢO EXPORT ĐÚNG
 export const ROUTER_ADMIN = [
   {
@@ -384,6 +387,13 @@ export const ROUTER_ADMIN = [
         name: "admin.playlistsmanager.detail",
         component: PlaylistAdminDetailView,
         props: true,
+        meta: { requiresAuth: true, requiresAdmin: true }
+      },
+      /*================================================ SETTING ================================================*/
+      {
+        path: "setting",
+        name: "admin.setting",
+        component: SettingManagerView,
         meta: { requiresAuth: true, requiresAdmin: true }
       },
     ]

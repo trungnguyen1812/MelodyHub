@@ -208,28 +208,28 @@
                     <div class="stat-card">
                         <div class="stat-icon">🎵</div>
                         <div class="stat-info">
-                            <span class="stat-value">{{ partner.total_songs || 0 }}</span>
+                            <span class="stat-value">{{ partner.songs_count ?? 0 }}</span>
                             <span class="stat-label">Total Songs</span>
                         </div>
                     </div>
                     <div class="stat-card">
                         <div class="stat-icon">🎤</div>
                         <div class="stat-info">
-                            <span class="stat-value">{{ partner.total_artists || 0 }}</span>
+                            <span class="stat-value">{{ partner.artists_count ?? 0 }}</span>
                             <span class="stat-label">Total Artists</span>
                         </div>
                     </div>
                     <div class="stat-card">
                         <div class="stat-icon">💿</div>
                         <div class="stat-info">
-                            <span class="stat-value">{{ partner.total_albums || 0 }}</span>
+                            <span class="stat-value">{{ partner.albums_count ?? 0 }}</span>
                             <span class="stat-label">Total Albums</span>
                         </div>
                     </div>
                     <div class="stat-card">
                         <div class="stat-icon">💰</div>
                         <div class="stat-info">
-                            <span class="stat-value">{{ formatCurrency(partner.total_revenue) }}</span>
+                            <span class="stat-value">{{ formatCurrency(partner.total_revenue ?? 0) }}</span>
                             <span class="stat-label">Total Revenue</span>
                         </div>
                     </div>
@@ -338,7 +338,8 @@ const fetchPartnerDetail = async () => {
         loading.value = true
         const id = Number(route.params.id)
         const response = await partnerStore.fetchPartnerDetail(id)
-        partner.value = response
+        // API trả về { success, data: {...} } — lấy đúng object partner
+        partner.value = response?.data || response
     } catch (error) {
         notificationStore.notify('Failed to load partner details', 'error')
     } finally {

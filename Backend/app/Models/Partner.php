@@ -64,6 +64,8 @@ class Partner extends Model
 	use SoftDeletes;
 	protected $table = 'partners';
 
+	protected $appends = ['total_revenue', 'total_paid', 'pending_payout'];
+
 	protected $casts = [
 		'user_id' => 'int',
 		'partner_type_id' => 'int',
@@ -168,7 +170,7 @@ class Partner extends Model
     public function getTotalRevenueAttribute(): float
     {
         try {
-            return $this->partner_revenues()->sum('amount') ?? 0;
+            return (float) ($this->partner_revenues()->sum('total_revenue') ?? 0);
         } catch (\Exception $e) {
             return 0;
         }
@@ -177,7 +179,7 @@ class Partner extends Model
     public function getTotalPaidAttribute(): float
     {
         try {
-            return $this->partner_payouts()->sum('amount') ?? 0;
+            return (float) ($this->partner_payouts()->sum('amount') ?? 0);
         } catch (\Exception $e) {
             return 0;
         }
@@ -186,7 +188,7 @@ class Partner extends Model
     public function getPendingPayoutAttribute(): float
     {
         try {
-            return $this->total_revenue - $this->total_paid;
+            return max(0, $this->getTotalRevenueAttribute() - $this->getTotalPaidAttribute());
         } catch (\Exception $e) {
             return 0;
         }

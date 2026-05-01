@@ -741,7 +741,7 @@ const openPlaylistModal = async () => {
   showPlaylistModal.value = true
   if (playlistStore.playlists.length === 0 && !playlistStore.loading) {
     isLoadingPlaylists.value = true
-    await playlistStore.fetchAll()
+    await playlistStore.fetchMyPlaylists()
     isLoadingPlaylists.value = false
   }
 }

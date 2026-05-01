@@ -145,12 +145,7 @@ class PartnersManagerController extends Controller
             $partner = Partner::with(['user', 'partnerType'])
                 ->withCount(['songs', 'artists', 'albums'])
                 ->findOrFail($id);
-            
-            // Lấy thêm thông tin doanh thu
-            $partner->total_revenue = PartnerRevenue::where('partner_id', $id)->sum('total_revenue') ?? 0;
-            $partner->total_paid = PartnerRevenue::where('partner_id', $id)->where('status', 'paid')->sum('net_payout') ?? 0;
-            $partner->pending_payout = PartnerRevenue::where('partner_id', $id)->where('status', 'pending')->sum('net_payout') ?? 0;
-            
+
             return response()->json([
                 'success' => true,
                 'data' => $partner

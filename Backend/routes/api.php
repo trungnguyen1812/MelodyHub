@@ -388,6 +388,41 @@ Route::prefix('admin')->middleware(['admin.token'])->group(function () {
         Route::get('/',         [TypePartnerController::class, 'getAllTypePartnar']);
     });
 
+    // =========================================================
+    // Settings Management
+    // =========================================================
+    Route::prefix('settings')->group(function () {
+        // Partner Types CRUD
+        Route::prefix('partner-types')->group(function () {
+            Route::get('/',                    [\App\Http\Controllers\Api\Admin\SettingPartnerTypeController::class, 'index']);
+            Route::post('/',                   [\App\Http\Controllers\Api\Admin\SettingPartnerTypeController::class, 'store']);
+            Route::get('/{id}',                [\App\Http\Controllers\Api\Admin\SettingPartnerTypeController::class, 'show']);
+            Route::put('/{id}',                [\App\Http\Controllers\Api\Admin\SettingPartnerTypeController::class, 'update']);
+            Route::delete('/{id}',             [\App\Http\Controllers\Api\Admin\SettingPartnerTypeController::class, 'destroy']);
+            Route::patch('/{id}/toggle-active',[\App\Http\Controllers\Api\Admin\SettingPartnerTypeController::class, 'toggleActive']);
+        });
+
+        // Roles CRUD
+        Route::prefix('roles')->group(function () {
+            Route::get('/',                    [\App\Http\Controllers\Api\Admin\SettingRoleController::class, 'index']);
+            Route::post('/',                   [\App\Http\Controllers\Api\Admin\SettingRoleController::class, 'store']);
+            Route::get('/permissions',         [\App\Http\Controllers\Api\Admin\SettingRoleController::class, 'permissions']);
+            Route::get('/{id}',                [\App\Http\Controllers\Api\Admin\SettingRoleController::class, 'show']);
+            Route::put('/{id}',                [\App\Http\Controllers\Api\Admin\SettingRoleController::class, 'update']);
+            Route::delete('/{id}',             [\App\Http\Controllers\Api\Admin\SettingRoleController::class, 'destroy']);
+        });
+
+        // Subscription Plans CRUD
+        Route::prefix('subscription-plans')->group(function () {
+            Route::get('/',                    [\App\Http\Controllers\Api\Admin\SettingSubscriptionController::class, 'index']);
+            Route::post('/',                   [\App\Http\Controllers\Api\Admin\SettingSubscriptionController::class, 'store']);
+            Route::get('/{id}',                [\App\Http\Controllers\Api\Admin\SettingSubscriptionController::class, 'show']);
+            Route::put('/{id}',                [\App\Http\Controllers\Api\Admin\SettingSubscriptionController::class, 'update']);
+            Route::delete('/{id}',             [\App\Http\Controllers\Api\Admin\SettingSubscriptionController::class, 'destroy']);
+            Route::patch('/{id}/toggle-active',[\App\Http\Controllers\Api\Admin\SettingSubscriptionController::class, 'toggleActive']);
+        });
+    });
+
     // Advertising
     Route::prefix('advertising')->group(function () {
         Route::get('/', [AdvertisingManagerController::class, 'index']);
@@ -416,6 +451,42 @@ Route::prefix('admin')->middleware(['admin.token'])->group(function () {
         Route::patch('/{id}/status',                 [AdminPlaylistController::class, 'updateStatus']);
         Route::delete('/{id}',                       [AdminPlaylistController::class, 'destroy']);
         Route::delete('/{id}/songs/{songId}',        [AdminPlaylistController::class, 'removeSong']);
+    });
+
+    // =========================================================
+    // Settings — Partner Types
+    // =========================================================
+    Route::prefix('settings/partner-types')->group(function () {
+        Route::get('/',                [App\Http\Controllers\Api\Admin\SettingPartnerTypeController::class, 'index']);
+        Route::post('/',               [App\Http\Controllers\Api\Admin\SettingPartnerTypeController::class, 'store']);
+        Route::get('/{id}',            [App\Http\Controllers\Api\Admin\SettingPartnerTypeController::class, 'show']);
+        Route::put('/{id}',            [App\Http\Controllers\Api\Admin\SettingPartnerTypeController::class, 'update']);
+        Route::delete('/{id}',         [App\Http\Controllers\Api\Admin\SettingPartnerTypeController::class, 'destroy']);
+        Route::patch('/{id}/toggle',   [App\Http\Controllers\Api\Admin\SettingPartnerTypeController::class, 'toggleActive']);
+    });
+
+    // =========================================================
+    // Settings — Roles
+    // =========================================================
+    Route::prefix('settings/roles')->group(function () {
+        Route::get('/permissions',     [App\Http\Controllers\Api\Admin\SettingRoleController::class, 'permissions']);
+        Route::get('/',                [App\Http\Controllers\Api\Admin\SettingRoleController::class, 'index']);
+        Route::post('/',               [App\Http\Controllers\Api\Admin\SettingRoleController::class, 'store']);
+        Route::get('/{id}',            [App\Http\Controllers\Api\Admin\SettingRoleController::class, 'show']);
+        Route::put('/{id}',            [App\Http\Controllers\Api\Admin\SettingRoleController::class, 'update']);
+        Route::delete('/{id}',         [App\Http\Controllers\Api\Admin\SettingRoleController::class, 'destroy']);
+    });
+
+    // =========================================================
+    // Settings — Subscription Plans
+    // =========================================================
+    Route::prefix('settings/subscription-plans')->group(function () {
+        Route::get('/',                [App\Http\Controllers\Api\Admin\SettingSubscriptionController::class, 'index']);
+        Route::post('/',               [App\Http\Controllers\Api\Admin\SettingSubscriptionController::class, 'store']);
+        Route::get('/{id}',            [App\Http\Controllers\Api\Admin\SettingSubscriptionController::class, 'show']);
+        Route::put('/{id}',            [App\Http\Controllers\Api\Admin\SettingSubscriptionController::class, 'update']);
+        Route::delete('/{id}',         [App\Http\Controllers\Api\Admin\SettingSubscriptionController::class, 'destroy']);
+        Route::patch('/{id}/toggle',   [App\Http\Controllers\Api\Admin\SettingSubscriptionController::class, 'toggleActive']);
     });
 });
 

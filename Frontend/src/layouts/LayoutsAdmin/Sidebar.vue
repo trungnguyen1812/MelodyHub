@@ -109,10 +109,12 @@
 
     <!-- BOTTOM: Setting -->
     <div class="bottomSidebar">
-      <div class="setting-btn">
-        <span class="icon-wrap"><img src="@/assets/images/icon/setting.svg" alt="" /></span>
-        <span>Settings</span>
-      </div>
+       <router-link :to="{ name: 'admin.setting' }" ">
+          <div class="setting-btn">
+            <span class="icon-wrap"><img src="@/assets/images/icon/setting.svg" alt="" /></span>
+            <span>Settings</span>
+          </div>
+        </router-link>
     </div>
   </div>
 </template>
@@ -133,7 +135,6 @@ const homepage = () => {
 </script>
 
 <style scoped>
-@import url('https://fonts.googleapis.com/css2?family=Afacad:wght@400;500;600&display=swap');
 
 /* ── ROOT ─────────────────────────────────── */
 .main {
