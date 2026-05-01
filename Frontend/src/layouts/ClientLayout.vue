@@ -183,23 +183,39 @@
                   <!-- Chỉ hiển thị 1 avatar, có frame VIP nếu là VIP -->
                   <div class="relative" :class="{'vip-frame': subscriptionStore.isVip}">
                       <div class="vip-frame-inner" v-if="subscriptionStore.isVip">
+                          <!-- Avatar VIP: ảnh nếu có, fallback theo tên -->
                           <img
-                              :src="getFullImageUrl(authStore.user?.avatar_url || '/default-avatar.jpg')"
+                              v-if="authStore.user?.avatar_url && authStore.user.avatar_url !== ''"
+                              :src="getFullImageUrl(authStore.user.avatar_url)"
                               alt="avatar"
-                              class="w-7 h-7 rounded-full object-cover"
+                              class="w-full h-full rounded-full object-cover"
+                              @error="(e) => { (e.target as HTMLImageElement).style.display='none'; (e.target as HTMLImageElement).nextElementSibling?.removeAttribute('style') }"
                           />
+                          <div
+                              v-else
+                              class="nav-avatar-fallback"
+                              :style="{ backgroundColor: getAvatarColor(authStore.user?.name) }"
+                          >{{ getInitial(authStore.user?.name) }}</div>
                           <div class="vip-crown-frame">
                               👑
                           </div>
                       </div>
-                      
-                      <!-- Avatar cho non-VIP hoặc fallback -->
-                      <img
-                          v-else
-                          :src="getFullImageUrl(authStore.user?.avatar_url || '/default-avatar.jpg')"
-                          alt="avatar"
-                          class="w-7 h-7 rounded-full object-cover"
-                      />
+
+                      <!-- Avatar cho non-VIP: ảnh nếu có, fallback theo tên -->
+                      <template v-else>
+                          <img
+                              v-if="authStore.user?.avatar_url && authStore.user.avatar_url !== ''"
+                              :src="getFullImageUrl(authStore.user.avatar_url)"
+                              alt="avatar"
+                              class="w-7 h-7 rounded-full object-cover"
+                              @error="(e) => { (e.target as HTMLImageElement).style.display='none' }"
+                          />
+                          <div
+                              v-else
+                              class="nav-avatar-fallback"
+                              :style="{ backgroundColor: getAvatarColor(authStore.user?.name) }"
+                          >{{ getInitial(authStore.user?.name) }}</div>
+                      </template>
                   </div>
               </div>
               <span>{{ authStore.user?.name?.split(' ').pop() || 'User' }}</span>
@@ -426,6 +442,27 @@ const handleClickOutside = (event: MouseEvent) => {
 
 const adminPage   = () => { router.push({ name: "admin.dashboard" }) }
 const profilePage = () => { router.push({ name: "client.profile" }) }
+
+// ── Avatar helpers ────────────────────────────────────────────────────────────
+const getInitial = (name?: string) => {
+  if (!name) return '?'
+  return name.trim().charAt(0).toUpperCase()
+}
+
+const getAvatarColor = (name?: string) => {
+  if (!name) return '#6b7280'
+  const colors = [
+    '#f87171', '#fb923c', '#fbbf24', '#34d399',
+    '#60a5fa', '#a78bfa', '#f472b6', '#2dd4bf',
+    '#818cf8', '#f43f5e',
+  ]
+  let hash = 0
+  for (let i = 0; i < name.length; i++) {
+    hash = ((hash << 5) - hash) + name.charCodeAt(i)
+    hash |= 0
+  }
+  return colors[Math.abs(hash) % colors.length]
+}
 
 onMounted(() => { document.addEventListener("click", handleClickOutside) })
 onBeforeUnmount(() => { document.removeEventListener("click", handleClickOutside) })
@@ -784,4 +821,19 @@ header {
 .search-drop-leave-active { transition: opacity 0.1s ease, transform 0.1s ease; }
 .search-drop-enter-from  { opacity: 0; transform: translateY(-6px); }
 .search-drop-leave-to    { opacity: 0; transform: translateY(-4px); }
+
+/* ── Nav Avatar Fallback ─────────────────────────────────────────────────── */
+.nav-avatar-fallback {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  color: #fff;
+  text-transform: uppercase;
+  flex-shrink: 0;
+}
 </style>

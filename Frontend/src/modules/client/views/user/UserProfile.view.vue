@@ -10,8 +10,8 @@
         <div class="profile-hero__avatar-wrap">
           <div class="profile-hero__avatar-ring">
             <img
-                 v-if="user?.avatar_url !== ''"
-                :src="getFullImageUrl(user?.avatar_url)"
+                v-if="user?.avatar_url && user.avatar_url !== ''"
+                :src="getFullImageUrl(user.avatar_url)"
                 :alt="user?.name"
                 class="profile-hero__avatar"
                 @error="handleAvatarError"

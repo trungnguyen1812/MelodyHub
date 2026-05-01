@@ -62,11 +62,13 @@ interface AuthState {
 
 export const getFullImageUrl = (path?: string | null): string | undefined => {
     if (!path || path.trim() === '') return undefined;
-    
     if (path === 'null' || path === 'undefined') return undefined;
-
     if (path.startsWith('http')) return path;
-
+    
+    if (path === '/default-avatar.jpg' || path === 'default-avatar.jpg') {
+        return '/default-avatar.jpg';
+    }
+    
     return `http://localhost:8000/storage/${path}`;
 };
 
