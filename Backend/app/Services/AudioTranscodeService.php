@@ -61,35 +61,29 @@ class AudioTranscodeService
 
     /**
      * Tạo URL stream/download theo chất lượng — transcode on-the-fly khi user request
+     *
+     * Cloudinary audio files are uploaded as resource_type=video, so we build
+     * the transformation URL manually to ensure the correct delivery format.
      */
     public function getUrl(string $publicId, string $quality = 'standard'): string
     {
-        $transformations = match ($quality) {
-            'low' => [
-                'format'          => 'mp3',
-                'audio_codec'     => 'mp3',
-                'audio_frequency' => 44100,
-                'bit_rate'        => '128k',
-            ],
-            'standard' => [
-                'format'          => 'mp3',
-                'audio_codec'     => 'mp3',
-                'audio_frequency' => 44100,
-                'bit_rate'        => '320k',
-            ],
-            'lossless' => [
-                'format'      => 'flac',
-                'audio_codec' => 'flac',
-            ],
-            default => [
-                'format'   => 'mp3',
-                'bit_rate' => '128k',
-            ]
+        $cloudName = env('CLOUDINARY_CLOUD_NAME');
+
+        [$format, $bitRate] = match ($quality) {
+            'low'      => ['mp3',  'ab_128k'],
+            'standard' => ['mp3',  'ab_320k'],
+            'lossless' => ['flac', null],
+            default    => ['mp3',  'ab_128k'],
         };
 
-        return $this->cloudinary->image($publicId)
-            ->delivery($transformations)
-            ->toUrl();
+        // Build transformation string: e.g. "ab_128k" or nothing for lossless
+        $transformation = $bitRate ? "{$bitRate}" : '';
+
+        // Cloudinary video URL pattern:
+        // https://res.cloudinary.com/{cloud}/video/upload/{transformation}/{public_id}.{format}
+        $transformPart = $transformation ? "{$transformation}/" : '';
+
+        return "https://res.cloudinary.com/{$cloudName}/video/upload/{$transformPart}{$publicId}.{$format}";
     }
 
     /**

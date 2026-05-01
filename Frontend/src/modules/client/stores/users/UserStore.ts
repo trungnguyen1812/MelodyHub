@@ -54,11 +54,6 @@ export const useUserStore = defineStore('client_user', {
 
       try {
         const response = await userService.getAllSub();
-        this.qrUrl = response.qr_url;
-        this.transferContent = response.content;
-        this.paymentId = response.payment_id;
-        this.status = 'pending';
-        this.startPolling();
         let plansData: any[] = [];
 
         if (Array.isArray(response)) {

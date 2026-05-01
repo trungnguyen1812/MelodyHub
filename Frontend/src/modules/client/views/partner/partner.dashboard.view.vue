@@ -2,9 +2,16 @@
   <div class="partner-dashboard">
     <div class="bg-grid"></div>
     <div class="bg-glow"></div>
-    <div class="container">
-      <!-- Case 1: Đang chờ duyệt (Pending) -->
-      <div v-if="partnerStatus === 'pending'" class="pending-state">
+
+    <!-- Loading State -->
+    <div v-if="loadingPermission" class="loading-state">
+      <div class="loading-spinner"></div>
+    </div>
+
+    <div v-else class="container">
+      <!-- Case 1: Pending CHUNG - chỉ hiện khi user CHƯA có partner active nào
+           VÀ chỉ có đúng 1 pending request (không phải nhiều loại) -->
+      <div v-if="showGlobalPending" class="pending-state">
         <div class="pending-card">
           <div class="pending-icon">
             <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
@@ -19,16 +26,20 @@
           </p>
           <div class="pending-info">
             <div class="info-item">
+              <span class="info-label">Partner Type:</span>
+              <span class="info-value">{{ globalPendingPartner?.partner_type?.name }}</span>
+            </div>
+            <div class="info-item">
               <span class="info-label">Company:</span>
-              <span class="info-value">{{ partnerInfo?.company_name }}</span>
+              <span class="info-value">{{ globalPendingPartner?.company_name }}</span>
             </div>
             <div class="info-item">
               <span class="info-label">Status:</span>
-              <span class="info-value status-pending">Pending</span>
+              <span class="info-value status-pending">Pending Approval</span>
             </div>
             <div class="info-item">
               <span class="info-label">Registered on:</span>
-              <span class="info-value">{{ formatDate(partnerInfo?.created_at) }}</span>
+              <span class="info-value">{{ formatDate(globalPendingPartner?.created_at) }}</span>
             </div>
           </div>
           <button class="back-btn" @click="router.push({ name: 'client.home' })">
@@ -37,7 +48,7 @@
         </div>
       </div>
 
-      <!-- Case 2: Bị suspended -->
+      <!-- Case 2: Suspended -->
       <div v-else-if="partnerStatus === 'suspended'" class="suspended-state">
         <div class="suspended-card">
           <div class="suspended-icon">
@@ -51,13 +62,11 @@
           <p class="suspended-desc">
             Your partner account has been suspended. Please contact support for more information.
           </p>
-          <button class="contact-btn" @click="contactSupport">
-            Contact Support
-          </button>
+          <button class="contact-btn" @click="contactSupport">Contact Support</button>
         </div>
       </div>
 
-      <!-- Case 3: Bị terminated -->
+      <!-- Case 3: Terminated -->
       <div v-else-if="partnerStatus === 'terminated'" class="terminated-state">
         <div class="terminated-card">
           <div class="terminated-icon">
@@ -69,43 +78,60 @@
           <p class="terminated-desc">
             Your partnership has been terminated. If you believe this is a mistake, please contact our support team.
           </p>
-          <button class="contact-btn" @click="contactSupport">
-            Contact Support
-          </button>
+          <button class="contact-btn" @click="contactSupport">Contact Support</button>
         </div>
       </div>
 
-      <!-- Case 4: Active - Hiển thị bình thường -->
-      <template v-else-if="partnerStatus === 'active'">
-        <!-- Header -->
+      <!-- Case 4: Active OR có ít nhất 1 active + pending → Hiện Cards -->
+      <template v-else>
         <div class="header">
           <h1 class="title">Welcome back, {{ partnerName }}</h1>
           <p class="subtitle">Please select your partner type to continue</p>
         </div>
 
-        <!-- 2 Cards Selection -->
         <div class="cards-container">
-          <!-- Music Distribution Partner Card -->
+          <!-- Music Distribution Card -->
           <div
             v-if="musicPartner"
             class="partner-card music-card"
-            :class="{
-              selected: selectedType === musicPartner.code,
-              locked: !isMusiceDistrib
-            }"
+            :class="musicCardClasses"
             @click="selectPartnerType(musicPartner.code)"
           >
             <div class="card-glow"></div>
 
-            <!-- Lock overlay -->
-            <div class="lock-overlay" v-if="!isMusiceDistrib">
+            <!-- Lock Overlay: chưa đăng ký -->
+            <div class="lock-overlay" v-if="musicCardState === 'unregistered'">
               <div class="lock-icon-wrap">
                 <svg width="32" height="32" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
                   <rect x="3" y="11" width="18" height="11" rx="2" />
                   <path d="M7 11V7a5 5 0 0 1 10 0v4" />
                 </svg>
               </div>
-              <p class="lock-text">Not available for your account</p>
+              <p class="lock-text">You haven't registered as a Music Partner yet</p>
+              <button class="register-btn" @click.stop="registerPartnerType('music_distribution')">
+                Register Now
+                <svg class="arrow-icon" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                </svg>
+              </button>
+            </div>
+
+            <!-- Pending Overlay: đã đăng ký, đang chờ duyệt -->
+            <div class="pending-overlay" v-if="musicCardState === 'pending'">
+              <div class="pending-icon-wrap">
+                <svg width="32" height="32" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                  <circle cx="12" cy="12" r="10" />
+                  <path d="M12 8v4l3 3" />
+                </svg>
+              </div>
+              <p class="pending-text">Pending Approval</p>
+              <p class="pending-subtext">Your registration is under review</p>
+              <div class="pending-progress">
+                <div class="progress-bar"></div>
+              </div>
+              <button class="view-detail-btn" @click.stop="viewPendingDetail('music_distribution')">
+                View Details
+              </button>
             </div>
 
             <div class="card-content">
@@ -125,14 +151,13 @@
                   <span class="stat-label">Default Revenue Share</span>
                 </div>
                 <div class="stat">
-                  <span class="stat-value">{{ musicPartner.default_payment_threshold }}USD</span>
+                  <span class="stat-value">{{ musicPartner.default_payment_threshold }} USD</span>
                   <span class="stat-label">Default Payment Threshold</span>
                 </div>
               </div>
-              <button class="select-btn" :disabled="!isMusiceDistrib">
+              <button class="select-btn" :disabled="musicCardState !== 'active'">
                 {{ selectedType === musicPartner.code ? 'Selected' : 'Select' }}
-                <svg v-if="selectedType === musicPartner.code" class="check-icon" fill="none" stroke="currentColor"
-                  viewBox="0 0 24 24">
+                <svg v-if="selectedType === musicPartner.code" class="check-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
                 </svg>
               </button>
@@ -143,23 +168,44 @@
           <div
             v-if="adPartner"
             class="partner-card ad-card"
-            :class="{
-              selected: selectedType === adPartner.code,
-              locked: !isAdvertising
-            }"
+            :class="adCardClasses"
             @click="selectPartnerType(adPartner.code)"
           >
             <div class="card-glow"></div>
 
-            <!-- Lock overlay -->
-            <div class="lock-overlay" v-if="!isAdvertising">
+            <!-- Lock Overlay: chưa đăng ký -->
+            <div class="lock-overlay" v-if="adCardState === 'unregistered'">
               <div class="lock-icon-wrap">
                 <svg width="32" height="32" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
                   <rect x="3" y="11" width="18" height="11" rx="2" />
                   <path d="M7 11V7a5 5 0 0 1 10 0v4" />
                 </svg>
               </div>
-              <p class="lock-text">Not available for your account</p>
+              <p class="lock-text">You haven't registered as an Advertising Partner yet</p>
+              <button class="register-btn" @click.stop="registerPartnerType('advertising')">
+                Register Now
+                <svg class="arrow-icon" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                </svg>
+              </button>
+            </div>
+
+            <!-- Pending Overlay: đã đăng ký, đang chờ duyệt -->
+            <div class="pending-overlay" v-if="adCardState === 'pending'">
+              <div class="pending-icon-wrap">
+                <svg width="32" height="32" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                  <circle cx="12" cy="12" r="10" />
+                  <path d="M12 8v4l3 3" />
+                </svg>
+              </div>
+              <p class="pending-text">Pending Approval</p>
+              <p class="pending-subtext">Your registration is under review</p>
+              <div class="pending-progress">
+                <div class="progress-bar"></div>
+              </div>
+              <button class="view-detail-btn" @click.stop="viewPendingDetail('advertising')">
+                View Details
+              </button>
             </div>
 
             <div class="card-content">
@@ -180,11 +226,11 @@
                   <span class="stat-label">Default Revenue Share</span>
                 </div>
                 <div class="stat">
-                  <span class="stat-value">{{ adPartner.default_payment_threshold }}USD</span>
+                  <span class="stat-value">{{ adPartner.default_payment_threshold }} USD</span>
                   <span class="stat-label">Default Payment Threshold</span>
                 </div>
               </div>
-              <button class="select-btn" :disabled="!isAdvertising">
+              <button class="select-btn" :disabled="adCardState !== 'active'">
                 {{ selectedType === adPartner.code ? 'Selected' : 'Select' }}
                 <svg v-if="selectedType === adPartner.code" class="check-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
@@ -213,29 +259,101 @@ import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import clientApi from '@/plugins/axios'
-import { useTypePartnerstore } from '@/modules/client/stores/typePartners/typePartnersStore' 
+import { useTypePartnerstore } from '@/modules/client/stores/typePartners/typePartnersStore'
+import { usePartnerStore } from '@/modules/client/stores/partners/partnersStore'
+
 
 const router = useRouter()
 const typePartnerStore = useTypePartnerstore()
 const { TypePartners } = storeToRefs(typePartnerStore)
+const partnerStore = usePartnerStore();
 
-const partnerName = ref('Partner')
-const selectedType = ref<string | null>(null)
-const isMusiceDistrib = ref(false)
-const isAdvertising = ref(false)
+// ─── State ────────────────────────────────────────────────────────────────────
+const partnerName       = ref('Partner')
+const selectedType      = ref<string | null>(null)
 const loadingPermission = ref(true)
-const partnerStatus = ref<string>('')
-const partnerInfo = ref<any>(null)
 
-// Lấy thông tin partner từ store
-const musicPartner = computed(() => {
-  return TypePartners.value?.find((p: any) => p.code === 'music_distribution')
+/**
+ * partnerStatus: trạng thái của partner ACTIVE (nếu có).
+ * Dùng để xác định suspended / terminated.
+ * Nếu không có active partner → để null.
+ */
+const partnerStatus = ref<string | null>(null)
+
+/**
+ * allPartners: toàn bộ registrations của user từ API /user/partners.
+ * Đây là nguồn dữ liệu chính để xác định trạng thái từng card.
+ * Shape: Array<{ partner_type: { code: string, name: string }, status: string, ... }>
+ */
+const allPartners = ref<any[]>([])
+
+// ─── Computed: Partner Type từ store ─────────────────────────────────────────
+const musicPartner = computed(() =>
+  TypePartners.value?.find((p: any) => p.code === 'music_distribution')
+)
+const adPartner = computed(() =>
+  TypePartners.value?.find((p: any) => p.code === 'advertising')
+)
+
+// ─── Computed: State của từng card ───────────────────────────────────────────
+/**
+ * getCardState: trả về trạng thái của 1 loại partner dựa trên allPartners.
+ * 'active'       → user đã được duyệt
+ * 'pending'      → user đã đăng ký nhưng chờ duyệt
+ * 'unregistered' → user chưa đăng ký loại này
+ *
+ * Ưu tiên: active > pending > unregistered
+ * (nếu có bản active thì dùng active, dù có bản pending cũ)
+ */
+const getCardState = (typeCode: string): 'active' | 'pending' | 'unregistered' => {
+  const registrations = allPartners.value.filter(
+    (p: any) => p.partner_type?.code === typeCode
+  )
+  if (registrations.some((p: any) => p.status === 'active'))  return 'active'
+  if (registrations.some((p: any) => p.status === 'pending')) return 'pending'
+  return 'unregistered'
+}
+
+const musicCardState = computed(() => getCardState('music_distribution'))
+const adCardState    = computed(() => getCardState('advertising'))
+
+// ─── Computed: CSS classes cho từng card ─────────────────────────────────────
+const musicCardClasses = computed(() => ({
+  selected:          selectedType.value === musicPartner.value?.code,
+  locked:            musicCardState.value === 'unregistered',
+  'pending-card-mode': musicCardState.value === 'pending',
+}))
+
+const adCardClasses = computed(() => ({
+  selected:          selectedType.value === adPartner.value?.code,
+  locked:            adCardState.value === 'unregistered',
+  'pending-card-mode': adCardState.value === 'pending',
+}))
+
+// ─── Computed: Global Pending Screen ─────────────────────────────────────────
+/**
+ * showGlobalPending: hiện màn hình chờ duyệt toàn trang khi:
+ * - KHÔNG có partner nào active
+ * - Chỉ có đúng 1 pending registration
+ * (Nếu có nhiều pending → hiển thị cards để user thấy từng trạng thái)
+ */
+const showGlobalPending = computed(() => {
+  const hasActive  = allPartners.value.some((p: any) => p.status === 'active')
+  const pendingList = allPartners.value.filter((p: any) => p.status === 'pending')
+  return !hasActive && pendingList.length === 1
 })
 
-const adPartner = computed(() => {
-  return TypePartners.value?.find((p: any) => p.code === 'advertising')
-})
+const globalPendingPartner = computed(() =>
+  allPartners.value.find((p: any) => p.status === 'pending') ?? null
+)
 
+// ─── Computed: Trạng thái active partner (cho suspended/terminated) ───────────
+// Lấy partner active cuối cùng (nếu có) để check suspended/terminated
+const activePartner = computed(() =>
+  allPartners.value.find((p: any) => p.status === 'active') ?? null
+)
+
+// ─── Helpers ─────────────────────────────────────────────────────────────────
 const formatDate = (date: string) => {
   if (!date) return 'N/A'
   return new Date(date).toLocaleDateString('vi-VN')
@@ -245,47 +363,40 @@ const contactSupport = () => {
   window.location.href = 'mailto:support@yourdomain.com'
 }
 
+// ─── Lifecycle ────────────────────────────────────────────────────────────────
 onMounted(async () => {
   try {
     if (!TypePartners.value?.length) {
-      await typePartnerStore.fetchTypePartners() 
+      await typePartnerStore.fetchTypePartners()
     }
 
-    const res = await clientApi.get('/check-permission')
+    const res  = await clientApi.get('/check-permission')
     const data = res.data
 
-    // Lấy status của partner
-    partnerStatus.value = data.partner?.status || 'pending'
-    partnerInfo.value = data.partner
-
-    // Nếu không phải active thì không cần xử lý tiếp
-    if (partnerStatus.value !== 'active') {
-      loadingPermission.value = false
-      return
-    }
-
     partnerName.value = data.user?.name ?? 'Partner'
-    isMusiceDistrib.value = data.is_music_distribution
-    isAdvertising.value = data.is_advertising
 
-    if (data.is_music_distribution && !data.is_advertising) {
-      selectedType.value = musicPartner.value?.code || 'music_distribution'
-    }
-    if (data.is_advertising && !data.is_music_distribution) {
-      selectedType.value = adPartner.value?.code || 'advertising'
+    allPartners.value = data.partners ?? (data.partner ? [data.partner] : [])
+
+    const activeTypes = allPartners.value
+      .filter((p: any) => p.status === 'active')
+      .map((p: any) => p.partner_type?.code)
+
+    if (activeTypes.length === 1) {
+      selectedType.value = activeTypes[0]
     }
 
   } catch (error) {
-    console.error(error)
+    console.error('[PartnerDashboard] Init error:', error)
     router.push({ name: 'login' })
   } finally {
     loadingPermission.value = false
   }
 })
 
+// ─── Actions ─────────────────────────────────────────────────────────────────
 const selectPartnerType = (type: string) => {
-  if (type === musicPartner.value?.code && !isMusiceDistrib.value) return
-  if (type === adPartner.value?.code && !isAdvertising.value) return
+  const state = type === musicPartner.value?.code ? musicCardState.value : adCardState.value
+  if (state !== 'active') return
   selectedType.value = type
 }
 
@@ -296,11 +407,25 @@ const continueToDashboard = () => {
     router.push({ name: 'client.partner.Advertisingd.dashboard' })
   }
 }
+
+const registerPartnerType = (partnerTypeCode: string) => {
+  router.push({
+    name: 'client.partner.register',
+    query: { type: partnerTypeCode, redirect: 'dashboard' },
+  })
+}
+
+const viewPendingDetail = (typeCode: string) => {
+  const pendingPartner = allPartners.value.find(
+    (p: any) => p.partner_type?.code === typeCode && p.status === 'pending'
+  )
+  if (!pendingPartner) return
+  console.log('[PartnerDashboard] View pending detail:', pendingPartner)
+}
 </script>
 
 <style scoped>
-/* Giữ nguyên style của bạn, thêm một số style bổ sung */
-
+/* ─── Base ──────────────────────────────────────────────────────────────────── */
 .partner-dashboard {
   min-height: 100vh;
   background: #080e14;
@@ -316,8 +441,8 @@ const continueToDashboard = () => {
   position: fixed;
   inset: 0;
   background-image:
-    linear-gradient(rgba(255, 255, 255, .025) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, .025) 1px, transparent 1px);
+    linear-gradient(rgba(255,255,255,.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,.025) 1px, transparent 1px);
   background-size: 40px 40px;
   pointer-events: none;
 }
@@ -329,7 +454,7 @@ const continueToDashboard = () => {
   transform: translateX(-50%);
   width: 600px;
   height: 500px;
-  background: radial-gradient(ellipse, rgba(99, 102, 241, .12) 0%, transparent 70%);
+  background: radial-gradient(ellipse, rgba(99,102,241,.12) 0%, transparent 70%);
   pointer-events: none;
 }
 
@@ -338,7 +463,122 @@ const continueToDashboard = () => {
   width: 100%;
 }
 
-/* Header Styles */
+/* ─── Loading ────────────────────────────────────────────────────────────────── */
+.loading-state {
+  min-height: 80vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.loading-spinner {
+  width: 48px;
+  height: 48px;
+  border: 3px solid rgba(255,255,255,0.1);
+  border-top-color: #3b82f6;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ─── Status Screens (pending / suspended / terminated) ─────────────────────── */
+.pending-state,
+.suspended-state,
+.terminated-state {
+  min-height: 80vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pending-card,
+.suspended-card,
+.terminated-card {
+  background: rgba(255,255,255,0.05);
+  border-radius: 24px;
+  padding: 48px;
+  text-align: center;
+  max-width: 500px;
+  width: 100%;
+  border: 1px solid rgba(255,255,255,0.1);
+}
+
+.pending-icon,
+.suspended-icon,
+.terminated-icon {
+  width: 80px;
+  height: 80px;
+  margin: 0 auto 24px;
+  background: rgba(255,255,255,0.1);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #f59e0b;
+}
+
+.suspended-icon,
+.terminated-icon { color: #ef4444; }
+
+.pending-title,
+.suspended-title,
+.terminated-title {
+  font-size: 28px;
+  font-weight: 700;
+  margin-bottom: 16px;
+  color: #f0f4f8;
+}
+
+.pending-desc,
+.suspended-desc,
+.terminated-desc {
+  color: #94a3b8;
+  margin-bottom: 32px;
+  line-height: 1.6;
+}
+
+.pending-info {
+  background: rgba(0,0,0,0.3);
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 32px;
+  text-align: left;
+}
+
+.info-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+
+.info-item:last-child { border-bottom: none; }
+.info-label { color: #64748b; font-weight: 500; }
+.info-value { color: #e2e8f0; }
+.status-pending { color: #f59e0b; font-weight: 600; }
+
+.back-btn,
+.contact-btn {
+  background: linear-gradient(90deg, #3b82f6, #2563eb);
+  border: none;
+  padding: 12px 24px;
+  border-radius: 12px;
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.back-btn:hover,
+.contact-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(59,130,246,0.3);
+}
+
+/* ─── Header ─────────────────────────────────────────────────────────────────── */
 .header {
   text-align: center;
   margin-bottom: 4rem;
@@ -359,7 +599,7 @@ const continueToDashboard = () => {
   font-size: 1.1rem;
 }
 
-/* Cards Container */
+/* ─── Cards Grid ─────────────────────────────────────────────────────────────── */
 .cards-container {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -367,37 +607,53 @@ const continueToDashboard = () => {
   margin-bottom: 3rem;
 }
 
-/* Partner Card Styles */
+/* ─── Partner Card ───────────────────────────────────────────────────────────── */
 .partner-card {
   position: relative;
-  background: rgba(30, 41, 59, 0.5);
+  background: rgba(30,41,59,0.5);
   backdrop-filter: blur(10px);
   border-radius: 2rem;
   cursor: pointer;
   transition: all 0.3s ease;
-  border: 2px solid rgba(255, 255, 255, 0.1);
+  border: 2px solid rgba(255,255,255,0.1);
   overflow: hidden;
 }
 
-.partner-card:not(.locked):hover {
+/* Hover chỉ cho active card */
+.partner-card:not(.locked):not(.pending-card-mode):hover {
   transform: translateY(-8px);
-  border-color: rgba(255, 255, 255, 0.3);
+  border-color: rgba(255,255,255,0.3);
 }
 
 .partner-card.selected {
   border-color: #3b82f6;
-  background: rgba(59, 130, 246, 0.1);
-  box-shadow: 0 0 30px rgba(59, 130, 246, 0.3);
+  background: rgba(59,130,246,0.1);
+  box-shadow: 0 0 30px rgba(59,130,246,0.3);
 }
 
-.music-card.selected .card-glow {
-  background: radial-gradient(circle at 50% 0%, rgba(59, 130, 246, 0.4), transparent);
+.ad-card.selected {
+  border-color: #8b5cf6;
+  box-shadow: 0 0 30px rgba(139,92,246,0.3);
 }
 
-.ad-card.selected .card-glow {
-  background: radial-gradient(circle at 50% 0%, rgba(139, 92, 246, 0.4), transparent);
+/* Locked: chưa đăng ký */
+.partner-card.locked {
+  cursor: not-allowed;
+  opacity: 0.65;
 }
 
+/* Pending: đã đăng ký, đang chờ */
+.partner-card.pending-card-mode {
+  border-color: rgba(245,158,11,0.5);
+  cursor: default;
+}
+
+.partner-card.pending-card-mode:hover {
+  transform: translateY(-4px);
+  border-color: #f59e0b;
+}
+
+/* ─── Card Glow ──────────────────────────────────────────────────────────────── */
 .card-glow {
   position: absolute;
   top: 0;
@@ -405,14 +661,21 @@ const continueToDashboard = () => {
   right: 0;
   height: 100%;
   pointer-events: none;
-  transition: opacity 0.3s ease;
   opacity: 0;
+  transition: opacity 0.3s ease;
 }
 
-.partner-card.selected .card-glow {
+.music-card.selected .card-glow {
+  background: radial-gradient(circle at 50% 0%, rgba(59,130,246,0.4), transparent);
   opacity: 1;
 }
 
+.ad-card.selected .card-glow {
+  background: radial-gradient(circle at 50% 0%, rgba(139,92,246,0.4), transparent);
+  opacity: 1;
+}
+
+/* ─── Card Content ───────────────────────────────────────────────────────────── */
 .card-content {
   padding: 2rem;
   position: relative;
@@ -422,7 +685,6 @@ const continueToDashboard = () => {
 .icon-wrapper {
   width: 80px;
   height: 80px;
-  background: rgba(59, 130, 246, 0.1);
   border-radius: 1.5rem;
   display: flex;
   align-items: center;
@@ -430,13 +692,8 @@ const continueToDashboard = () => {
   margin-bottom: 1.5rem;
 }
 
-.music-card .icon-wrapper {
-  background: rgba(59, 130, 246, 0.1);
-}
-
-.ad-card .icon-wrapper {
-  background: rgba(139, 92, 246, 0.1);
-}
+.music-card .icon-wrapper { background: rgba(59,130,246,0.1); }
+.ad-card .icon-wrapper    { background: rgba(139,92,246,0.1); }
 
 .card-icon {
   width: 48px;
@@ -444,15 +701,8 @@ const continueToDashboard = () => {
   stroke-width: 1.5;
 }
 
-.music-card .card-icon {
-  color: #3b82f6;
-  stroke: #3b82f6;
-}
-
-.ad-card .card-icon {
-  color: #8b5cf6;
-  stroke: #8b5cf6;
-}
+.music-card .card-icon { color: #3b82f6; stroke: #3b82f6; }
+.ad-card .card-icon    { color: #8b5cf6; stroke: #8b5cf6; }
 
 .card-title {
   font-size: 1.75rem;
@@ -472,14 +722,11 @@ const continueToDashboard = () => {
   gap: 1.5rem;
   margin-bottom: 1.5rem;
   padding: 1rem 0;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  border-top: 1px solid rgba(255,255,255,0.1);
+  border-bottom: 1px solid rgba(255,255,255,0.1);
 }
 
-.stat {
-  display: flex;
-  flex-direction: column;
-}
+.stat { display: flex; flex-direction: column; }
 
 .stat-value {
   font-size: 1.5rem;
@@ -492,11 +739,12 @@ const continueToDashboard = () => {
   color: #64748b;
 }
 
+/* ─── Select Button ──────────────────────────────────────────────────────────── */
 .select-btn {
   width: 100%;
   padding: 0.875rem;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.1);
   border-radius: 1rem;
   color: white;
   font-weight: 600;
@@ -509,7 +757,7 @@ const continueToDashboard = () => {
 }
 
 .select-btn:disabled {
-  opacity: 0.5;
+  opacity: 0.4;
   cursor: not-allowed;
 }
 
@@ -524,16 +772,164 @@ const continueToDashboard = () => {
 }
 
 .select-btn:hover:not(:disabled) {
-  background: rgba(255, 255, 255, 0.1);
-  transform: scale(0.98);
+  background: rgba(255,255,255,0.1);
 }
 
-.check-icon {
-  width: 1.25rem;
-  height: 1.25rem;
+.check-icon { width: 1.25rem; height: 1.25rem; }
+
+/* ─── Lock Overlay ───────────────────────────────────────────────────────────── */
+.lock-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  background: rgba(8,14,20,0.85);
+  backdrop-filter: blur(4px);
+  border-radius: 2rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
 }
 
-/* Continue Button */
+.lock-icon-wrap {
+  width: 64px;
+  height: 64px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #64748b;
+}
+
+.lock-text {
+  color: #64748b;
+  font-size: 0.875rem;
+  font-weight: 500;
+  text-align: center;
+  padding: 0 1rem;
+}
+
+.register-btn {
+  margin-top: 4px;
+  padding: 10px 20px;
+  background: linear-gradient(90deg, #3b82f6, #2563eb);
+  border: none;
+  border-radius: 10px;
+  color: white;
+  font-weight: 600;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  pointer-events: all;
+}
+
+.register-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(59,130,246,0.4);
+}
+
+.register-btn:hover .arrow-icon {
+  transform: translateX(3px);
+}
+
+.register-btn .arrow-icon {
+  transition: transform 0.2s ease;
+}
+
+/* ─── Pending Overlay ────────────────────────────────────────────────────────── */
+.pending-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  background: rgba(8,14,20,0.8);
+  backdrop-filter: blur(8px);
+  border-radius: calc(2rem - 2px); /* khớp với border card */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.pending-icon-wrap {
+  width: 56px;
+  height: 56px;
+  background: rgba(245,158,11,0.15);
+  border: 2px solid #f59e0b;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #f59e0b;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1);   opacity: 1;   }
+  50%       { transform: scale(1.1); opacity: 0.8; }
+}
+
+.pending-text {
+  color: #f59e0b;
+  font-size: 1rem;
+  font-weight: 700;
+  margin: 0;
+}
+
+.pending-subtext {
+  color: #94a3b8;
+  font-size: 0.75rem;
+  margin: 0;
+}
+
+.pending-progress {
+  width: 70%;
+  height: 4px;
+  background: rgba(255,255,255,0.08);
+  border-radius: 2px;
+  overflow: hidden;
+  margin: 0.5rem 0;
+}
+
+.progress-bar {
+  width: 45%;
+  height: 100%;
+  background: linear-gradient(90deg, #f59e0b, #fbbf24);
+  border-radius: 2px;
+  animation: loading 1.8s ease-in-out infinite;
+}
+
+@keyframes loading {
+  0%   { transform: translateX(-120%); }
+  100% { transform: translateX(280%);  }
+}
+
+.view-detail-btn {
+  margin-top: 0.25rem;
+  padding: 0.5rem 1.25rem;
+  background: rgba(245,158,11,0.15);
+  border: 1px solid #f59e0b;
+  border-radius: 0.5rem;
+  color: #f59e0b;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  pointer-events: all;
+}
+
+.view-detail-btn:hover {
+  background: rgba(245,158,11,0.28);
+  transform: translateY(-2px);
+}
+
+/* ─── Continue Button ────────────────────────────────────────────────────────── */
 .action-footer {
   display: flex;
   justify-content: center;
@@ -556,190 +952,26 @@ const continueToDashboard = () => {
 
 .continue-btn:hover {
   transform: translateY(-2px);
-  box-shadow: 0 10px 25px rgba(59, 130, 246, 0.3);
+  box-shadow: 0 10px 25px rgba(59,130,246,0.35);
 }
 
-.arrow-icon {
-  width: 1.25rem;
-  height: 1.25rem;
-}
+.arrow-icon { width: 1.25rem; height: 1.25rem; }
 
-/* Locked Card Styles */
-.partner-card.locked {
-  opacity: 0.6;
-  cursor: not-allowed;
-  pointer-events: auto;
-}
-
-.lock-overlay {
-  position: absolute;
-  inset: 0;
-  z-index: 10;
-  background: rgba(8, 14, 20, 0.85);
-  backdrop-filter: blur(4px);
-  border-radius: 2rem;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 0.75rem;
-}
-
-.lock-icon-wrap {
-  width: 64px;
-  height: 64px;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #64748b;
-}
-
-.lock-text {
-  color: #64748b;
-  font-size: 0.875rem;
-  font-weight: 500;
-}
-
-/* Responsive */
+/* ─── Responsive ─────────────────────────────────────────────────────────────── */
 @media (max-width: 768px) {
   .cards-container {
     grid-template-columns: 1fr;
     gap: 1.5rem;
   }
 
-  .title {
-    font-size: 1.75rem;
-  }
+  .title { font-size: 1.75rem; }
 
-  .card-content {
-    padding: 1.5rem;
-  }
+  .card-content { padding: 1.5rem; }
 
-  .icon-wrapper {
-    width: 60px;
-    height: 60px;
-  }
+  .icon-wrapper { width: 60px; height: 60px; }
 
-  .card-icon {
-    width: 36px;
-    height: 36px;
-  }
+  .card-icon { width: 36px; height: 36px; }
 
-  .card-title {
-    font-size: 1.5rem;
-  }
-}
-.pending-state,
-.suspended-state,
-.terminated-state,
-.loading-state {
-  min-height: 80vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.pending-card,
-.suspended-card,
-.terminated-card {
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: 24px;
-  padding: 48px;
-  text-align: center;
-  max-width: 500px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.pending-icon,
-.suspended-icon,
-.terminated-icon {
-  width: 80px;
-  height: 80px;
-  margin: 0 auto 24px;
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #f59e0b;
-}
-
-.suspended-icon {
-  color: #ef4444;
-}
-
-.terminated-icon {
-  color: #ef4444;
-}
-
-.pending-title,
-.suspended-title,
-.terminated-title {
-  font-size: 28px;
-  font-weight: 700;
-  margin-bottom: 16px;
-  color: #f0f4f8;
-}
-
-.pending-desc,
-.suspended-desc,
-.terminated-desc {
-  color: #94a3b8;
-  margin-bottom: 32px;
-  line-height: 1.6;
-}
-
-.pending-info {
-  background: rgba(0, 0, 0, 0.3);
-  border-radius: 12px;
-  padding: 16px;
-  margin-bottom: 32px;
-  text-align: left;
-}
-
-.info-item {
-  display: flex;
-  justify-content: space-between;
-  padding: 8px 0;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-}
-
-.info-item:last-child {
-  border-bottom: none;
-}
-
-.info-label {
-  color: #64748b;
-  font-weight: 500;
-}
-
-.info-value {
-  color: #e2e8f0;
-}
-
-.status-pending {
-  color: #f59e0b;
-  font-weight: 600;
-}
-
-.back-btn,
-.contact-btn {
-  background: linear-gradient(90deg, #3b82f6, #2563eb);
-  border: none;
-  padding: 12px 24px;
-  border-radius: 12px;
-  color: white;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.back-btn:hover,
-.contact-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+  .card-title { font-size: 1.5rem; }
 }
 </style>

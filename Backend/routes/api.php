@@ -34,6 +34,7 @@ use App\Http\Controllers\Api\SongPlayController;
 use App\Http\Controllers\Api\Client\ClientAdImpressionController;
 use App\Http\Controllers\Api\Client\PlaylistController;
 use App\Http\Controllers\Api\Admin\AdminPlaylistController;
+use App\Http\Controllers\Api\Client\SongDownloadController;
 use App\Models\Partner;
 use App\Models\Song;
 
@@ -71,20 +72,41 @@ Route::prefix('client')->group(function () {
             || $rolesFlags['is_boss']
             || $rolesFlags['is_content_manager'];
 
-        $partner = Partner::where('user_id', $user->id)
+        $allPartners = Partner::where('user_id', $user->id)
             ->whereIn('status', ['active', 'pending', 'suspended', 'terminated'])
             ->with('partnerType')
-            ->first();
+            ->get();
 
-        $partnerTypeName = $partner?->partnerType?->name ?? null;
+        $isMusicDistribution = $allPartners->contains(function ($p) {
+            return $p->status === 'active'
+                && $p->partnerType?->code === 'music_distribution';
+        });
+
+        $isAdvertising = $allPartners->contains(function ($p) {
+            return $p->status === 'active'
+                && $p->partnerType?->code === 'advertising';
+        });
+
+        // Lấy partner active đầu tiên (dùng để check suspended/terminated ở frontend)
+        // Ưu tiên: active → suspended → terminated → pending
+        $primaryPartner = $allPartners->sortBy(function ($p) {
+            return match ($p->status) {
+                'active'     => 0,
+                'suspended'  => 1,
+                'terminated' => 2,
+                'pending'    => 3,
+                default      => 4,
+            };
+        })->first();
 
         return response()->json([
             'is_admin'              => $isAdmin,
-            'is_partner'            => !is_null($partner),
-            'is_music_distribution' => $partnerTypeName === 'Music distribution partners',
-            'is_advertising'        => $partnerTypeName === 'Advertising partners',
-            'partner_type_name'     => $partnerTypeName,
-            'partner'               => $partner,
+            'is_partner'            => $allPartners->isNotEmpty(),
+            'is_music_distribution' => $isMusicDistribution,
+            'is_advertising'        => $isAdvertising,
+            'partner_type_name'     => $primaryPartner?->partnerType?->name,
+            'partner'               => $primaryPartner,  
+            'partners'              => $allPartners,      
             'user'                  => $user,
             'roles_flags'           => $rolesFlags,
         ]);
@@ -148,6 +170,11 @@ Route::prefix('client')->group(function () {
 
         // Song Plays
         Route::post('/{song}/play', [ClientSongPlayController::class, 'record']);
+
+        // Song Download — quality is enforced server-side (VIP → lossless, Free → low)
+        Route::get('/{id}/download', [SongDownloadController::class, 'download'])
+            ->where('id', '[0-9]+')
+            ->middleware('optional.auth');
     });
 
     // Lịch sử nghe

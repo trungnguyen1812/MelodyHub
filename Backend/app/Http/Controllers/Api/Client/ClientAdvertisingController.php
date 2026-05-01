@@ -58,10 +58,25 @@ class ClientAdvertisingController extends Controller
     public function store(Request $request)
     {
         $user = $request->user();
-        $partner = Partner::where('user_id', $user->id)->first();
+        
+        // 1. Kiểm tra user có phải partner không (đã được duyệt)
+        $partner = Partner::where('user_id', $user->id)
+            ->where('status', 'active') // Chỉ lấy partner đã được duyệt
+            ->first();
 
         if (!$partner) {
-            return response()->json(['message' => 'Partner profile not found'], 404);
+            return response()->json([
+                'message' => 'You are not an active partner. Please register as a partner first.',
+                'errors' => ['partner' => ['Only active partners can create advertisements.']]
+            ], 403);
+        }
+
+        // 2. Kiểm tra partner type (chỉ advertising partner mới được tạo ads)
+        if ($partner->partner_type->code !== 'advertising') {
+            return response()->json([
+                'message' => 'Your partner account does not have advertising permissions.',
+                'errors' => ['partner_type' => ['Only advertising partners can create ad campaigns.']]
+            ], 403);
         }
 
         try {
@@ -81,8 +96,8 @@ class ClientAdvertisingController extends Controller
                 'priority'           => 'nullable|integer|min:0',
                 
                 // Targeting
-                'target_age_min'     => 'nullable|integer|min:1',
-                'target_age_max'     => 'nullable|integer|max:100',
+                'target_age_min'     => 'nullable|integer|min:1|max:100',
+                'target_age_max'     => 'nullable|integer|min:1|max:100',
                 'target_gender'      => 'nullable|string|in:all,male,female',
                 'target_location'    => 'nullable|array',
                 'target_genres'      => 'nullable|array',
@@ -90,10 +105,30 @@ class ClientAdvertisingController extends Controller
                 // Files
                 'thumbnail'          => 'nullable|image|max:5120', // 5MB
                 'media_file'         => 'nullable|file|max:51200', // 50MB
-                'media_url'          => 'nullable|url'
+                'media_url'          => 'nullable|url',
+                'duration'           => 'nullable|integer|min:1'
             ]);
 
-            // Handle Thumbnail Upload
+            // 3. Validate ngân sách tối thiểu theo loại quảng cáo
+            $minBudget = $this->getMinimumBudget($validated['type']);
+            if ($validated['budget_total'] < $minBudget) {
+                return response()->json([
+                    'message' => 'Budget too low for this ad type',
+                    'errors' => ['budget_total' => ["Minimum budget for {$validated['type']} ads is \${$minBudget}"]]
+                ], 422);
+            }
+
+            // 4. Validate age range
+            if (!empty($validated['target_age_min']) && !empty($validated['target_age_max'])) {
+                if ($validated['target_age_min'] > $validated['target_age_max']) {
+                    return response()->json([
+                        'message' => 'Invalid age range',
+                        'errors' => ['target_age_max' => ['Maximum age must be greater than or equal to minimum age']]
+                    ], 422);
+                }
+            }
+
+            // 5. Handle Thumbnail Upload
             $thumbnailUrl = null;
             if ($request->hasFile('thumbnail')) {
                 $file = $request->file('thumbnail');
@@ -103,14 +138,30 @@ class ClientAdvertisingController extends Controller
                 $thumbnailUrl = $uploaded['secure_url'];
             }
 
-            // Handle Media Upload (if provided instead of URL)
-            $mediaUrl = $request->media_url;
+            // 6. Handle Media Upload hoặc Media URL
+            $mediaUrl = $validated['media_url'] ?? null;
             $fileSize = null;
-            $duration = $request->input('duration'); // Expecting duration if detectible frontend-side
+            $duration = $validated['duration'] ?? null;
 
             if ($request->hasFile('media_file')) {
+                // Phải có media file hoặc media URL
+                if (!$request->hasFile('media_file') && !$mediaUrl) {
+                    return response()->json([
+                        'message' => 'Either media file or media URL is required',
+                        'errors' => ['media' => ['Please provide either a media file or a media URL']]
+                    ], 422);
+                }
+                
                 $file = $request->file('media_file');
-                $resourceType = $validated['type'] === 'video' ? 'video' : ($validated['type'] === 'audio' ? 'video' : 'auto');
+                
+                // Validate file type dựa vào ad type
+                $resourceType = $this->getResourceType($validated['type'], $file);
+                if (!$resourceType) {
+                    return response()->json([
+                        'message' => 'Invalid file type for this advertisement type',
+                        'errors' => ['media_file' => ["File type does not match advertisement type: {$validated['type']}"]]
+                    ], 422);
+                }
                 
                 $uploaded = $this->cloudinary->uploadApi()->upload($file->getRealPath(), [
                     'folder'        => 'ads/media',
@@ -124,48 +175,78 @@ class ClientAdvertisingController extends Controller
                 }
             }
 
-            // Verify wallet balance
-            if ($user->wallet_balance < $validated['budget_total']) {
+            // 7. Kiểm tra media URL nếu không có file upload
+            if (!$mediaUrl) {
                 return response()->json([
-                    'message' => 'Insufficient wallet balance',
-                    'errors' => ['budget_total' => ['Insufficient funds in your wallet.']]
+                    'message' => 'Media URL or media file is required',
+                    'errors' => ['media' => ['Please provide a media file or media URL']]
                 ], 422);
             }
-            $user->wallet_balance -= $validated['budget_total'];
-            $user->save();
 
-            $ad = Advertisement::create([
-                'partner_id'      => $partner->id,
-                'name'            => $validated['name'],
-                'type'            => $validated['type'],
-                'advertiser_name' => $validated['advertiser_name'],
-                'advertiser_url'  => $validated['advertiser_url'],
-                'media_url'       => $mediaUrl,
-                'thumbnail_url'   => $thumbnailUrl,
-                'click_url'       => $validated['click_url'],
-                'duration'        => $duration,
-                'file_size'       => $fileSize,
-                'budget_total'    => $validated['budget_total'],
-                'budget_spent'    => 0,
-                'cost_per_play'   => $validated['cost_per_play'] ?? 0.002,
-                'cost_per_click'  => $validated['cost_per_click'] ?? 0.005,
-                'max_plays_per_user_per_day' => $validated['max_plays_per_user_per_day'] ?? 3,
-                'frequency_cap'   => $validated['frequency_cap'] ?? 5,
-                'priority'        => $validated['priority'] ?? 0,
-                'start_date'      => $validated['start_date'],
-                'end_date'        => $validated['end_date'],
-                'target_age_min'  => $validated['target_age_min']?? null,
-                'target_age_max'  => $validated['target_age_max']?? null,
-                'target_gender'   => $validated['target_gender'] ?? 'all',
-                'target_location' => $validated['target_location'],
-                'target_genres'   => $validated['target_genres'] ?? null,
-                'status'          => 'pending', // Requires admin approval or start date
-            ]);
+            // 8. Verify wallet balance (KIỂM TRA SỐ DƯ LẦN CUỐI)
+            $currentBalance = $user->fresh()->wallet_balance; // Lấy balance mới nhất
+            
+            if ($currentBalance < $validated['budget_total']) {
+                return response()->json([
+                    'message' => 'Insufficient wallet balance',
+                    'errors' => ['budget_total' => [
+                        "Insufficient funds. Your balance: \${$currentBalance}, Required: \${$validated['budget_total']}"
+                    ]],
+                    'data' => [
+                        'current_balance' => $currentBalance,
+                        'required_budget' => $validated['budget_total'],
+                        'shortfall' => $validated['budget_total'] - $currentBalance
+                    ]
+                ], 422);
+            }
+            
+            // 9. Trừ tiền và lưu (sử dụng transaction để đảm bảo atomic)
+            DB::beginTransaction();
+            try {
+                $user->wallet_balance -= $validated['budget_total'];
+                $user->save();
 
-            return response()->json([
-                'message' => 'Advertisement campaign created successfully',
-                'data'    => $ad
-            ], 201);
+                // 10. Tạo advertisement với các giá trị mặc định hợp lý
+                $ad = Advertisement::create([
+                    'partner_id'      => $partner->id,
+                    'name'            => $validated['name'],
+                    'type'            => $validated['type'],
+                    'advertiser_name' => $validated['advertiser_name'],
+                    'advertiser_url'  => $validated['advertiser_url'] ?? null,
+                    'media_url'       => $mediaUrl,
+                    'thumbnail_url'   => $thumbnailUrl,
+                    'click_url'       => $validated['click_url'],
+                    'duration'        => $duration,
+                    'file_size'       => $fileSize,
+                    'budget_total'    => $validated['budget_total'],
+                    'budget_spent'    => 0,
+                    'cost_per_play'   => $validated['cost_per_play'] ?? 0.002,
+                    'cost_per_click'  => $validated['cost_per_click'] ?? 0.005,
+                    'max_plays_per_user_per_day' => $validated['max_plays_per_user_per_day'] ?? 3,
+                    'frequency_cap'   => $validated['frequency_cap'] ?? 5,
+                    'priority'        => $validated['priority'] ?? 0,
+                    'start_date'      => $validated['start_date'],
+                    'end_date'        => $validated['end_date'],
+                    'target_age_min'  => $validated['target_age_min'] ?? null,
+                    'target_age_max'  => $validated['target_age_max'] ?? null,
+                    'target_gender'   => $validated['target_gender'] ?? 'all',
+                    'target_location' => $validated['target_location'] ?? null,
+                    'target_genres'   => $validated['target_genres'] ?? null,
+                    'status'          => 'pending', // Requires admin approval
+                ]);
+                
+                DB::commit();
+                
+                return response()->json([
+                    'message' => 'Advertisement campaign created successfully. Awaiting admin approval.',
+                    'data'    => $ad,
+                    'wallet_balance' => $user->wallet_balance
+                ], 201);
+                
+            } catch (\Exception $e) {
+                DB::rollBack();
+                throw $e;
+            }
 
         } catch (ValidationException $e) {
             return response()->json([
@@ -173,12 +254,41 @@ class ClientAdvertisingController extends Controller
                 'errors'  => $e->errors()
             ], 422);
         } catch (\Exception $e) {
-            Log::error('Ad creation failed: ' . $e->getMessage());
+            Log::error('Ad creation failed: ' . $e->getMessage(), [
+                'user_id' => $user->id,
+                'trace' => $e->getTraceAsString()
+            ]);
+            
             return response()->json([
                 'message' => 'Internal server error during ad creation',
-                'error'   => $e->getMessage()
+                'error'   => config('app.debug') ? $e->getMessage() : 'An error occurred'
             ], 500);
         }
+    }
+
+    // Helper methods
+    private function getMinimumBudget(string $adType): float
+    {
+        return match($adType) {
+            'audio' => 50,  // Minimum $50 for audio ads
+            'banner' => 100, // Minimum $100 for banner ads
+            'video' => 200,  // Minimum $200 for video ads
+            'sponsored_content' => 150, // Minimum $150 for sponsored content
+            default => 50
+        };
+    }
+
+    private function getResourceType(string $adType, $file): ?string
+    {
+        $mimeType = $file->getMimeType();
+        
+        return match($adType) {
+            'audio' => in_array($mimeType, ['audio/mpeg', 'audio/mp3', 'audio/wav', 'audio/ogg']) ? 'video' : null,
+            'video' => str_starts_with($mimeType, 'video/') ? 'video' : null,
+            'banner' => str_starts_with($mimeType, 'image/') ? 'image' : null,
+            'sponsored_content' => 'auto', // Có thể là image hoặc video
+            default => null
+        };
     }
 
 

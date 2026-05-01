@@ -1,4 +1,4 @@
-<template>
+﻿<template>
     <div class="upgrade-page">
         <!-- Header -->
         <section class="upgrade-header">
@@ -209,57 +209,93 @@
             <div class="container">
                 <div class="section-header">
                     <h2 class="section-title">Detailed Plan Comparison</h2>
-                    <p class="section-subtitle">See all the features you’ll get</p>
+                    <p class="section-subtitle">See all the features you'll get</p>
                 </div>
-                
-                <div class="comparison-table">
+
+                <!-- Loading state -->
+                <div v-if="userStore.loading" class="comparison-loading">
+                    <div class="spinner"></div>
+                    <p>Loading plans...</p>
+                </div>
+
+                <div v-else-if="sortedPlans.length > 0" class="comparison-table">
                     <table>
                         <thead>
                             <tr>
                                 <th>Feature</th>
-                                <th>7-Day Trial</th>
-                                <th>Monthly Premium</th>
-                                <th>Annual Premium</th>
+                                <th v-for="plan in sortedPlans" :key="plan.id">
+                                    {{ plan.display_name }}
+                                </th>
                             </tr>
                         </thead>
                         <tbody>
                             <tr>
+                                <td>Price</td>
+                                <td v-for="plan in sortedPlans" :key="plan.id">
+                                    <span v-if="plan.price === 0">Free</span>
+                                    <span v-else>{{ formatPrice(plan.price) }} {{ plan.currency }}{{ getPricePeriod(plan.duration_days) }}</span>
+                                </td>
+                            </tr>
+                            <tr>
                                 <td>Audio quality</td>
-                                <td>320kbps</td>
-                                <td>Lossless (FLAC)</td>
-                                <td>Lossless + Master</td>
+                                <td v-for="plan in sortedPlans" :key="plan.id">
+                                    {{ getAudioQualityText(plan.audio_quality) }}
+                                </td>
                             </tr>
                             <tr>
                                 <td>Offline downloads</td>
-                                <td><i class="fas fa-times"></i></td>
-                                <td>Unlimited</td>
-                                <td>Unlimited</td>
+                                <td v-for="plan in sortedPlans" :key="plan.id">
+                                    <i v-if="!plan.can_download" class="fas fa-times"></i>
+                                    <span v-else-if="plan.max_offline_downloads >= 9999">Unlimited</span>
+                                    <span v-else>{{ plan.max_offline_downloads }}</span>
+                                </td>
                             </tr>
-                           
                             <tr>
                                 <td>Ads</td>
-                                 <td><i class="fas fa-times"></i></td>
-                                <td>None</td>
-                                <td>None</td>
+                                <td v-for="plan in sortedPlans" :key="plan.id">
+                                    <i v-if="!plan.ads_free" class="fas fa-times"></i>
+                                    <span v-else>None</span>
+                                </td>
                             </tr>
                             <tr>
-                                <td>Lyrics playback</td>
-                                <td><i class="fas fa-times"></i></td>
-                                <td><i class="fas fa-check"></i></td>
-                                <td><i class="fas fa-check"></i></td>
+                                <td>Playlists</td>
+                                <td v-for="plan in sortedPlans" :key="plan.id">
+                                    <i v-if="plan.max_playlists === 0" class="fas fa-times"></i>
+                                    <span v-else-if="plan.max_playlists >= 9999">Unlimited</span>
+                                    <span v-else>Up to {{ plan.max_playlists }}</span>
+                                </td>
                             </tr>
-                            
+                            <tr>
+                                <td>Devices</td>
+                                <td v-for="plan in sortedPlans" :key="plan.id">
+                                    <span v-if="plan.max_devices >= 9999">Unlimited</span>
+                                    <span v-else>{{ plan.max_devices }}</span>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Unlimited skips</td>
+                                <td v-for="plan in sortedPlans" :key="plan.id">
+                                    <i :class="plan.can_skip_unlimited ? 'fas fa-check' : 'fas fa-times'"></i>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Collaborative playlists</td>
+                                <td v-for="plan in sortedPlans" :key="plan.id">
+                                    <i :class="plan.can_create_collaborative_playlist ? 'fas fa-check' : 'fas fa-times'"></i>
+                                </td>
+                            </tr>
                             <tr>
                                 <td>Customer support</td>
-                                <td>Standard</td>
-                                <td>Priority</td>
-                                <td>VIP 24/7</td>
+                                <td v-for="plan in sortedPlans" :key="plan.id">
+                                    <span v-if="plan.priority_support">Priority</span>
+                                    <span v-else>Standard</span>
+                                </td>
                             </tr>
                             <tr>
-                                <td>Special rewards</td>
-                                <td><i class="fas fa-times"></i></td>
-                                <td><i class="fas fa-times"></i></td>
-                                <td><i class="fas fa-check"></i></td>
+                                <td>Early access</td>
+                                <td v-for="plan in sortedPlans" :key="plan.id">
+                                    <i :class="plan.early_access ? 'fas fa-check' : 'fas fa-times'"></i>
+                                </td>
                             </tr>
                         </tbody>
                     </table>
@@ -331,6 +367,9 @@ import { useNotificationStore } from "@/store/notificationStore";
 
 const userStore = useUserStore()
 const notificationStore = useNotificationStore();
+
+// Sorted plans from store (by sort_order)
+const sortedPlans = computed(() => userStore.sortedPlans)
 
 // State
 const isAnnual = ref(false)
@@ -914,6 +953,17 @@ onMounted(() => {
     overflow-x: auto;
     border-radius: 15px;
     box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+}
+
+.comparison-loading {
+    text-align: center;
+    padding: 60px 20px;
+    color: rgba(255, 255, 255, 0.5);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    font-size: 1rem;
 }
 
 .comparison-table table {

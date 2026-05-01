@@ -71,6 +71,15 @@ class SongService {
     }) {
         return clientApi.post(`/songs/${songId}/play`, payload)
     }
+
+    /**
+     * Get a backend-generated download URL with quality enforced server-side.
+     * VIP → lossless FLAC, Free → 128kbps MP3
+     */
+    async getDownloadUrl(songId: number): Promise<{ url: string; quality: string; quality_label: string; filename: string; is_vip: boolean }> {
+        const res = await clientApi.get(`/songs/${songId}/download`)
+        return res.data
+    }
 }
 
 export default new SongService();

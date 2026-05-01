@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <Teleport to="body">
     <div v-if="player.currentSong" class="player-wrapper" :class="{ collapsed: isCollapsed }">
 
@@ -82,87 +82,103 @@
                 <circle cx="18" cy="18" r="3" />
               </svg>
             </button>
-           
           </div>
 
           <div class="player-volume" ref="volumePopupRef">
-              <button class="player-vol-icon" @click="toggleVolumePopup">
-                <!-- Icon mute -->
-                <svg v-if="player.isMuted || player.volume === 0" width="18" height="18" viewBox="0 0 24 24" fill="none"
-                  stroke="currentColor" stroke-width="2">
-                  <path d="M11 5L6 9H2V15H6L11 19V5Z" />
-                  <line x1="23" y1="9" x2="17" y2="15" />
-                  <line x1="17" y1="9" x2="23" y2="15" />
-                </svg>
-                <!-- Icon có âm thanh -->
-                <svg v-else width="18" height="18" viewBox="0 0 24 24" fill="none"
-                  stroke="currentColor" stroke-width="2">
-                  <path d="M11 5L6 9H2V15H6L11 19V5Z" />
-                  <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
-                  <path v-if="player.volume > 0.5" d="M19.07 4.93a10 10 0 0 1 0 14.14" />
-                </svg>
-              </button>
-
-              <!-- Popup volume - chỉ hiện khi showVolumePopup = true -->
-              <div v-if="showVolumePopup" class="player-vol-popup">
-                <div class="player-vol-wrap">
-                  <div class="player-vol-track">
-                    <div class="player-vol-fill" :style="{ width: (displayVolume * 100) + '%' }"></div>
-                  </div>
-                  <input 
-                    type="range" 
-                    min="0" 
-                    max="1" 
-                    step="0.05" 
-                    :value="displayVolume"
-                    class="player-vol-slider" 
-                    @input="onVolumeChange"
-                  />
-                </div>
-              </div>
-          </div>
-
-          <div class="player-timer" ref="timerPopupRef">
-            <button class="player-timer-icon" @click="toggleTimerPopup" :class="{ active: timerRemaining > 0 }">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <circle cx="12" cy="12" r="10" />
-                <polyline points="12 6 12 12 16 14" />
+            <button class="player-vol-icon" @click="toggleVolumePopup">
+              <svg v-if="player.isMuted || player.volume === 0" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M11 5L6 9H2V15H6L11 19V5Z" />
+                <line x1="23" y1="9" x2="17" y2="15" />
+                <line x1="17" y1="9" x2="23" y2="15" />
               </svg>
-              <span v-if="timerRemaining > 0" class="timer-badge">{{ formatTimerDisplay }}</span>
+              <svg v-else width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M11 5L6 9H2V15H6L11 19V5Z" />
+                <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
+                <path v-if="player.volume > 0.5" d="M19.07 4.93a10 10 0 0 1 0 14.14" />
+              </svg>
             </button>
-
-            <!-- Popup timer -->
-            <div v-if="showTimerPopup" class="player-timer-popup">
-              <div class="timer-header">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <circle cx="12" cy="12" r="10" />
-                  <polyline points="12 6 12 12 16 14" />
-                </svg>
-                <span>Timer stop</span>
-              </div>
-              <div class="timer-options">
-                <button v-for="opt in timerOptions" :key="opt.minutes" 
-                  class="timer-option" 
-                  :class="{ active: timerSelected === opt.minutes }"
-                  @click="setSleepTimer(opt.minutes)">
-                  {{ opt.label }}
-                </button>
-              </div>
-              <div v-if="timerRemaining > 0" class="timer-cancel" @click="cancelSleepTimer">
-                🗑️ Turn off the timer.
+            <div v-if="showVolumePopup" class="player-vol-popup">
+              <div class="player-vol-wrap">
+                <div class="player-vol-track">
+                  <div class="player-vol-fill" :style="{ width: (displayVolume * 100) + '%' }"></div>
+                </div>
+                <input type="range" min="0" max="1" step="0.05" :value="displayVolume"
+                  class="player-vol-slider" @input="onVolumeChange" />
               </div>
             </div>
           </div>
 
-          <div class="player-playlist">
-            <button class="player-playlist-icon" @click="openPlaylistModal">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M21 12v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h6" />
-                <line x1="15" y1="6" x2="21" y2="6" />
-                <line x1="15" y1="12" x2="21" y2="12" />
-                <line x1="15" y1="18" x2="21" y2="18" />
+          <!-- ── 3-dot menu: Download · Timer · Playlist ── -->
+          <div class="player-more" ref="moreMenuRef">
+            <button class="player-more-btn" @click="toggleMoreMenu" :class="{ active: showMoreMenu }">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                <circle cx="12" cy="5"  r="1.5"/>
+                <circle cx="12" cy="12" r="1.5"/>
+                <circle cx="12" cy="19" r="1.5"/>
               </svg>
+              <!-- Timer badge khi đang đếm -->
+              <span v-if="timerRemaining > 0" class="more-timer-badge">{{ formatTimerDisplay }}</span>
             </button>
+
+            <Transition name="more-menu">
+              <div v-if="showMoreMenu" class="player-more-menu">
+
+                <!-- Add to playlist -->
+                <button class="more-item" @click="openPlaylistModal(); showMoreMenu = false">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 12v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h6"/>
+                    <line x1="15" y1="6" x2="21" y2="6"/>
+                    <line x1="15" y1="12" x2="21" y2="12"/>
+                    <line x1="15" y1="18" x2="21" y2="18"/>
+                  </svg>
+                  <span>Add to playlist</span>
+                </button>
+
+                <!-- Download -->
+                <button v-if="canDownload" class="more-item" :class="{ 'more-item--loading': isDownloading }"
+                  :disabled="isDownloading" @click="downloadSong(); showMoreMenu = false">
+                  <svg v-if="!isDownloading" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                    <polyline points="7 10 12 15 17 10"/>
+                    <line x1="12" y1="15" x2="12" y2="3"/>
+                  </svg>
+                  <svg v-else width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="spin-icon">
+                    <circle cx="12" cy="12" r="10" stroke-dasharray="32" stroke-dashoffset="10"/>
+                  </svg>
+                  <span>
+                    {{ isDownloading ? 'Downloading...' : 'Download' }}
+                    <em class="more-item__badge" :class="userStore.isVip ? 'vip' : 'free'">
+                      {{ userStore.isVip ? '320kbps' : '128kbps' }}
+                    </em>
+                  </span>
+                </button>
+
+                <!-- Sleep timer -->
+                <div class="more-item more-item--timer-wrap">
+                  <div class="more-item more-item--no-hover">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <circle cx="12" cy="12" r="10"/>
+                      <polyline points="12 6 12 12 16 14"/>
+                    </svg>
+                    <span>Sleep timer</span>
+                    <span v-if="timerRemaining > 0" class="more-item__badge active-timer">{{ formatTimerDisplay }}</span>
+                  </div>
+                  <div class="more-timer-options">
+                    <button v-for="opt in timerOptions" :key="opt.minutes"
+                      class="more-timer-opt"
+                      :class="{ active: timerSelected === opt.minutes }"
+                      @click="setSleepTimer(opt.minutes)">
+                      {{ opt.label }}
+                    </button>
+                    <button v-if="timerRemaining > 0" class="more-timer-opt more-timer-opt--cancel"
+                      @click="cancelSleepTimer">
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+
+              </div>
+            </Transition>
           </div>
 
           <button class="player-btn player-btn--close" @click="player.stop()">
@@ -457,6 +473,7 @@ import songsService from '@/modules/client/services/songs/songs.service'
 import ActionButton from '@/components/common/VcBtnAction/ActionButton.vue'
 import VcAdBanner from '@/components/common/VcAd/VcAdBanner.vue'
 import {usePlaylistStore} from '@/modules/client/stores/playlist/playlistStore';
+import { useUserStore } from '@/modules/client/stores/users/UserStore';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 interface LyricLine {
@@ -469,6 +486,7 @@ interface LyricLine {
 const router = useRouter()
 const player = usePlayerStore()
 const songStore = useSongStore()
+const userStore = useUserStore()
 
 // ─── State ───────────────────────────────────────────────────────────────────
 const isCollapsed = ref(false)
@@ -489,12 +507,20 @@ const timerRemaining = ref(0)
 const timerSelected = ref(0)
 let timerInterval: ReturnType<typeof setInterval> | null = null
 
+// ─── More Menu (3-dot) State ─────────────────────────────────────────────────
+const showMoreMenu = ref(false)
+const moreMenuRef  = ref<HTMLElement | null>(null)
+const toggleMoreMenu = () => { showMoreMenu.value = !showMoreMenu.value }
+
 const timerOptions = [
   { minutes: 15, label: '15 minutes' },
   { minutes: 30, label: '30 minutes' },
   { minutes: 45, label: '45 minutes' },
   { minutes: 60, label: '60 minutes' },
 ]
+
+// ─── Download State ───────────────────────────────────────────────────────────
+const isDownloading = ref(false)
 
 // ─── Computed ─────────────────────────────────────────────────────────────────
 const hasLyrics = computed(() => currentLyrics.value.length > 0)
@@ -568,6 +594,61 @@ const formatNumber = (n: number) =>
   n >= 1_000_000 ? (n / 1_000_000).toFixed(1) + 'M'
   : n >= 1_000 ? (n / 1_000).toFixed(1) + 'K'
   : String(n)
+
+// ─── Download ─────────────────────────────────────────────────────────────────
+const canDownload = computed(() => {
+  const song = player.currentSong
+  if (!song || !song.allow_download) return false
+  // Just need audio_public_id to exist (backend will build the URL)
+  // Fallback: also allow if any url exists
+  return true
+})
+
+const downloadQualityLabel = computed(() => {
+  return userStore.isVip ? 'Lossless (FLAC)' : 'Low quality (128kbps)'
+})
+
+const downloadSong = async () => {
+  const song = player.currentSong
+  if (!song || isDownloading.value) return
+
+  isDownloading.value = true
+  try {
+    // Backend streams the transcoded file — quality enforced server-side
+    const token = localStorage.getItem('client_token') ?? ''
+
+    const response = await fetch(`/api/client/songs/${song.id}/download`, {
+      method: 'GET',
+      headers: {
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+    })
+
+    if (!response.ok) {
+      throw new Error(`Server error: ${response.status}`)
+    }
+
+    // Get filename from Content-Disposition header
+    const disposition = response.headers.get('Content-Disposition') ?? ''
+    const nameMatch   = disposition.match(/filename="?([^";\n]+)"?/)
+    const filename    = nameMatch?.[1]?.trim()
+      ?? `${song.title} - ${song.artist?.name ?? 'Unknown'}.mp3`
+
+    const blob    = await response.blob()
+    const blobUrl = URL.createObjectURL(blob)
+    const a       = document.createElement('a')
+    a.href        = blobUrl
+    a.download    = filename
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(blobUrl)
+  } catch (err) {
+    console.error('[Download] Failed:', err)
+  } finally {
+    isDownloading.value = false
+  }
+}
 
 // ─── Seek / Volume ───────────────────────────────────────────────────────────
 const onSeek = (e: Event) => player.seek(parseFloat((e.target as HTMLInputElement).value))
@@ -816,6 +897,9 @@ const handleClickOutside = (event: MouseEvent) => {
   }
   if (timerPopupRef.value && !timerPopupRef.value.contains(event.target as Node)) {
     showTimerPopup.value = false
+  }
+  if (moreMenuRef.value && !moreMenuRef.value.contains(event.target as Node)) {
+    showMoreMenu.value = false
   }
 }
 
@@ -1268,6 +1352,50 @@ onUnmounted(() => {
   transform: scale(1.05);
 }
 
+/* ── Download button ── */
+.player-btn--download {
+  position: relative;
+  width: 36px;
+  height: 36px;
+  background: rgba(255, 255, 255, 0.05);
+  color: #d1d5db;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 50%;
+}
+
+.player-btn--download:hover:not(:disabled) {
+  background: rgba(52, 211, 153, 0.15);
+  color: #34d399;
+  border-color: rgba(52, 211, 153, 0.4);
+  transform: scale(1.05);
+}
+
+.player-btn--download.downloading {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.spin-icon {
+  animation: spin-anim 1s linear infinite;
+}
+
+@keyframes spin-anim {
+  to { transform: rotate(360deg); }
+}
+
+/* VIP gold dot badge on download button */
+.download-vip-dot {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #facc15, #f59e0b);
+  border: 1px solid rgba(0,0,0,0.4);
+  pointer-events: none;
+}
+
 .player-btn--close {
   width: 34px;
   height: 34px;
@@ -1403,7 +1531,7 @@ onUnmounted(() => {
     inset 0 1px 1px rgba(255, 255, 255, 0.1),
     0 20px 40px rgba(0, 0, 0, 0.6);
   overflow: hidden;
-  z-index: 10000;
+  z-index: 9998;
   pointer-events: all;
   transition: background 0.5s ease;
 }
@@ -1943,6 +2071,7 @@ onUnmounted(() => {
 
   .player-btn--skip,
   .player-btn--lyrics,
+  .player-btn--download,
   .player-btn--close {
     width: 28px;
     height: 28px;
@@ -2162,6 +2291,189 @@ onUnmounted(() => {
   background: rgba(255, 255, 255, 0.1);
   color: #fff;
 }
+
+/* ====================== MORE MENU (3-dot) ====================== */
+.player-more {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  margin-left: 4px;
+}
+
+.player-more-btn {
+  position: relative;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(255, 255, 255, 0.55);
+  transition: background 0.2s, color 0.2s;
+}
+
+.player-more-btn:hover,
+.player-more-btn.active {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+
+/* badge hiển thị thời gian timer còn lại trên nút 3 chấm */
+.more-timer-badge {
+  position: absolute;
+  top: 0;
+  right: 0;
+  background: #3b82f6;
+  color: #fff;
+  font-size: 9px;
+  font-weight: 700;
+  padding: 1px 4px;
+  border-radius: 8px;
+  line-height: 1.4;
+  pointer-events: none;
+}
+
+/* Dropdown panel */
+.player-more-menu {
+  position: absolute;
+  bottom: calc(100% + 10px);
+  right: 0;
+  min-width: 210px;
+  background: #1a1f2e;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 14px;
+  padding: 6px;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(255,255,255,0.04);
+  z-index: 10001;
+  overflow: hidden;
+}
+
+/* Row item */
+.more-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 9px 12px;
+  background: transparent;
+  border: none;
+  border-radius: 9px;
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.15s, color 0.15s;
+}
+
+.more-item:hover:not(.more-item--no-hover) {
+  background: rgba(255, 255, 255, 0.07);
+  color: #fff;
+}
+
+.more-item--loading {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.more-item--no-hover {
+  cursor: default;
+  padding-bottom: 4px;
+  color: rgba(255, 255, 255, 0.45);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.more-item--timer-wrap {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0;
+  padding: 0;
+  border-top: 1px solid rgba(255,255,255,0.06);
+  margin-top: 4px;
+}
+
+/* quality badge inside download row */
+.more-item__badge {
+  font-style: normal;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 6px;
+  margin-left: 6px;
+  vertical-align: middle;
+}
+
+.more-item__badge.vip {
+  background: linear-gradient(135deg, #facc15, #f59e0b);
+  color: #000;
+}
+
+.more-item__badge.free {
+  background: rgba(255,255,255,0.1);
+  color: rgba(255,255,255,0.6);
+}
+
+.more-item__badge.active-timer {
+  background: rgba(59, 130, 246, 0.25);
+  color: #60a5fa;
+}
+
+/* Timer options inside more menu */
+.more-timer-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  padding: 6px 12px 10px;
+}
+
+.more-timer-opt {
+  flex: 1 1 calc(50% - 5px);
+  padding: 6px 4px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 8px;
+  color: rgba(255,255,255,0.7);
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: center;
+  transition: background 0.15s, color 0.15s;
+}
+
+.more-timer-opt:hover {
+  background: rgba(59, 130, 246, 0.2);
+  color: #60a5fa;
+  border-color: rgba(59, 130, 246, 0.4);
+}
+
+.more-timer-opt.active {
+  background: rgba(59, 130, 246, 0.3);
+  color: #93c5fd;
+  border-color: rgba(59, 130, 246, 0.6);
+}
+
+.more-timer-opt--cancel {
+  flex: 1 1 100%;
+  background: rgba(239, 68, 68, 0.1);
+  border-color: rgba(239, 68, 68, 0.2);
+  color: #f87171;
+}
+
+.more-timer-opt--cancel:hover {
+  background: rgba(239, 68, 68, 0.2);
+  color: #fca5a5;
+  border-color: rgba(239, 68, 68, 0.4);
+}
+
+/* Transition */
+.more-menu-enter-active { transition: opacity 0.15s ease, transform 0.15s ease; }
+.more-menu-leave-active { transition: opacity 0.1s ease, transform 0.1s ease; }
+.more-menu-enter-from  { opacity: 0; transform: translateY(6px) scale(0.97); }
+.more-menu-leave-to    { opacity: 0; transform: translateY(4px) scale(0.97); }
 
 /* ====================== PLAYLIST MODAL ====================== */
 .playlist-modal-overlay {
