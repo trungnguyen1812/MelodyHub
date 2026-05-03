@@ -600,6 +600,7 @@ import { usePartnerStore } from '@/modules/client/stores/partners/partnersStore'
 import { useGenrestore } from '@/modules/client/stores/genres/genresStore'
 import advertisingService from '@/modules/client/services/partners/advertising.service'
 import {COUNTRIES, MUSIC_MARKET_COUNTRIES, COUNTRIES_BY_REGION} from '@/interfaces/countries';
+import clientApi from '@/plugins/axios'
 
 const router = useRouter()
 const userStore = useUserStore()
@@ -616,12 +617,12 @@ const steps = [
   { label: 'Review' }
 ]
 
-// ── Priority tiers ──────────────────────────────────────────
-const priorityTiers = [
+// ── Priority tiers — loaded dynamically from API ────────────────────────────
+const priorityTiers = ref([
   { value: 'standard', label: 'Standard',  color: '#888fa0', minCpm: 0.0020, minCpc: 0.0050, maxPriority: 33,  desc: 'General reach, competitive queue' },
   { value: 'enhanced', label: 'Enhanced',  color: '#00aaff', minCpm: 0.0050, minCpc: 0.0120, maxPriority: 66,  desc: 'Higher visibility, better placement' },
   { value: 'premium',  label: 'Premium',   color: '#f59e0b', minCpm: 0.0100, minCpc: 0.0250, maxPriority: 100, desc: 'Top priority, maximum exposure' }
-]
+])
 
 const genderOptions = [
   { value: 'all', label: 'All' },
@@ -702,6 +703,23 @@ onMounted(async () => {
       form.advertiser_name = p.company_name
     }
   }
+  // Fetch priority tiers from API
+  try {
+    const { data } = await clientApi.get('/ad-priority-tiers')
+    if (data?.data?.length) {
+      priorityTiers.value = data.data.map((t) => ({
+        value:       t.value,
+        label:       t.label,
+        color:       t.color,
+        minCpm:      Number(t.min_cpm),
+        minCpc:      Number(t.min_cpc),
+        maxPriority: t.max_priority,
+        desc:        t.description ?? '',
+      }))
+    }
+  } catch (e) {
+    console.warn('[AdTiers] Failed to load from API, using defaults', e)
+  }
 })
 
 // ── Computed ────────────────────────────────────────────────
@@ -709,7 +727,7 @@ const today = computed(() => new Date().toISOString().split('T')[0])
 
 const partnerName = computed(() => partnerStore.partnerInfo?.partner?.company_name || 'Loading...')
 
-const currentTier = computed(() => priorityTiers.find(t => t.value === form.priorityTier) || priorityTiers[0])
+const currentTier = computed(() => priorityTiers.value.find(t => t.value === form.priorityTier) || priorityTiers.value[0])
 
 const cpmWarning = computed(() => {
   if (!form.cost_per_play) return false

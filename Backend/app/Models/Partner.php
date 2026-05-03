@@ -200,4 +200,9 @@ class Partner extends Model
 		\Illuminate\Support\Facades\Cache::forget("partner_{$this->id}_artists");
 		\Illuminate\Support\Facades\Cache::forget("partners_all");
 	}
+
+	public function partner_type()
+	{
+		return $this->belongsTo(PartnerType::class, 'partner_type_id');
+	}
 }

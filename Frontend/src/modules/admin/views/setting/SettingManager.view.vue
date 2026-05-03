@@ -6,6 +6,8 @@
         <h1 class="settings-title">Settings</h1>
         <p class="settings-subtitle">Manage system configurations, roles and subscription plans</p>
       </div>
+
+
     </div>
 
     <!-- Tab Navigation -->
@@ -269,6 +271,84 @@
           <div v-if="!plans.length" class="empty-card">No subscription plans found</div>
         </div>
       </div>
+
+      <!-- ══════════════════════════════════════
+           TAB: AD PRIORITY TIERS
+      ══════════════════════════════════════ -->
+      <div v-if="activeTab === 'ad-priority-tiers'" class="tab-pane">
+        <div class="pane-header">
+          <div>
+            <h2>Ad Priority Tiers</h2>
+            <p>Configure advertising priority tiers, CPM/CPC floors and priority ranges</p>
+          </div>
+          <button class="btn-primary" @click="openTierModal()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+            </svg>
+            Add Tier
+          </button>
+        </div>
+
+        <div v-if="adTierLoading" class="loading-row">
+          <div class="spinner"></div> Loading...
+        </div>
+
+        <div v-else class="table-wrapper">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Tier</th>
+                <th>Key</th>
+                <th>Min CPM</th>
+                <th>Min CPC</th>
+                <th>Max Priority</th>
+                <th>Description</th>
+                <th>Order</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="tier in adTiers" :key="tier.id">
+                <td>
+                  <div class="tier-label-cell">
+                    <span class="tier-color-dot" :style="{ background: tier.color }"></span>
+                    <span class="cell-name" :style="{ color: tier.color }">{{ tier.label }}</span>
+                  </div>
+                </td>
+                <td><code class="code-tag">{{ tier.value }}</code></td>
+                <td><span class="highlight">${{ Number(tier.min_cpm).toFixed(4) }}</span></td>
+                <td><span class="highlight">${{ Number(tier.min_cpc).toFixed(4) }}</span></td>
+                <td>{{ tier.max_priority }}</td>
+                <td class="cell-sub">{{ tier.description || '—' }}</td>
+                <td>{{ tier.sort_order }}</td>
+                <td>
+                  <button class="toggle-pill" :class="tier.is_active ? 'on' : 'off'" @click="toggleTier(tier)">
+                    {{ tier.is_active ? 'Active' : 'Inactive' }}
+                  </button>
+                </td>
+                <td class="actions">
+                  <button class="action-btn edit" title="Edit" @click="openTierModal(tier)">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                      <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                    </svg>
+                  </button>
+                  <button class="action-btn delete" title="Delete" @click="deleteTier(tier)">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/>
+                      <path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/>
+                    </svg>
+                  </button>
+                </td>
+              </tr>
+              <tr v-if="!adTiers.length">
+                <td colspan="9" class="empty-row">No tiers found</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
 
     <!-- ══════════════════════════════════════
@@ -515,6 +595,93 @@
         </div>
       </Transition>
     </Teleport>
+
+    <!-- Ad Priority Tier Modal -->
+    <Teleport to="body">
+      <Transition name="s-modal">
+        <div v-if="showTierModal" class="s-modal-overlay" @click.self="showTierModal = false">
+          <div class="s-modal">
+            <div class="s-modal-header">
+              <h3>{{ editingTier ? 'Edit Tier' : 'New Tier' }}</h3>
+              <button class="s-modal-close" @click="showTierModal = false">×</button>
+            </div>
+            <div class="s-modal-body">
+              <div class="s-form-grid">
+                <div class="s-form-group">
+                  <label class="s-label">Key (value) *</label>
+                  <input v-model="tierForm.value" class="s-input" placeholder="e.g. standard" :disabled="!!editingTier" />
+                  <span class="s-hint">Unique identifier, lowercase, no spaces</span>
+                </div>
+                <div class="s-form-group">
+                  <label class="s-label">Display Label *</label>
+                  <input v-model="tierForm.label" class="s-input" placeholder="e.g. Standard" />
+                </div>
+                <div class="s-form-group">
+                  <label class="s-label">Color</label>
+                  <div style="display:flex;gap:8px;align-items:center">
+                    <input type="color" v-model="tierForm.color" style="width:40px;height:36px;padding:2px;border-radius:6px;border:1px solid rgba(255,255,255,0.1);background:transparent;cursor:pointer" />
+                    <input v-model="tierForm.color" class="s-input" placeholder="#888fa0" style="flex:1" />
+                  </div>
+                </div>
+                <div class="s-form-group">
+                  <label class="s-label">Sort Order</label>
+                  <input v-model.number="tierForm.sort_order" type="number" class="s-input" min="0" />
+                </div>
+                <div class="s-form-group">
+                  <label class="s-label">Min CPM (per play) *</label>
+                  <input v-model.number="tierForm.min_cpm" type="number" class="s-input" min="0.000001" step="0.0001" placeholder="0.0020" />
+                  <span class="s-hint">Minimum cost per play in USD</span>
+                </div>
+                <div class="s-form-group">
+                  <label class="s-label">Min CPC (per click) *</label>
+                  <input v-model.number="tierForm.min_cpc" type="number" class="s-input" min="0.000001" step="0.0001" placeholder="0.0050" />
+                  <span class="s-hint">Minimum cost per click in USD</span>
+                </div>
+                <div class="s-form-group">
+                  <label class="s-label">Max Priority *</label>
+                  <input v-model.number="tierForm.max_priority" type="number" class="s-input" min="1" max="1000" placeholder="33" />
+                  <span class="s-hint">Upper bound of priority slider for this tier</span>
+                </div>
+                <div class="s-form-group">
+                  <label class="s-label">Active</label>
+                  <label class="s-checkbox-label" style="margin-top:8px">
+                    <input type="checkbox" v-model="tierForm.is_active" /> Visible to partners
+                  </label>
+                </div>
+                <div class="s-form-group s-form-group--full">
+                  <label class="s-label">Description</label>
+                  <input v-model="tierForm.description" class="s-input" placeholder="Short description shown in partner wizard..." />
+                </div>
+              </div>
+              <!-- Live preview -->
+              <div class="tier-preview" :style="{ borderColor: tierForm.color + '44', background: tierForm.color + '11' }">
+                <div class="tier-preview__badge" :style="{ background: tierForm.color + '22', color: tierForm.color, border: `1px solid ${tierForm.color}44` }">
+                  {{ tierForm.label || 'Label' }}
+                </div>
+                <div class="tier-preview__row">
+                  <span>Min CPM</span><strong>${{ Number(tierForm.min_cpm || 0).toFixed(4) }}</strong>
+                </div>
+                <div class="tier-preview__row">
+                  <span>Min CPC</span><strong>${{ Number(tierForm.min_cpc || 0).toFixed(4) }}</strong>
+                </div>
+                <div class="tier-preview__row">
+                  <span>Priority range</span><strong>0 – {{ tierForm.max_priority }}</strong>
+                </div>
+                <div class="tier-preview__desc">{{ tierForm.description || 'No description' }}</div>
+              </div>
+              <div v-if="modalError" class="s-modal-error">{{ modalError }}</div>
+            </div>
+            <div class="s-modal-footer">
+              <button class="btn-ghost" @click="showTierModal = false">Cancel</button>
+              <button class="btn-primary" @click="saveTier" :disabled="modalLoading">
+                <span v-if="modalLoading" class="spinner-sm"></span>
+                {{ editingTier ? 'Save Changes' : 'Create' }}
+              </button>
+            </div>
+          </div>
+        </div>
+      </Transition>
+    </Teleport>
   </div>
 </template>
 
@@ -543,6 +710,11 @@ const tabs = [
     id: 'subscription-plans',
     label: 'Subscription Plans',
     icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>',
+  },
+  {
+    id: 'ad-priority-tiers',
+    label: 'Ad Priority Tiers',
+    icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>',
   },
 ]
 
@@ -873,11 +1045,110 @@ const deletePlan = async (plan: any) => {
   }
 }
 
+// ══════════════════════════════════════════════════════════════
+// AD PRIORITY TIERS
+// ══════════════════════════════════════════════════════════════
+const adTiers         = ref<any[]>([])
+const adTierLoading   = ref(false)
+const showTierModal   = ref(false)
+const editingTier     = ref<any>(null)
+
+const tierFormDefault = () => ({
+  value:        '',
+  label:        '',
+  color:        '#888fa0',
+  min_cpm:      0.002,
+  min_cpc:      0.005,
+  max_priority: 33,
+  description:  '',
+  sort_order:   0,
+  is_active:    true,
+})
+const tierForm = reactive(tierFormDefault())
+
+const loadAdTiers = async () => {
+  adTierLoading.value = true
+  try {
+    const { data } = await settingsService.getAdPriorityTiers()
+    adTiers.value = data.data ?? []
+  } catch { notify.notify('Failed to load ad priority tiers', 'error') }
+  finally { adTierLoading.value = false }
+}
+
+const openTierModal = (tier?: any) => {
+  modalError.value = ''
+  editingTier.value = tier ?? null
+  if (tier) {
+    Object.assign(tierForm, {
+      value:        tier.value,
+      label:        tier.label,
+      color:        tier.color,
+      min_cpm:      tier.min_cpm,
+      min_cpc:      tier.min_cpc,
+      max_priority: tier.max_priority,
+      description:  tier.description ?? '',
+      sort_order:   tier.sort_order,
+      is_active:    tier.is_active,
+    })
+  } else {
+    Object.assign(tierForm, tierFormDefault())
+  }
+  showTierModal.value = true
+}
+
+const saveTier = async () => {
+  modalError.value = ''
+  if (!tierForm.value || !tierForm.label) { modalError.value = 'Value and Label are required'; return }
+  modalLoading.value = true
+  try {
+    if (editingTier.value) {
+      await settingsService.updateAdPriorityTier(editingTier.value.id, { ...tierForm })
+      notify.notify('Tier updated', 'success')
+    } else {
+      await settingsService.createAdPriorityTier({ ...tierForm })
+      notify.notify('Tier created', 'success')
+    }
+    showTierModal.value = false
+    await loadAdTiers()
+  } catch (e: any) {
+    modalError.value = e?.response?.data?.message ?? 'Failed to save'
+  } finally { modalLoading.value = false }
+}
+
+const toggleTier = async (tier: any) => {
+  try {
+    const { data } = await settingsService.toggleAdPriorityTier(tier.id)
+    const idx = adTiers.value.findIndex(t => t.id === tier.id)
+    if (idx !== -1) adTiers.value[idx] = { ...adTiers.value[idx], ...data.data }
+  } catch { notify.notify('Failed to toggle status', 'error') }
+}
+
+const deleteTier = async (tier: any) => {
+  const result = await Swal.fire({
+    title: `Delete tier "${tier.label}"?`,
+    text: 'This action cannot be undone.',
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonText: 'Delete',
+    confirmButtonColor: '#ef4444',
+    background: '#181c22', color: '#f0f4f8',
+  })
+  if (!result.isConfirmed) return
+  try {
+    await settingsService.deleteAdPriorityTier(tier.id)
+    notify.notify('Tier deleted', 'success')
+    await loadAdTiers()
+  } catch (e: any) {
+    notify.notify(e?.response?.data?.message ?? 'Failed to delete', 'error')
+  }
+}
+
 // ── Load on tab change ──────────────────────────────────────
 watch(activeTab, (tab) => {
   if (tab === 'partner-types'      && !partnerTypes.value.length) loadPartnerTypes()
   if (tab === 'roles'              && !roles.value.length)        loadRoles()
   if (tab === 'subscription-plans' && !plans.value.length)        loadPlans()
+  if (tab === 'ad-priority-tiers'  && !adTiers.value.length)      loadAdTiers()
 }, { immediate: true })
 </script>
 
@@ -1050,6 +1321,44 @@ watch(activeTab, (tab) => {
 .code-tag   { font-family: 'JetBrains Mono', monospace; font-size: 11px; background: rgba(255,255,255,0.06); padding: 2px 7px; border-radius: 4px; color: #94a3b8; }
 .highlight  { color: #60a5fa; font-weight: 600; }
 .capitalize { text-transform: capitalize; }
+.empty-row  { text-align: center; color: rgba(255,255,255,0.25); padding: 32px; font-size: 13px; }
+
+/* ── Ad Priority Tier cells ────────────────────────────────────────────────── */
+.tier-label-cell { display: flex; align-items: center; gap: 8px; }
+.tier-color-dot  { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+
+/* ── Tier preview in modal ─────────────────────────────────────────────────── */
+.tier-preview {
+  margin-top: 16px;
+  border: 1px solid;
+  border-radius: 12px;
+  padding: 14px 16px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+.tier-preview__badge {
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 700;
+}
+.tier-preview__row {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 12px;
+  color: rgba(255,255,255,0.5);
+}
+.tier-preview__row strong { color: rgba(255,255,255,0.9); font-size: 13px; }
+.tier-preview__desc {
+  width: 100%;
+  font-size: 12px;
+  color: rgba(255,255,255,0.4);
+  font-style: italic;
+}
+.s-hint { font-size: 11px; color: rgba(255,255,255,0.35); margin-top: 3px; display: block; }
 
 /* ── Toggle pill ───────────────────────────────────────────────────────────── */
 .toggle-pill        { padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; border: none; cursor: pointer; transition: all 0.2s; }

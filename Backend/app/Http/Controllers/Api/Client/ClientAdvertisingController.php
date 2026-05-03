@@ -56,7 +56,7 @@ class ClientAdvertisingController extends Controller
      * Store a new advertisement.
      */
     public function store(Request $request)
-    {
+    {log::info($request);
         $user = $request->user();
         
         // 1. Kiểm tra user có phải partner không (đã được duyệt)
@@ -106,7 +106,7 @@ class ClientAdvertisingController extends Controller
                 'thumbnail'          => 'nullable|image|max:5120', // 5MB
                 'media_file'         => 'nullable|file|max:51200', // 50MB
                 'media_url'          => 'nullable|url',
-                'duration'           => 'nullable|integer|min:1'
+                'duration'           => 'nullable|integer|min:0'
             ]);
 
             // 3. Validate ngân sách tối thiểu theo loại quảng cáo
@@ -226,7 +226,7 @@ class ClientAdvertisingController extends Controller
                     'frequency_cap'   => $validated['frequency_cap'] ?? 5,
                     'priority'        => $validated['priority'] ?? 0,
                     'start_date'      => $validated['start_date'],
-                    'end_date'        => $validated['end_date'],
+                    'end_date'        => $validated['end_date']?? null,
                     'target_age_min'  => $validated['target_age_min'] ?? null,
                     'target_age_max'  => $validated['target_age_max'] ?? null,
                     'target_gender'   => $validated['target_gender'] ?? 'all',
@@ -346,7 +346,7 @@ class ClientAdvertisingController extends Controller
      * Update an advertisement.
      */
     public function update(Request $request, $id)
-    {
+    {log::info($request);
         $user = $request->user();
         $partner = Partner::where('user_id', $user->id)->first();
 

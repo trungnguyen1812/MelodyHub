@@ -559,6 +559,7 @@ import { usePartnerStore } from '@/modules/client/stores/partners/partnersStore'
 import { useGenrestore } from '@/modules/client/stores/genres/genresStore'
 import advertisingService from '@/modules/client/services/partners/advertising.service'
 import { COUNTRIES } from '@/interfaces/countries'
+import clientApi from '@/plugins/axios'
 
 const router = useRouter()
 const route = useRoute()
@@ -576,11 +577,11 @@ const steps = [
   { label: 'Review' }
 ]
 
-const priorityTiers = [
+const priorityTiers = ref([
   { value: 'standard', label: 'Standard', color: '#888fa0', minCpm: 0.0020, minCpc: 0.0050, maxPriority: 33, desc: 'General reach, competitive queue' },
   { value: 'enhanced', label: 'Enhanced', color: '#00aaff', minCpm: 0.0050, minCpc: 0.0120, maxPriority: 66, desc: 'Higher visibility, better placement' },
   { value: 'premium', label: 'Premium', color: '#f59e0b', minCpm: 0.0100, minCpc: 0.0250, maxPriority: 100, desc: 'Top priority, maximum exposure' }
-]
+])
 const genderOptions = [
   { value: 'all', label: 'All' },
   { value: 'male', label: 'Male' },
@@ -714,12 +715,34 @@ onMounted(async () => {
       showToast('Không thể tải dữ liệu campaign', 'error')
     }
   }
+
+  // Fetch priority tiers from API
+  try {
+    const { data } = await clientApi.get('/ad-priority-tiers')
+    if (data?.data?.length) {
+      priorityTiers.value = data.data.map((t) => ({
+        value:       t.value,
+        label:       t.label,
+        color:       t.color,
+        minCpm:      Number(t.min_cpm),
+        minCpc:      Number(t.min_cpc),
+        maxPriority: t.max_priority,
+        desc:        t.description ?? '',
+      }))
+      // Re-infer tier after loading
+      const p = form.priority ?? 0
+      const matched = priorityTiers.value.find(t => p <= t.maxPriority)
+      if (matched) form.priorityTier = matched.value
+    }
+  } catch (e) {
+    console.warn('[AdTiers] Failed to load from API, using defaults', e)
+  }
 })
 
 // ── Computed (giữ nguyên) ─────────────────────────────────────
 const today = computed(() => new Date().toISOString().split('T')[0])
 const partnerName = computed(() => partnerStore.partnerInfo?.partner?.company_name || 'Loading...')
-const currentTier = computed(() => priorityTiers.find(t => t.value === form.priorityTier) || priorityTiers[0])
+const currentTier = computed(() => priorityTiers.value.find(t => t.value === form.priorityTier) || priorityTiers.value[0])
 const cpmWarning = computed(() => form.cost_per_play && form.cost_per_play < currentTier.value.minCpm)
 const cpcWarning = computed(() => form.cost_per_click && form.cost_per_click < currentTier.value.minCpc)
 const walletWarning = computed(() => form.budget_total && form.budget_total > walletBalance.value * 0.8 && form.budget_total <= walletBalance.value)
@@ -892,6 +915,7 @@ async function handleSubmit() {
     if (thumbFile.value) {
       formData.append('thumbnail', thumbFile.value)
     }
+    
     formData.append('click_url', form.click_url)
     formData.append('duration', form.duration || 0)
     if (form.target_age_min) formData.append('target_age_min', form.target_age_min)
@@ -907,7 +931,7 @@ async function handleSubmit() {
     formData.append('priority', form.priority)
     formData.append('start_date', form.start_date)
     if (form.end_date) formData.append('end_date', form.end_date)
-
+    
     // Gọi API UPDATE
     await advertisingService.updateCampaign(campaignId.value, formData)   // ← Service phải có method updateCampaign(id, formData)
     

@@ -605,6 +605,10 @@ const refreshBalance = async () => {
   isRefreshing.value = true
   try {
     await partnerStore.fetchPartnerInfo()
+    // Sync walletBalance ref từ store sau khi fetch
+    if (partnerStore.user) {
+      walletBalance.value = Number(partnerStore.user.wallet_balance ?? 0)
+    }
     await new Promise(resolve => setTimeout(resolve, 600))
   } catch (err) {
     console.error('Refresh balance failed', err)

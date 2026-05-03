@@ -35,6 +35,8 @@ use App\Http\Controllers\Api\Client\ClientAdImpressionController;
 use App\Http\Controllers\Api\Client\PlaylistController;
 use App\Http\Controllers\Api\Admin\AdminPlaylistController;
 use App\Http\Controllers\Api\Client\SongDownloadController;
+use App\Http\Controllers\Api\Client\AdPriorityTierController;
+use App\Http\Controllers\Api\Admin\SettingAdPriorityTierController;
 use App\Models\Partner;
 use App\Models\Song;
 
@@ -198,6 +200,8 @@ Route::prefix('client')->group(function () {
                 Route::get('/{advertisement}', [ClientAdvertisingController::class, 'show']);
                 Route::put('/{advertisement}', [ClientAdvertisingController::class, 'update']);
                 Route::patch('/{advertisement}', [ClientAdvertisingController::class, 'update']);
+                // Dedicated POST update route — avoids PHP multipart/form-data parsing issues with PUT/PATCH
+                Route::post('/{advertisement}/update', [ClientAdvertisingController::class, 'update']);
                 Route::delete('/{advertisement}', [ClientAdvertisingController::class, 'destroy']);
                 Route::patch('/{advertisement}/toggle-status', [ClientAdvertisingController::class, 'toggleStatus']);
             });
@@ -209,6 +213,9 @@ Route::prefix('client')->group(function () {
         Route::get('/', [ClientGenresController::class, 'index']);
         Route::get('/{slug}', [ClientGenresController::class, 'show']);
     });
+
+    // Ad Priority Tiers — public, used by partner ad wizard
+    Route::get('/ad-priority-tiers', [AdPriorityTierController::class, 'index']);
     
     // ── PUBLIC routes (không cần login) ─────────────────────────────────────────
     Route::prefix('albums')->group(function () {
@@ -447,6 +454,16 @@ Route::prefix('admin')->middleware(['admin.token'])->group(function () {
             Route::put('/{id}',                [\App\Http\Controllers\Api\Admin\SettingSubscriptionController::class, 'update']);
             Route::delete('/{id}',             [\App\Http\Controllers\Api\Admin\SettingSubscriptionController::class, 'destroy']);
             Route::patch('/{id}/toggle-active',[\App\Http\Controllers\Api\Admin\SettingSubscriptionController::class, 'toggleActive']);
+        });
+
+        // Ad Priority Tiers CRUD
+        Route::prefix('ad-priority-tiers')->group(function () {
+            Route::get('/',                    [SettingAdPriorityTierController::class, 'index']);
+            Route::post('/',                   [SettingAdPriorityTierController::class, 'store']);
+            Route::get('/{id}',                [SettingAdPriorityTierController::class, 'show']);
+            Route::put('/{id}',                [SettingAdPriorityTierController::class, 'update']);
+            Route::delete('/{id}',             [SettingAdPriorityTierController::class, 'destroy']);
+            Route::patch('/{id}/toggle-active',[SettingAdPriorityTierController::class, 'toggleActive']);
         });
     });
 
