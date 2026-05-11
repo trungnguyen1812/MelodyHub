@@ -319,10 +319,16 @@
               <div class="field" style="height:100%">
                 <label class="field-label">Lyrics</label>
                 <LyricsEditor
-                  v-model="form.lyrics"
-                  :src="form.cover_url"
-                />
-                <p class="field-hint">Dán lyrics thô → gán timestamps bằng nút ⏱ trong khi nghe nhạc.</p>
+                    v-model="form.lyrics"
+                    :src="audioObjectUrl"
+                    :audio-ref="audioPlayer"
+                    :current-time="currentTime"
+                    :duration="duration"
+                    :is-playing="isPlaying"
+                    @toggle-play="togglePlay"
+                    @seek="handleSeek"
+                  />
+                <p class="field-hint">Paste raw lyrics → assign timestamps using the ⏱ button while listening to music.</p>
               </div>
             </div>
           </div>
@@ -447,6 +453,7 @@
               :src="audioObjectUrl" 
               @ended="isPlaying = false; currentTime = 0"
               @timeupdate="onTimeUpdate"
+              @loadedmetadata="onLoadedMetadata"
             />
 
             <!-- Overlay chỉ chứa nút play ở giữa -->
@@ -546,6 +553,7 @@ import { useGenrestore } from '@/modules/client/stores/genres/genresStore'
 import { useSongStore } from '@/modules/client/stores/songs/songsStore'
 import type { ArtistInterface } from '@/interfaces/artists.interface'
 import type { Album, Flag, CreateSongPayload } from '@/modules/client/interfaces/songs/create-song.payload'
+import {useAlbumStore} from '@/modules/client/stores/albums/albumssStore';
 import { useNotificationStore } from '@/store/notificationStore'
 import { useCloudinaryUpload } from '@/composables/Usecloudinaryupload'
 import { storeToRefs } from 'pinia'
@@ -560,6 +568,7 @@ const usePartner = usePartnerStore()
 const useGenre = useGenrestore()
 const useSong = useSongStore()
 const notificationStore = useNotificationStore()
+const albumStore = useAlbumStore()
 // ── Steps ──
 const steps = ['Basic Info', 'Audio Files', 'Artwork & Lyrics', 'Settings'] as const
 const currentStep = ref<number>(0)
@@ -571,6 +580,8 @@ type Step2Errors = Record<string, never>
 type Step3Errors = Record<string, never>
 
 const stepErrors = ref<[Step0Errors, Step1Errors, Step2Errors, Step3Errors]>([{}, {}, {}, {}])
+
+const duration = ref<number>(0)
 
 function validateStep(step: number): boolean {
   stepErrors.value[step] = {} as any
@@ -627,8 +638,6 @@ const form = reactive<CreateSongPayload>({
   is_premium: false, is_explicit: false, is_featured: false, allow_download: false,
 })
 
-// ── Mock data ──
-const mockAlbums = ref<Album[]>([])
 
 // ── Flags ──
 const flags: Flag[] = [
@@ -742,11 +751,11 @@ function onEnded(): void {
 }
 
 function seekTo(e: MouseEvent): void {
-  if (!audioPlayer.value || !form.duration) return
-  const bar   = e.currentTarget as HTMLElement
-  const rect  = bar.getBoundingClientRect()
+  if (!audioPlayer.value || !duration.value) return
+  const bar = e.currentTarget as HTMLElement
+  const rect = bar.getBoundingClientRect()
   const ratio = (e.clientX - rect.left) / rect.width
-  audioPlayer.value.currentTime = ratio * form.duration
+  audioPlayer.value.currentTime = ratio * duration.value
 }
 
 // ── Waveform animation ──
@@ -794,12 +803,11 @@ function removeAudio(): void {
 }
 
 function detectDuration(file: File): void {
-  const audio     = new Audio()
+  const audio = new Audio()
   const objectUrl = URL.createObjectURL(file)
-  audio.src       = objectUrl
+  audio.src = objectUrl
   audio.onloadedmetadata = () => {
-    form.duration  = Math.round(audio.duration)
-    form.file_size = file.size
+    form.duration = Math.round(audio.duration)
     URL.revokeObjectURL(objectUrl)
   }
 }
@@ -908,12 +916,16 @@ function pollSongStatus(songId: number) {
 
 const artistList = computed(() => useArtist.artists || [])
 
+// ── Mock data ──
+const mockAlbums = computed(() => albumStore.albumsByPartner || [])
+
 const loadInfoPartner = async () => { 
   await usePartner.fetchPartnerInfo()
   const idPartner = usePartner.partner?.id  
    if (idPartner) {
     form.partner_id = idPartner
     await loadArtists(idPartner)
+    await loadAlbumByPartner(idPartner)
   }
 }
 
@@ -921,12 +933,28 @@ const loadArtists = async (id: number) => {
   await useArtist.fetchGetAritistByIdPartner(id)
 }
 
+const loadAlbumByPartner = async (id: number)=>{
+  await albumStore.fetchAlbumByPartner(id);
+}
 
+const handleSeek = (time: number) => {
+  if (audioPlayer.value) {
+    audioPlayer.value.currentTime = time
+    currentTime.value = time
+  }
+}
+
+function onLoadedMetadata() {
+  if (audioPlayer.value) {
+    duration.value = audioPlayer.value.duration
+    form.duration = Math.round(duration.value)
+  }
+}
 
 // ── Lifecycle ──
 onMounted(async () => {
   try {
-    loadInfoPartner()
+    loadInfoPartner(),
     await usePartner.fetchPartners()
     await useGenre.fetchGenres()
   } catch {

@@ -91,38 +91,27 @@ class ProcessSongAudio implements ShouldQueue
             ]);
 
             // 5. Kiểm tra lyrics hiện tại để quyết định có chạy Groq không
+            $lyricsSource = 'none';
             if ($publicId) {
                 $lyricsSource = $this->detectLyricsSource($song->lyrics);
 
                 if ($lyricsSource === 'lrc') {
-                    // LRC đã có timestamps đầy đủ → KHÔNG reset, KHÔNG chạy Groq
-                    Log::info('LRC lyrics detected — skipping GenerateLyricsJob', [
-                        'song_id' => $song->id,
-                    ]);
+                    Log::info('LRC lyrics detected — skipping', ['song_id' => $song->id]);
+
+                } elseif ($lyricsSource === 'raw') {
+                    $lyricsService = app(\App\Services\LyricsService::class);
+                    $song->update(['lyrics_status' => 'processing']);
+
+                    $success = $lyricsService->alignLyrics($song, $this->getRawLyricsText($song->lyrics));
+
+                    if (!$success) {
+                        $song->update(['lyrics_status' => 'failed']);
+                        Log::warning('Align lyrics failed', ['song_id' => $song->id]);
+                    }
 
                 } else {
-                    // Lyrics thô hoặc chưa có → reset + chạy Groq
-                    $song->update([
-                        'lyrics_status' => 'pending',
-                        'lyrics_error'  => null,
-                        // Giữ nguyên lyrics nếu là text thô (Groq sẽ align timestamps)
-                        // Chỉ xóa nếu không có gì cả
-                        'lyrics'        => $lyricsSource === 'raw' ? $song->lyrics : null,
-                    ]);
-
-                    GenerateLyricsJob::dispatch($song->id, $publicId)
-                        ->onQueue('lyrics');
-
-                    Log::info('GenerateLyricsJob dispatched', [
-                        'song_id'       => $song->id,
-                        'public_id'     => $publicId,
-                        'lyrics_source' => $lyricsSource,
-                    ]);
+                    Log::info('No lyrics to process', ['song_id' => $song->id]);
                 }
-            } else {
-                Log::warning('No public_id — skipping lyrics generation', [
-                    'song_id' => $song->id,
-                ]);
             }
 
             // 6. Xóa file tạm
@@ -187,5 +176,17 @@ class ProcessSongAudio implements ShouldQueue
             Log::error('Failed to extract public_id', ['error' => $e->getMessage()]);
             return null;
         }
+    }
+
+    private function getRawLyricsText(mixed $raw): string
+    {
+        $lines = is_array($raw) ? $raw : json_decode($raw, true);
+        
+        if (!is_array($lines)) return '';
+        
+        return collect($lines)
+            ->pluck('text')
+            ->filter()
+            ->implode("\n");
     }
 }

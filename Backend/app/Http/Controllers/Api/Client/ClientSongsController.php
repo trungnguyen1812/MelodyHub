@@ -256,11 +256,6 @@ class ClientSongsController extends Controller
 
     public function add(Request $request): JsonResponse
     {
-        if (is_array($request->input('lyrics'))) {
-            $lyricsJson   = json_encode(array_values($request->input('lyrics')), JSON_UNESCAPED_UNICODE);
-            $lyricsSource = 'lrc';
-            $request->merge(['lyrics' => null]);
-        }
         // ── 1. Validate ──
         $request->validate([
             'title'           => 'required|string|max:255',
@@ -279,7 +274,6 @@ class ClientSongsController extends Controller
             'quality'         => 'nullable|string|in:standard,high,lossless',
     
             // Lyrics: text thô HOẶC file .lrc (không bắt buộc cả hai)
-            'lyrics'          => 'nullable|string',
             'lyrics_file'     => [
                                     'nullable',
                                     'file',
@@ -330,7 +324,6 @@ class ClientSongsController extends Controller
         if (is_array($request->input('lyrics'))) {
             $lyricsJson   = json_encode(array_values($request->input('lyrics')), JSON_UNESCAPED_UNICODE);
             $lyricsSource = 'lrc';
-            $request->merge(['lyrics' => null]);
 
         // ── Ưu tiên 2: File .lrc ──
         } elseif ($request->hasFile('lyrics_file')) {
@@ -355,7 +348,7 @@ class ClientSongsController extends Controller
                 $lyricsSource = 'raw';
             }
         }
-    
+
         // ── 3. Store audio ─────────────────────────────────────────────────────────
         DB::beginTransaction();
     
@@ -410,15 +403,6 @@ class ClientSongsController extends Controller
                 $storedPath,
                 $request->status ?? 'published'
             )->onQueue('audio');
-    
-            // GenerateLyricsJob chỉ chạy nếu KHÔNG phải từ .lrc
-            // (lrc đã có timestamps đầy đủ rồi, không cần Groq)
-            if ($lyricsSource !== 'lrc') {
-                GenerateLyricsJob::dispatch(
-                    $song->id,
-                    $song->audio_public_id  
-                )->onQueue('lyrics')->delay(now()->addSeconds(10)); 
-            }
     
             Log::info("Song #{$song->id} queued", [
                 'stored_path'   => $storedPath,
@@ -561,15 +545,11 @@ class ClientSongsController extends Controller
         } elseif (is_array($request->input('lyrics'))) {
             $arr = $request->input('lyrics');
             if (!empty($arr)) {
-                $lyricsJson   = json_encode(array_values($arr), JSON_UNESCAPED_UNICODE);
-                $lyricsSource = 'lrc';
-
-                Log::info('Array lyrics stored for update', [
-                    'song_id'    => $song->id,
-                    'line_count' => count($arr),
-                ]);
+                $lyricsJson = json_encode(array_values($arr), JSON_UNESCAPED_UNICODE);
+                
+                $hasTimestamps = collect($arr)->every(fn($l) => ($l['start'] ?? 0) > 0);
+                $lyricsSource  = $hasTimestamps ? 'lrc' : 'raw';
             }
-
         } elseif ($request->has('lyrics')) {
             // ── Text thô hoặc JSON string ──
             $raw = $request->lyrics;
@@ -702,24 +682,37 @@ class ClientSongsController extends Controller
                     $newAudioStoredPath,
                     $song->status
                 )->onQueue('audio')->delay(now()->addSeconds(5));
-    
+
                 Log::info("Song #{$song->id} re-queued for audio processing");
             }
     
-            // GenerateLyricsJob chỉ chạy khi lyrics là text thô (raw)
-            // - lrc / JSON đã có timestamps → skip
-            // - null (không gửi) → skip
-            if ($lyricsSource === 'raw') {
-                GenerateLyricsJob::dispatch(
-                    $song->id,
-                    $song->audio_public_id  // field lưu public_id Cloudinary
-                )->onQueue('lyrics')->delay(now()->addSeconds(10));
-    
-                Log::info("Song #{$song->id} queued for lyrics alignment", [
-                    'lyrics_source' => $lyricsSource,
-                ]);
+            if ($lyricsSource === 'raw' && !$newAudioStoredPath) {
+                dispatch(function () use ($song) {
+                    $freshSong = Song::find($song->id);
+                    if (!$freshSong || empty($freshSong->song_url)) {
+                        Log::warning('Lyrics align skipped: no audio URL yet', ['song_id' => $song->id]);
+                        return;
+                    }
+
+                    $lyricsService = app(\App\Services\LyricsService::class);
+                    $freshSong->update(['lyrics_status' => 'processing']);
+
+                    $rawText = collect(json_decode($freshSong->lyrics, true))
+                        ->pluck('text')
+                        ->filter()
+                        ->implode("\n");
+
+                    $success = $lyricsService->alignLyrics($freshSong, $rawText);
+
+                    if (!$success) {
+                        $freshSong->update(['lyrics_status' => 'failed']);
+                        Log::warning('Align lyrics failed on update', ['song_id' => $freshSong->id]);
+                    }
+                })->onQueue('audio');
+
+                Log::info("Song #{$song->id} queued for lyrics alignment");
             }
-    
+           
             return response()->json([
                 'success' => true,
                 'message' => $newAudioStoredPath

@@ -26,6 +26,7 @@ class SongService {
     }
 
     async addSong(payload: CreateSongPayload) {
+        console.log(payload);
         return clientApi.post('/songs/add', payload, {
             headers: {
                 'Content-Type': 'multipart/form-data'

@@ -543,6 +543,7 @@ import type { Album, Flag } from '@/modules/client/interfaces/songs/create-song.
 import type { UpdateSongPayload } from "@/modules/client/interfaces/songs/update_song.payload";
 import { useNotificationStore } from '@/store/notificationStore'
 import { useCloudinaryUpload } from '@/composables/Usecloudinaryupload'
+import {useAlbumStore} from '@/modules/client/stores/albums/albumssStore';
 import { storeToRefs } from 'pinia'
 import router from '@/modules/router'
 import LyricsEditor from '@/components/common/VcLyrics/LyricsEditor.vue'
@@ -558,6 +559,7 @@ const usePartner = usePartnerStore()
 const useGenre   = useGenrestore()
 const useSong    = useSongStore()
 const notificationStore = useNotificationStore()
+const albumStore = useAlbumStore()
 
 // ── Steps ──
 const steps       = ['Basic Info', 'Audio Files', 'Artwork & Lyrics', 'Settings'] as const
@@ -701,8 +703,6 @@ async function loadSong(): Promise<void> {
 
 
 
-// ── Mock data ──
-const mockAlbums = ref<Album[]>([])
 
 // ── Flags ──
 const flags: Flag[] = [
@@ -925,6 +925,8 @@ async function submitForm(): Promise<void> {
   try {
     loading.value = true
     // Build payload — omit audio_file if no new file chosen
+    console.log(form);
+    
     const payload: UpdateSongPayload = { ...form }
     if (!payload.audio_file) delete (payload as any).audio_file
     ;(payload as any).lyrics = JSON.stringify(form.lyrics)
@@ -944,6 +946,8 @@ async function submitForm(): Promise<void> {
 }
 
 const artistList = computed(() => useArtist.artists || [])
+const mockAlbums = computed(() => albumStore.albumsByPartner || [])
+
 
 const loadInfoPartner = async () => { 
   await usePartner.fetchPartnerInfo()
@@ -951,12 +955,18 @@ const loadInfoPartner = async () => {
    if (idPartner) {
     form.partner_id = idPartner
     await loadArtists(idPartner)
+    await loadAlbumByPartner(idPartner)
   }
 }
 
 const loadArtists = async (id: number) => { 
   await useArtist.fetchGetAritistByIdPartner(id)
 }
+
+const loadAlbumByPartner = async (id: number)=>{
+  await albumStore.fetchAlbumByPartner(id);
+}
+
 
 // ── Lifecycle ──
 onMounted(async () => {

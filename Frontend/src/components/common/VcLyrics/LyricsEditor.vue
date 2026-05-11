@@ -31,12 +31,29 @@
 
     <!-- Toolbar -->
     <div class="le-toolbar">
-      <button type="button" class="le-btn" @click="addLine">+ Thêm dòng</button>
-      <button type="button" class="le-btn" @click="stampLine" :disabled="focusedIdx < 0">
-        ⏱ Gán <span class="le-time-chip">{{ fmtTime(cur) }}</span>
-      </button>
+      <button type="button" class="le-btn" @click="addLine">+ Add lines</button>
+      
+      <div class="le-stamp-group">
+        <button 
+            type="button" 
+            class="le-btn le-btn--start" 
+            @mousedown.prevent="stampStart"  
+            :disabled="focusedIdx < 0"
+          >
+            🟢 Gán START <span class="le-time-chip">{{ fmtTime(cur) }}</span>
+          </button>
+          <button 
+            type="button" 
+            class="le-btn le-btn--end" 
+            @mousedown.prevent="stampEnd"
+            :disabled="focusedIdx < 0"
+          >
+            🔴 Gán END <span class="le-time-chip">{{ fmtTime(cur) }}</span>
+          </button>
+      </div>
+      
       <div class="le-sep"/>
-      <button type="button" class="le-btn" @click="openPaste">Dán lyrics thô</button>
+      <button type="button" class="le-btn" @click="openPaste">Paste raw lyrics</button>
       <div class="le-sep"/>
       <label class="le-btn le-btn--lrc">
         📄 Import .lrc
@@ -49,7 +66,7 @@
         @click="clearAll"
         v-if="lines.length > 0"
       >
-        🗑 Xoá tất cả
+        🗑 Delete all
       </button>
       <div class="le-sep"/>
       <span class="le-count">{{ lines.length }} dòng</span>
@@ -60,26 +77,30 @@
       <span>#</span>
       <span>Start (s)</span>
       <span>End (s)</span>
-      <span>Lời bài hát</span>
+      <span>Lyrics</span>
       <span/>
     </div>
 
     <!-- Lines -->
     <div class="le-list" ref="listEl">
       <div v-if="lines.length === 0" class="le-empty">
-        Chưa có lyrics — nhấn "Dán lyrics thô", "+ Thêm dòng" hoặc "Import .lrc"
+        No lyrics yet — click "Paste raw lyrics", "+ Add lines" or "Import .lrc"
       </div>
 
       <div
         v-for="(line, i) in lines"
         :key="line._id"
         class="le-row"
-        :class="{ 'le-row--active': activeIdx === i }"
-        @click="jumpTo(line.start)"
+        :class="{ 
+          'le-row--active': activeIdx === i,
+          'le-row--focused': focusedIdx === i 
+        }"
+        @click="handleRowClick(i, line.start)"
       >
         <span class="le-num">{{ i + 1 }}</span>
         <input
           class="le-time-input"
+          :class="{ 'le-time-input--has-value': line.start > 0 }"
           :value="line.start.toFixed(2)"
           @change="updateField(i, 'start', ($event.target as HTMLInputElement).value)"
           @click.stop
@@ -87,6 +108,7 @@
         />
         <input
           class="le-time-input"
+          :class="{ 'le-time-input--has-value': line.end > 0 }"
           :value="line.end.toFixed(2)"
           @change="updateField(i, 'end', ($event.target as HTMLInputElement).value)"
           @click.stop
@@ -96,12 +118,12 @@
           class="le-text-input"
           :value="line.text"
           @input="updateText(i, ($event.target as HTMLInputElement).value)"
-          @focus="focusedIdx = i"
-          @blur="focusedIdx = -1"
+          @focus="onFocusLine(i)"
+          @blur="onBlurLine"
           @click.stop
-          placeholder="Nhập lời..."
+          placeholder="Enter words..."
         />
-        <button type="button" class="le-del" @click.stop="deleteLine(i)" title="Xóa">×</button>
+        <button type="button" class="le-del" @click.stop="deleteLine(i)" title="Delete">×</button>
       </div>
     </div>
 
@@ -109,18 +131,18 @@
     <Teleport to="body">
       <div v-if="showPaste" class="le-modal-backdrop" @click.self="showPaste = false">
         <div class="le-modal">
-          <p class="le-modal-title">Dán lyrics thô</p>
-          <p class="le-modal-sub">Mỗi dòng = 1 câu. Timestamps sẽ được gán sau.</p>
+          <p class="le-modal-title">Paste raw lyrics</p>
+          <p class="le-modal-sub">Each line = 1 sentence. Timestamps will be assigned later.</p>
           <textarea
             v-model="rawPaste"
             class="le-paste-area"
-            placeholder="Nhập lyrics vào đây..."
+            placeholder="Enter lyrics here..."
             rows="12"
             autofocus
           />
           <div class="le-modal-footer">
-            <button type="button" class="le-btn" @click="showPaste = false">Huỷ</button>
-            <button type="button" class="le-btn le-btn--primary" @click="confirmPaste">Xác nhận</button>
+            <button type="button" class="le-btn" @click="showPaste = false">Cancel</button>
+            <button type="button" class="le-btn le-btn--primary" @click="confirmPaste">Confirm</button>
           </div>
         </div>
       </div>
@@ -131,7 +153,7 @@
       <div v-if="showLrcPreview" class="le-modal-backdrop" @click.self="showLrcPreview = false">
         <div class="le-modal le-modal--wide">
           <p class="le-modal-title">📄 Preview LRC — {{ lrcParsed.length }} dòng</p>
-          <p class="le-modal-sub">Kiểm tra trước khi import. Timestamps đã được parse từ file .lrc.</p>
+          <p class="le-modal-sub">Check before importing. Timestamps have been parsed from the .lrc file.</p>
           <div class="le-lrc-preview">
             <div v-for="(line, i) in lrcParsed" :key="i" class="le-lrc-row">
               <span class="le-lrc-time">{{ fmtTime(line.start) }}</span>
@@ -139,7 +161,7 @@
             </div>
           </div>
           <div class="le-modal-footer">
-            <button type="button" class="le-btn" @click="showLrcPreview = false">Huỷ</button>
+            <button type="button" class="le-btn" @click="showLrcPreview = false">Cancel</button>
             <button type="button" class="le-btn le-btn--primary" @click="confirmLrcImport">
               Import {{ lrcParsed.length }} dòng
             </button>
@@ -192,6 +214,20 @@ let _uid = 0
 function mkId() { return ++_uid }
 
 // ─────────────────────────────────────────────
+// Toast notification
+// ─────────────────────────────────────────────
+const toastMessage = ref('')
+const toastType = ref('success')
+
+function showToast(message: string, type: 'success' | 'error' | 'info' = 'success') {
+  toastMessage.value = message
+  toastType.value = type
+  setTimeout(() => {
+    toastMessage.value = ''
+  }, 2000)
+}
+
+// ─────────────────────────────────────────────
 // Lines state
 // ─────────────────────────────────────────────
 const lines = ref<InternalLine[]>(
@@ -201,7 +237,7 @@ const lines = ref<InternalLine[]>(
 watch(
   () => props.modelValue,
   (val) => {
-    if (val.length !== lines.value.length) {
+    if (JSON.stringify(val) !== JSON.stringify(lines.value.map(({ start, end, text }) => ({ start, end, text })))) {
       lines.value = val.map(l => ({ ...l, _id: mkId() }))
     }
   },
@@ -226,7 +262,9 @@ const hasAudio = computed(() => !!props.src)
 watch(
   () => props.currentTime,
   (t) => {
-    if (props.audioRef && t !== undefined) cur.value = t
+    if (props.audioRef && t !== undefined) {
+      cur.value = t
+    }
   },
   { immediate: true }
 )
@@ -234,7 +272,9 @@ watch(
 watch(
   () => props.duration,
   (d) => {
-    if (props.audioRef && d !== undefined) dur.value = d
+    if (props.audioRef && d !== undefined) {
+      dur.value = d
+    }
   },
   { immediate: true }
 )
@@ -242,7 +282,9 @@ watch(
 watch(
   () => props.isPlaying,
   (p) => {
-    if (props.audioRef && p !== undefined) playing.value = p
+    if (props.audioRef && p !== undefined) {
+      playing.value = p
+    }
   },
   { immediate: true }
 )
@@ -331,9 +373,35 @@ function jumpTo(start: number) {
 
   if (props.audioRef) {
     emit('seek', start)
+    if (props.isPlaying) {
+      setTimeout(() => {
+        props.audioRef?.play()
+      }, 50)
+    }
   } else if (internalAudioEl.value) {
     internalAudioEl.value.currentTime = start
   }
+}
+
+// ─────────────────────────────────────────────
+// Row handlers
+// ─────────────────────────────────────────────
+function handleRowClick(i: number, startTime: number) {
+  focusedIdx.value = i
+  jumpTo(startTime)
+  
+  nextTick(() => {
+    const inputs = listEl.value?.querySelectorAll<HTMLInputElement>('.le-text-input')
+    inputs?.[i]?.focus()
+  })
+}
+
+function onFocusLine(i: number) {
+  focusedIdx.value = i
+}
+
+function onBlurLine() {
+  focusedIdx.value = -1
 }
 
 // ─────────────────────────────────────────────
@@ -356,7 +424,7 @@ function addLine() {
   const lastEnd = lines.value.length > 0
     ? lines.value[lines.value.length - 1].end
     : 0
-  lines.value.push({ start: lastEnd, end: 0, text: '', _id: mkId() })
+  lines.value.push({ start: lastEnd, end: lastEnd + 3, text: '', _id: mkId() })
   emitOut()
   nextTick(() => {
     const inputs = listEl.value?.querySelectorAll<HTMLInputElement>('.le-text-input')
@@ -381,26 +449,60 @@ function updateText(i: number, val: string) {
 }
 
 function clearAll() {
-  lines.value = []
-  emitOut()
+  if (confirm('Bạn có chắc muốn xóa tất cả lyrics?')) {
+    lines.value = []
+    emitOut()
+    showToast('Đã xóa tất cả lyrics', 'info')
+  }
 }
 
 // ─────────────────────────────────────────────
-// Stamp current time
+// Stamp functions
 // ─────────────────────────────────────────────
-function stampLine() {
+function stampStart() {
   const i = focusedIdx.value
-  if (i < 0) return
-
-  const t = parseFloat(cur.value.toFixed(2))
-  lines.value[i].start = t
-
-  // Auto-fill end của dòng trước nếu chưa có
-  if (i > 0 && lines.value[i - 1].end === 0) {
-    lines.value[i - 1].end = t
+  if (i < 0) {
+    showToast('Vui lòng click vào ô lyrics cần gán trước', 'error')
+    return
   }
 
+  const t = parseFloat(cur.value.toFixed(2))
+  const oldStart = lines.value[i].start
+  
+  lines.value[i].start = t
   emitOut()
+  
+  showToast(`✅ Đã gán START cho dòng ${i + 1}: ${fmtTime(t)}`, 'success')
+  console.log(`Gán START dòng ${i}: ${t}s (cũ: ${oldStart}s)`)
+}
+
+function stampEnd() {
+  const i = focusedIdx.value
+  if (i < 0) {
+    showToast('Vui lòng click vào ô lyrics cần gán trước', 'error')
+    return
+  }
+
+  const t = parseFloat(cur.value.toFixed(2))
+  const oldEnd = lines.value[i].end
+  
+  lines.value[i].end = t
+  emitOut()
+  
+  showToast(`✅ Đã gán END cho dòng ${i + 1}: ${fmtTime(t)}`, 'success')
+  console.log(`Gán END dòng ${i}: ${t}s (cũ: ${oldEnd}s)`)
+  
+  // Tự động chuyển sang dòng tiếp theo sau khi gán END
+  if (i + 1 < lines.value.length) {
+    nextTick(() => {
+      focusedIdx.value = i + 1
+      const inputs = listEl.value?.querySelectorAll<HTMLInputElement>('.le-text-input')
+      inputs?.[i + 1]?.focus()
+      showToast(`👉 Đã chuyển sang dòng ${i + 2}`, 'info')
+    })
+  } else {
+    showToast(`🎉 Hoàn thành! Đã gán hết ${lines.value.length} dòng`, 'success')
+  }
 }
 
 // ─────────────────────────────────────────────
@@ -419,11 +521,17 @@ function confirmPaste() {
     .split('\n')
     .map(l => l.trim())
     .filter(l => l !== '')
-    .map(text => ({ start: 0, end: 0, text, _id: mkId() }))
+    .map((text, idx) => ({ 
+      start:0, 
+      end: 0, 
+      text, 
+      _id: mkId() 
+    }))
 
-  lines.value     = lines.value.length > 0 ? lines.value.concat(newLines) : newLines
+  lines.value = lines.value.length > 0 ? lines.value.concat(newLines) : newLines
   showPaste.value = false
   emitOut()
+  showToast(`Đã thêm ${newLines.length} dòng lyrics`, 'success')
 }
 
 // ─────────────────────────────────────────────
@@ -470,6 +578,11 @@ function parseLrc(content: string): LyricLine[] {
   for (let i = 0; i < result.length - 1; i++) {
     result[i].end = result[i + 1].start
   }
+  
+  // Dòng cuối cùng: end = start + 3 giây
+  if (result.length > 0 && result[result.length - 1].end === 0) {
+    result[result.length - 1].end = result[result.length - 1].start + 3
+  }
 
   return result
 }
@@ -478,26 +591,44 @@ function onLrcImport(e: Event) {
   const file = (e.target as HTMLInputElement).files?.[0]
   if (!file) return
 
-  // Reset input để có thể import lại cùng file
   ;(e.target as HTMLInputElement).value = ''
 
   const reader = new FileReader()
   reader.onload = (ev) => {
     const content = ev.target?.result as string
     const parsed  = parseLrc(content)
-    if (parsed.length === 0) return
-    lrcParsed.value      = parsed
+    if (parsed.length === 0) {
+      showToast('Không tìm thấy lyrics hợp lệ trong file LRC', 'error')
+      return
+    }
+    lrcParsed.value = parsed
     showLrcPreview.value = true
   }
   reader.readAsText(file, 'UTF-8')
 }
 
 function confirmLrcImport() {
-  lines.value          = lrcParsed.value.map(l => ({ ...l, _id: mkId() }))
+  lines.value = lrcParsed.value.map(l => ({ ...l, _id: mkId() }))
   showLrcPreview.value = false
-  lrcParsed.value      = []
+  lrcParsed.value = []
   emitOut()
+  showToast(`Đã import ${lines.value.length} dòng lyrics từ file LRC`, 'success')
 }
+
+watch(
+  () => props.duration,
+  (d) => {
+    if (props.audioRef && d !== undefined) {
+      dur.value = d
+    }
+  },
+  { immediate: true, deep: true }
+)
+
+
+watch(focusedIdx, (newVal) => {
+  console.log('🔴 focusedIdx changed to:', newVal)
+})
 </script>
 
 <style scoped>
@@ -540,6 +671,7 @@ function confirmLrcImport() {
 
 /* Toolbar */
 .le-toolbar { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.le-stamp-group { display: flex; gap: 4px; }
 .le-btn {
   font-size: 12px; padding: 5px 12px; border-radius: 7px;
   border: 1px solid #2d3748; background: #0f1117;
@@ -548,8 +680,10 @@ function confirmLrcImport() {
 }
 .le-btn:hover:not(:disabled) { border-color: #00c6ff; color: #00c6ff; }
 .le-btn:disabled { opacity: 0.4; cursor: not-allowed; }
-.le-btn--primary { background: #00c6ff; color: #000; border-color: #00c6ff; font-weight: 600; }
-.le-btn--primary:hover { opacity: 0.85; color: #000; }
+.le-btn--start { border-color: #2d5a3b; color: #4ade80; }
+.le-btn--start:hover:not(:disabled) { border-color: #4ade80; color: #86efac; }
+.le-btn--end { border-color: #5a2d2d; color: #f87171; }
+.le-btn--end:hover:not(:disabled) { border-color: #f87171; color: #fca5a5; }
 .le-btn--lrc { border-color: #4a3f6b; color: #a78bfa; }
 .le-btn--lrc:hover { border-color: #a78bfa; color: #c4b5fd; }
 .le-btn--danger { border-color: #4a2020; color: #f87171; }
@@ -589,6 +723,7 @@ function confirmLrcImport() {
 }
 .le-row:hover { background: rgba(255,255,255,.03); border-color: #1e2535; }
 .le-row--active { background: rgba(0,198,255,.06); border-color: rgba(0,198,255,.3); }
+.le-row--focused { background: rgba(0,198,255,.12); border-color: rgba(0,198,255,.5); }
 .le-num { font-size: 10px; color: #334155; text-align: right; font-family: monospace; }
 .le-time-input {
   width: 100%; font-size: 11px; font-family: monospace;
@@ -596,6 +731,7 @@ function confirmLrcImport() {
   border-radius: 5px; padding: 4px 6px; color: #64748b; outline: none;
 }
 .le-time-input:focus { border-color: #0072ff; color: #e2e8f0; }
+.le-time-input--has-value { color: #4ade80; border-color: #2d5a3b; }
 .le-text-input {
   width: 100%; font-size: 13px; background: transparent;
   border: none; color: #e2e8f0; outline: none; font-family: inherit;
@@ -648,4 +784,20 @@ function confirmLrcImport() {
   white-space: nowrap; flex-shrink: 0; min-width: 40px;
 }
 .le-lrc-text { font-size: 13px; color: #e2e8f0; }
+
+/* Toast */
+.le-toast {
+  position: fixed; bottom: 20px; right: 20px;
+  padding: 10px 16px; border-radius: 8px;
+  font-size: 13px; font-weight: 500;
+  z-index: 10000; animation: slideIn 0.3s ease;
+}
+.le-toast.success { background: #2d5a3b; color: #4ade80; border: 1px solid #4ade80; }
+.le-toast.error { background: #5a2d2d; color: #f87171; border: 1px solid #f87171; }
+.le-toast.info { background: #2d3a5a; color: #60a5fa; border: 1px solid #60a5fa; }
+
+@keyframes slideIn {
+  from { transform: translateX(100%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
 </style>

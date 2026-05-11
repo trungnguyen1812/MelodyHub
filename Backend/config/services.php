@@ -48,5 +48,8 @@ return [
     'groq' => [
         'api_key' => env('GROQ_API_KEY'),
     ],
+        'lyric_align' => [
+        'url' => env('LYRIC_ALIGN_URL', 'http://localhost:8001'),
+    ],
 
 ];

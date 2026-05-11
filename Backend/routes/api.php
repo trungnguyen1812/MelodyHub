@@ -148,35 +148,23 @@ Route::prefix('client')->group(function () {
 
     // Songs manager
     Route::prefix('songs')->group(function () {
-        Route::get('/{song}/lyrics', [ClientSongsController::class, 'getLyricsSong']);
+        // Static routes trước
         Route::get('/allSongs', [ClientSongsController::class, 'index']);
-
-        Route::get('/new', [ClientSongsController::class, 'getNewSongs'])
-            ->middleware('optional.auth');
-
-        Route::get('/popular', [ClientSongsController::class, 'getPopularSongs'])
-            ->middleware('optional.auth');
-
-        Route::get('/top-liked', [ClientSongsController::class, 'getTopLikedSongs'])
-            ->middleware('optional.auth');
+        Route::get('/new', [ClientSongsController::class, 'getNewSongs'])->middleware('optional.auth');
+        Route::get('/popular', [ClientSongsController::class, 'getPopularSongs'])->middleware('optional.auth');
+        Route::get('/top-liked', [ClientSongsController::class, 'getTopLikedSongs'])->middleware('optional.auth');
+        Route::get('/by-slug/{slug}', [ClientSongsController::class, 'showBySlug']);
 
         Route::post('/add', [ClientSongsController::class, 'add']);
-
-        Route::get('/by-slug/{slug}', [ClientSongsController::class, 'showBySlug']);
-        Route::get('/{id}', [ClientSongsController::class, 'show'])->where('id', '[0-9]+')
-                                                                ->middleware('optional.auth');
-
+        Route::post('/update/{song}', [ClientSongsController::class, 'update']);
         Route::delete('/delete/{song}', [ClientSongsController::class, 'delete']);
         Route::delete('/delete-multiple', [ClientSongsController::class, 'deleteMultiple']);
-        Route::post('/update/{song}', [ClientSongsController::class, 'update']);
 
-        // Song Plays
+        // Dynamic routes sau
+        Route::get('/{id}', [ClientSongsController::class, 'show'])->where('id', '[0-9]+')->middleware('optional.auth');
+        Route::get('/{song}/lyrics', [ClientSongsController::class, 'getLyricsSong']);
         Route::post('/{song}/play', [ClientSongPlayController::class, 'record']);
-
-        // Song Download — quality is enforced server-side (VIP → lossless, Free → low)
-        Route::get('/{id}/download', [SongDownloadController::class, 'download'])
-            ->where('id', '[0-9]+')
-            ->middleware('optional.auth');
+        Route::get('/{id}/download', [SongDownloadController::class, 'download'])->where('id', '[0-9]+')->middleware('optional.auth');
     });
 
     // Lịch sử nghe
@@ -532,6 +520,73 @@ Route::prefix('admin')->middleware(['admin.token'])->group(function () {
         Route::delete('/{id}',         [App\Http\Controllers\Api\Admin\SettingSubscriptionController::class, 'destroy']);
         Route::patch('/{id}/toggle',   [App\Http\Controllers\Api\Admin\SettingSubscriptionController::class, 'toggleActive']);
     });
+});
+
+// =========================================================
+// TEST ROUTE: Lyric Align Service (XÓA SAU KHI TEST XONG)
+// =========================================================
+Route::post('/test-align', function (Request $request) {
+    // Validate input
+    if (!$request->hasFile('audio') || !$request->input('lyrics')) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Thiếu audio file hoặc lyrics text',
+        ], 422);
+    }
+
+    $serviceUrl = config('services.lyric_align.url', 'http://localhost:8001');
+
+    try {
+        // Lưu file upload vào temp
+        $audioFile = $request->file('audio');
+        $tmpPath   = $audioFile->getPathname();
+        $fileName  = $audioFile->getClientOriginalName() ?: 'audio.mp3';
+
+        // Gọi Python service
+        $response = \Illuminate\Support\Facades\Http::timeout(120)
+            ->attach('audio', file_get_contents($tmpPath), $fileName)
+            ->post($serviceUrl . '/align', [
+                'lyrics' => $request->input('lyrics'),
+            ]);
+
+        if ($response->failed()) {
+            return response()->json([
+                'success'     => false,
+                'message'     => 'Python service trả về lỗi',
+                'status_code' => $response->status(),
+                'body'        => $response->body(),
+            ], 502);
+        }
+
+        $lrc = $response->json('lrc');
+
+        if (!$lrc) {
+            return response()->json([
+                'success'  => false,
+                'message'  => 'Response không có trường lrc',
+                'raw_body' => $response->body(),
+            ], 502);
+        }
+
+        // Parse LRC sang array để dễ đọc
+        $lyricsService = app(\App\Services\LyricsService::class);
+        $parsed        = $lyricsService->parseLrc($lrc);
+
+        return response()->json([
+            'success'      => true,
+            'message'      => 'Align thành công',
+            'lrc_raw'      => $lrc,
+            'lrc_parsed'   => $parsed,
+            'total_lines'  => count($parsed),
+        ]);
+
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Lỗi kết nối tới Python service',
+            'error'   => $e->getMessage(),
+        ], 500);
+    }
 });
 
 // Route 404 fallback
