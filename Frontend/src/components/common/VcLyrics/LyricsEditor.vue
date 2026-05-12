@@ -40,7 +40,7 @@
             @mousedown.prevent="stampStart"  
             :disabled="focusedIdx < 0"
           >
-            🟢 Gán START <span class="le-time-chip">{{ fmtTime(cur) }}</span>
+            🟢 Assign START <span class="le-time-chip">{{ fmtTime(cur) }}</span>
           </button>
           <button 
             type="button" 
@@ -48,7 +48,7 @@
             @mousedown.prevent="stampEnd"
             :disabled="focusedIdx < 0"
           >
-            🔴 Gán END <span class="le-time-chip">{{ fmtTime(cur) }}</span>
+            🔴 Assign END <span class="le-time-chip">{{ fmtTime(cur) }}</span>
           </button>
       </div>
       

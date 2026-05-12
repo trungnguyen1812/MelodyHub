@@ -77,7 +77,6 @@
 
       <p class="section-label" style="margin-top: 18px;">MANAGE</p>
       <ul>
-        <li><span class="icon-wrap"><img src="@/assets/images/icon/heart.png" alt="" /></span><span>Social Interaction</span></li>
         <router-link :to="{ name: 'admin.playlistsmanager' }" custom v-slot="{ navigate, isActive }">
           <li :class="{ active: isActive }" @click="navigate" @keyup.enter="navigate" role="link" tabindex="0">
             <span class="icon-wrap"><img src="@/assets/images/icon/playlist.svg" alt="" /></span>

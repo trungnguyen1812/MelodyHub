@@ -375,10 +375,12 @@
             <!-- Partner -->
             <div class="field">
               <label class="field-label">Partner</label>
-              <select v-model="form.partner_id" class="field-select">
-                <option value="">-- No Partner --</option>
-                <option v-for="p in usePartner.partners" :key="p.id" :value="p.id">{{ p.company_name }}</option>
-              </select>
+              <input 
+                type="text" 
+                class="field-input" 
+                :value="usePartner.partner?.company_name || 'No partner selected'"
+                disabled
+              />
             </div>
 
             <!-- Toggles -->
@@ -924,9 +926,7 @@ async function copyPayload(): Promise<void> {
 async function submitForm(): Promise<void> {
   try {
     loading.value = true
-    // Build payload — omit audio_file if no new file chosen
-    console.log(form);
-    
+    // Build payload — omit audio_file if no new file chosen    
     const payload: UpdateSongPayload = { ...form }
     if (!payload.audio_file) delete (payload as any).audio_file
     ;(payload as any).lyrics = JSON.stringify(form.lyrics)

@@ -318,16 +318,69 @@
             <div class="lyrics-wrap">
               <div class="field" style="height:100%">
                 <label class="field-label">Lyrics</label>
+                
+                <!-- ⚠️ Modal thông báo lyrics -->
+                <Teleport to="body">
+                  <div v-if="showLyricsNotice && currentStep === 2" class="lyrics-notice-overlay" @click.self="closeNotice">
+                    <div class="lyrics-notice-modal">
+                      <div class="notice-header">
+                        <span class="notice-icon">🎤</span>
+                        <h3>Important note</h3>
+                      </div>
+                      
+                      <div class="notice-body">
+                        <div class="notice-item">
+                          <span class="item-icon">✅</span>
+                          <span>Only add lyrics when you <strong>COPYRIGHTED</strong> song</span>
+                        </div>
+                        <div class="notice-item">
+                          <span class="item-icon">⏱️</span>
+                          <span><strong>You should assign time MANUALLY</strong> for the most accurate</span>
+                        </div>
+                        <div class="notice-item">
+                          <span class="item-icon">🤖</span>
+                          <span>The "Automatic Time Assignment" feature is available <strong>discrepancies 20-40%</strong></span>
+                        </div>
+                        <div class="notice-item">
+                          <span class="item-icon">⚠️</span>
+                          <span>Copyright infringement → the song will be removed <strong>PERMANENT LOCK</strong></span>
+                        </div>
+                      </div>
+
+                      <div class="notice-footer">
+                        <button class="notice-btn notice-btn--secondary" @click="skipLyrics">
+                          🚫 Skip (add later)
+                        </button>
+                        <button class="notice-btn notice-btn--primary" @click="acceptLyrics">
+                          📝 Agreed - Continue
+                        </button>
+                      </div>
+
+                      <button class="notice-close" @click="skipLyrics">✕</button>
+                    </div>
+                  </div>
+                </Teleport>
+
+                <!-- Hiển thị LyricsEditor sau khi đã xác nhận -->
                 <LyricsEditor
-                    v-model="form.lyrics"
-                    :src="audioObjectUrl"
-                    :audio-ref="audioPlayer"
-                    :current-time="currentTime"
-                    :duration="duration"
-                    :is-playing="isPlaying"
-                    @toggle-play="togglePlay"
-                    @seek="handleSeek"
-                  />
+                  v-if="lyricsEditorEnabled"
+                  v-model="form.lyrics"
+                  :src="audioObjectUrl"
+                  :audio-ref="audioPlayer"
+                  :current-time="currentTime"
+                  :duration="duration"
+                  :is-playing="isPlaying"
+                  @toggle-play="togglePlay"
+                  @seek="handleSeek"
+                />
+                
+                <!-- Message khi chưa xác nhận -->
+                <div v-else class="lyrics-placeholder">
+                  <div class="placeholder-icon">🎵</div>
+                  <p>Please read and confirm the terms before adding lyrics.</p>
+                  <button class="placeholder-btn" @click="openNotice">Start adding lyrics</button>
+                </div>
+                
                 <p class="field-hint">Paste raw lyrics → assign timestamps using the ⏱ button while listening to music.</p>
               </div>
             </div>
@@ -569,6 +622,8 @@ const useGenre = useGenrestore()
 const useSong = useSongStore()
 const notificationStore = useNotificationStore()
 const albumStore = useAlbumStore()
+const showLyricsNotice = ref(false)
+const lyricsEditorEnabled = ref(false)
 // ── Steps ──
 const steps = ['Basic Info', 'Audio Files', 'Artwork & Lyrics', 'Settings'] as const
 const currentStep = ref<number>(0)
@@ -949,6 +1004,39 @@ function onLoadedMetadata() {
     duration.value = audioPlayer.value.duration
     form.duration = Math.round(duration.value)
   }
+}
+
+// Kiểm tra đã xem notice chưa
+onMounted(() => {
+  const hasAccepted = localStorage.getItem('melodyhub_lyrics_accepted')
+  if (hasAccepted === 'true') {
+    lyricsEditorEnabled.value = true
+  }
+})
+
+// Mở notice (khi click vào placeholder)
+function openNotice() {
+  showLyricsNotice.value = true
+}
+
+// Đồng ý
+function acceptLyrics() {
+  localStorage.setItem('melodyhub_lyrics_accepted', 'true')
+  showLyricsNotice.value = false
+  lyricsEditorEnabled.value = true
+  notificationStore.notify('Thank you for confirming! Lets start adding the lyrics.','success')
+}
+
+// Bỏ qua (thêm sau)
+function skipLyrics() {
+  showLyricsNotice.value = false
+  lyricsEditorEnabled.value = false
+  notificationStore.notify('You can add the following lyrics in the song manager.','success')
+}
+
+// Đóng notice
+function closeNotice() {
+  showLyricsNotice.value = false
 }
 
 // ── Lifecycle ──
@@ -2316,5 +2404,175 @@ onMounted(async () => {
   padding: 5px 14px 0;
   font-size: 11px;
   color: #64748b;
+}
+/* Modal */
+.lyrics-notice-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(8px);
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.lyrics-notice-modal {
+  background: linear-gradient(135deg, #1a1f2e 0%, #0f1117 100%);
+  border: 1px solid #2d3748;
+  border-radius: 24px;
+  padding: 28px;
+  max-width: 480px;
+  width: 90%;
+  position: relative;
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
+  animation: fadeInUp 0.3s ease;
+}
+
+.notice-header {
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.notice-icon {
+  font-size: 48px;
+  display: block;
+  margin-bottom: 12px;
+}
+
+.notice-header h3 {
+  color: #f1f5f9;
+  font-size: 20px;
+  margin: 0;
+}
+
+.notice-body {
+  margin-bottom: 28px;
+}
+
+.notice-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid #1e2535;
+  color: #cbd5e1;
+  font-size: 14px;
+}
+
+.notice-item:last-child {
+  border-bottom: none;
+}
+
+.item-icon {
+  font-size: 20px;
+  min-width: 32px;
+}
+
+.notice-footer {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+}
+
+.notice-btn {
+  padding: 10px 20px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: none;
+}
+
+.notice-btn--primary {
+  background: #00c6ff;
+  color: #000;
+}
+
+.notice-btn--primary:hover {
+  opacity: 0.85;
+  transform: translateY(-1px);
+}
+
+.notice-btn--secondary {
+  background: #1e2535;
+  color: #94a3b8;
+  border: 1px solid #2d3748;
+}
+
+.notice-btn--secondary:hover {
+  background: #2d3748;
+  color: #cbd5e1;
+}
+
+.notice-close {
+  position: absolute;
+  top: 16px;
+  right: 20px;
+  background: none;
+  border: none;
+  color: #4a5568;
+  font-size: 20px;
+  cursor: pointer;
+  padding: 4px;
+}
+
+.notice-close:hover {
+  color: #f87171;
+}
+
+/* Placeholder khi chưa xác nhận */
+.lyrics-placeholder {
+  background: #0f1117;
+  border: 1px solid #2d3748;
+  border-radius: 12px;
+  padding: 40px;
+  text-align: center;
+  min-height: 300px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.placeholder-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+}
+
+.lyrics-placeholder p {
+  color: #64748b;
+  margin-bottom: 20px;
+  font-size: 14px;
+}
+
+.placeholder-btn {
+  background: #00c6ff;
+  border: none;
+  padding: 10px 24px;
+  border-radius: 30px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.placeholder-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 198, 255, 0.3);
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 </style>

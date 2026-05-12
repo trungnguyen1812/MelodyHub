@@ -15,6 +15,8 @@ use App\Http\Resources\SongResource;
 use Illuminate\Support\Facades\Auth;
 
 use App\Jobs\GenerateLyricsJob;
+use App\Models\Album;
+use App\Models\AlbumTrack;
 use App\Services\LyricsService;
 use App\Services\CloudinaryService;
 
@@ -362,7 +364,7 @@ class ClientSongsController extends Controller
                 'original' => $audioFile->getClientOriginalName(),
             ]);
     
-            // ── 4. Tạo Song ───────────────────────────────────────────────────────
+            // ── 4. Tạo Song , tạo album strack ───────────────────────────────────────────────────────
             $song = Song::create([
                 'title'             => $request->title,
                 'slug'              => $request->slug,
@@ -393,7 +395,30 @@ class ClientSongsController extends Controller
                 'genre_id'          => $request->genre_id       ?: null,
                 'status'            => $request->status,
             ]);
-    
+
+            if ($request->album_id) {
+                // Lấy album
+                $album = Album::find($request->album_id);
+                
+                if ($album) {
+                    $maxPosition = AlbumTrack::where('album_id', $album->id)->max('position');
+                    $nextPosition = ($maxPosition ? $maxPosition + 1 : 1);
+                    
+                    // Tạo album track
+                    AlbumTrack::create([
+                        'album_id' => $album->id,
+                        'track_id' => $song->id,
+                        'position' => $nextPosition,
+                    ]);
+                    
+                    $album->total_tracks = AlbumTrack::where('album_id', $album->id)->count();
+                    $album->total_duration = Song::whereIn('id', 
+                        AlbumTrack::where('album_id', $album->id)->pluck('track_id')
+                    )->sum('duration');
+                    $album->save();
+                }
+            }
+
             DB::commit();
     
             // ── 5. Dispatch jobs ───────────────────────────────────────────────────
@@ -477,7 +502,7 @@ class ClientSongsController extends Controller
             'file_size'       => 'nullable|integer|min:0',
             'bitrate'         => 'nullable|integer',
             'quality'         => 'nullable|string|in:standard,high,lossless',
-    
+
             // Lyrics: text thô HOẶC file .lrc
             'lyrics'          => 'nullable|string',
             'lyrics_file'     => [
@@ -491,7 +516,7 @@ class ClientSongsController extends Controller
                                         }
                                     },
                                 ],
-    
+
             'cover_url'       => 'nullable|string|max:500',
             'cover_file'      => 'nullable|image|max:5120',
             'audio_file'      => [
@@ -514,34 +539,29 @@ class ClientSongsController extends Controller
             'is_featured'     => 'nullable',
             'allow_download'  => 'nullable',
         ]);
-    
+
+        // ── Lưu lại album_id cũ để xử lý sau ──
+        $oldAlbumId = $song->album_id;
+        $newAlbumId = $request->has('album_id') ? $request->album_id : $oldAlbumId;
+
         // ── 2. Xử lý lyrics ───────────────────────────────────────────────────────
-        //
-        //  Ưu tiên: lyrics_file (.lrc) > lyrics (text thô)
-        //
-        //  - File .lrc  → parse → [{start, end, text}] → JSON, status = completed, skip Groq
-        //  - Text thô   → [{start:0, end:0, text}]     → JSON, status = pending,   run Groq
-        //  - Không gửi  → giữ nguyên lyrics cũ trong DB
-        //
-        $lyricsJson   = null;   // null = không update lyrics
-        $lyricsSource = null;   // 'lrc' | 'raw' | null
+        $lyricsJson   = null;
+        $lyricsSource = null;
         $lrcParser = new ParseLrcFile();
+        
         if ($request->hasFile('lyrics_file')) {
-        // ── File .lrc ──
-        $lrcContent  = file_get_contents($request->file('lyrics_file')->getRealPath());
-        $parsedLines = $lrcParser->parseLrcFile($lrcContent);
+            $lrcContent  = file_get_contents($request->file('lyrics_file')->getRealPath());
+            $parsedLines = $lrcParser->parseLrcFile($lrcContent);
 
-        if (!empty($parsedLines)) {
-            $lyricsJson   = json_encode($parsedLines, JSON_UNESCAPED_UNICODE);
-            $lyricsSource = 'lrc';
+            if (!empty($parsedLines)) {
+                $lyricsJson   = json_encode($parsedLines, JSON_UNESCAPED_UNICODE);
+                $lyricsSource = 'lrc';
 
-            Log::info('LRC file parsed for update', [
-                'song_id'    => $song->id,
-                'line_count' => count($parsedLines),
-            ]);
-        }
-
-        // ── Thêm case này: frontend gửi array trực tiếp ──
+                Log::info('LRC file parsed for update', [
+                    'song_id'    => $song->id,
+                    'line_count' => count($parsedLines),
+                ]);
+            }
         } elseif (is_array($request->input('lyrics'))) {
             $arr = $request->input('lyrics');
             if (!empty($arr)) {
@@ -551,7 +571,6 @@ class ClientSongsController extends Controller
                 $lyricsSource  = $hasTimestamps ? 'lrc' : 'raw';
             }
         } elseif ($request->has('lyrics')) {
-            // ── Text thô hoặc JSON string ──
             $raw = $request->lyrics;
 
             if (!empty($raw) && $raw !== '[object Object]') {
@@ -587,56 +606,58 @@ class ClientSongsController extends Controller
                 $lyricsSource = null;
             }
         }
-        log::info($lyricsJson);
+        
+        Log::info($lyricsJson);
         DB::beginTransaction();
-    
+
         try {
             $updateData = [];
-    
+
             // ── 3. Các field text thông thường ────────────────────────────────────
             $fields = [
-                'title', 'slug', 'artist_id', 'album_id', 'track_number',
+                'title', 'slug', 'artist_id', 'track_number',
                 'disc_number', 'isrc', 'copyright_owner', 'license_type',
                 'duration', 'bitrate', 'quality', 'partner_id', 'genre_id', 'status',
             ];
-    
+
             foreach ($fields as $field) {
                 if ($request->has($field)) {
                     $updateData[$field] = $request->$field ?: null;
                 }
             }
-    
+
             if ($request->has('year')) {
                 $updateData['year'] = $request->year ?: null;
             }
-    
+
+            // ── Xử lý album_id riêng ──
+            if ($request->has('album_id')) {
+                $updateData['album_id'] = $request->album_id ?: null;
+            }
+
             foreach (['is_premium', 'is_explicit', 'is_featured', 'allow_download'] as $bool) {
                 if ($request->has($bool)) {
                     $updateData[$bool] = filter_var($request->$bool, FILTER_VALIDATE_BOOLEAN);
                 }
             }
-    
+
             // ── 4. Ghi lyrics vào updateData ──────────────────────────────────────
             if ($lyricsJson === 'null_clear') {
-                // Xóa lyrics
                 $updateData['lyrics']        = null;
                 $updateData['lyrics_status'] = 'pending';
             } elseif ($lyricsJson !== null) {
                 $updateData['lyrics'] = $lyricsJson;
-    
+
                 if ($lyricsSource === 'lrc') {
-                    // .lrc hoặc JSON đã có timestamps → hoàn chỉnh, không cần Groq
                     $updateData['lyrics_status']       = 'completed';
                     $updateData['lyrics_processed_at'] = now();
                     $updateData['lyrics_error']        = null;
                 } else {
-                    // Text thô → cần Groq align
                     $updateData['lyrics_status'] = 'pending';
                     $updateData['lyrics_error']  = null;
                 }
             }
-            // Nếu $lyricsJson === null → không gửi lyrics lên → giữ nguyên DB
-    
+
             // ── 5. Cover image ────────────────────────────────────────────────────
             if ($request->hasFile('cover_file')) {
                 $this->cloudinaryService->deleteImageByUrl($song->cover_url);
@@ -647,35 +668,97 @@ class ClientSongsController extends Controller
             } elseif ($request->has('cover_url')) {
                 $updateData['cover_url'] = $request->cover_url ?: null;
             }
-    
+
             // ── 6. Audio file mới ─────────────────────────────────────────────────
             $newAudioStoredPath = null;
             if ($request->hasFile('audio_file')) {
                 $audioFile          = $request->file('audio_file');
                 $newAudioStoredPath = $audioFile->store('audio_originals', 'local');
                 $updateData['file_size'] = $audioFile->getSize();
-    
-                // Reset audio URLs — sẽ được điền lại sau khi transcode xong
+
                 $updateData['song_url']          = null;
                 $updateData['song_url_hq']       = null;
                 $updateData['song_url_lossless'] = null;
-    
+
                 $this->cloudinaryService->deleteSongFolder($song->id);
-    
+
                 Log::info('New audio file stored', [
                     'song_id'  => $song->id,
                     'path'     => $newAudioStoredPath,
                     'original' => $audioFile->getClientOriginalName(),
                 ]);
             }
-    
+
             $song->update($updateData);
-    
+
+            // ── 7. Xử lý Album Track ─────────────────────────────────────────────
+            // Xóa khỏi album cũ nếu khác album mới
+            if ($oldAlbumId && $oldAlbumId != $newAlbumId) {
+                AlbumTrack::where('album_id', $oldAlbumId)
+                    ->where('track_id', $song->id)
+                    ->delete();
+                
+                // Cập nhật lại stats cho album cũ
+                $oldAlbum = Album::find($oldAlbumId);
+                if ($oldAlbum) {
+                    $oldAlbum->total_tracks = AlbumTrack::where('album_id', $oldAlbumId)->count();
+                    $oldAlbum->total_duration = Song::whereIn('id', 
+                        AlbumTrack::where('album_id', $oldAlbumId)->pluck('track_id')
+                    )->sum('duration');
+                    $oldAlbum->save();
+                }
+                
+                Log::info('Song removed from old album', [
+                    'song_id' => $song->id,
+                    'old_album_id' => $oldAlbumId
+                ]);
+            }
+            
+            // Thêm vào album mới nếu có
+            if ($newAlbumId) {
+                // Kiểm tra xem track đã tồn tại trong album mới chưa
+                $exists = AlbumTrack::where('album_id', $newAlbumId)
+                    ->where('track_id', $song->id)
+                    ->exists();
+                
+                if (!$exists) {
+                    // Tìm vị trí lớn nhất hiện tại trong album mới
+                    $maxPosition = AlbumTrack::where('album_id', $newAlbumId)->max('position');
+                    $nextPosition = ($maxPosition ? $maxPosition + 1 : 1);
+                    
+                    AlbumTrack::create([
+                        'album_id' => $newAlbumId,
+                        'track_id' => $song->id,
+                        'position' => $nextPosition,
+                    ]);
+                    
+                    // Cập nhật stats cho album mới
+                    $newAlbum = Album::find($newAlbumId);
+                    if ($newAlbum) {
+                        $newAlbum->total_tracks = AlbumTrack::where('album_id', $newAlbumId)->count();
+                        $newAlbum->total_duration = Song::whereIn('id', 
+                            AlbumTrack::where('album_id', $newAlbumId)->pluck('track_id')
+                        )->sum('duration');
+                        $newAlbum->save();
+                    }
+                    
+                    Log::info('Song added to new album', [
+                        'song_id' => $song->id,
+                        'new_album_id' => $newAlbumId,
+                        'position' => $nextPosition
+                    ]);
+                }
+            } elseif ($oldAlbumId && !$newAlbumId) {
+                // Nếu xóa album_id (chuyển thành null) thì đã xóa ở trên rồi
+                Log::info('Song removed from album (set to null)', [
+                    'song_id' => $song->id,
+                    'album_id' => $oldAlbumId
+                ]);
+            }
+
             DB::commit();
-    
-            // ── 7. Dispatch jobs sau commit ───────────────────────────────────────
-    
-            // Audio processing nếu có file mới
+
+            // ── 8. Dispatch jobs sau commit ───────────────────────────────────────
             if ($newAudioStoredPath) {
                 ProcessSongAudio::dispatch(
                     $song->id,
@@ -685,34 +768,56 @@ class ClientSongsController extends Controller
 
                 Log::info("Song #{$song->id} re-queued for audio processing");
             }
-    
-            if ($lyricsSource === 'raw' && !$newAudioStoredPath) {
-                dispatch(function () use ($song) {
-                    $freshSong = Song::find($song->id);
-                    if (!$freshSong || empty($freshSong->song_url)) {
-                        Log::warning('Lyrics align skipped: no audio URL yet', ['song_id' => $song->id]);
-                        return;
+
+            // ── Xử lý lyrics alignment ────────────────────────────────────────────
+            // Kiểm tra xem lyrics có cần align không (start và end đều = 0)
+            $needsAlignment = false;
+            $currentLyrics = $song->lyrics;
+
+            if (!empty($currentLyrics)) {
+                $lyricsArray = is_string($currentLyrics) ? json_decode($currentLyrics, true) : $currentLyrics;
+                
+                if (is_array($lyricsArray) && !empty($lyricsArray)) {
+                    // Kiểm tra xem có dòng nào có timestamp > 0 không
+                    $hasValidTimestamps = false;
+                    foreach ($lyricsArray as $line) {
+                        if (($line['start'] ?? 0) > 0 || ($line['end'] ?? 0) > 0) {
+                            $hasValidTimestamps = true;
+                            break;
+                        }
                     }
-
-                    $lyricsService = app(\App\Services\LyricsService::class);
-                    $freshSong->update(['lyrics_status' => 'processing']);
-
-                    $rawText = collect(json_decode($freshSong->lyrics, true))
-                        ->pluck('text')
-                        ->filter()
-                        ->implode("\n");
-
-                    $success = $lyricsService->alignLyrics($freshSong, $rawText);
-
-                    if (!$success) {
-                        $freshSong->update(['lyrics_status' => 'failed']);
-                        Log::warning('Align lyrics failed on update', ['song_id' => $freshSong->id]);
+                    
+                    if (!$hasValidTimestamps) {
+                        $needsAlignment = true;
                     }
-                })->onQueue('audio');
-
-                Log::info("Song #{$song->id} queued for lyrics alignment");
+                }
             }
-           
+
+            // Dispatch job nếu cần align lyrics
+            if ($needsAlignment && !$newAudioStoredPath) {
+                // Cập nhật trạng thái lyrics trước khi dispatch
+                $song->update(['lyrics_status' => 'processing']);
+                
+                // Dispatch job xử lý lyrics vào queue lyrics
+                \App\Jobs\ProcessLyrics::dispatch($song->id, $song->lyrics)
+                    ->onQueue('lyrics')
+                    ->delay(now()->addSeconds(5));
+                
+                Log::info("Song #{$song->id} queued for lyrics alignment", [
+                    'queue' => 'lyrics',
+                    'has_audio_url' => !empty($song->song_url)
+                ]);
+            } elseif ($needsAlignment && $newAudioStoredPath) {
+                Log::info("Lyrics alignment deferred until audio processing completes", [
+                    'song_id' => $song->id
+                ]);
+            } else {
+                Log::info("No lyrics alignment needed", [
+                    'song_id' => $song->id,
+                    'has_valid_timestamps' => !$needsAlignment
+                ]);
+            }
+
             return response()->json([
                 'success' => true,
                 'message' => $newAudioStoredPath
@@ -724,14 +829,14 @@ class ClientSongsController extends Controller
                     'cover_url'     => $song->cover_url,
                     'status'        => $song->status,
                     'lyrics_status' => $song->fresh()->lyrics_status,
-                    'lyrics_source' => $lyricsSource ?? 'unchanged',
+                    'album_id'      => $newAlbumId,
                 ],
             ], 200);
-    
+
         } catch (\Throwable $e) {
             DB::rollBack();
             Log::error("SongController@update failed: " . $e->getMessage());
-    
+
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to update song: ' . $e->getMessage(),
