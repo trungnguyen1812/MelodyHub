@@ -17,7 +17,7 @@
             class="text-sm font-medium text-white hover:text-cyan-400 drop-shadow-[0_0_10px_#22d3ee] transition-colors duration-200">
             Home
           </router-link>
-          <div class="relative" ref="dropdown">
+          <div class="relative" ref="dropdownLibrary">
             <a href="#"
               class="text-sm font-medium text-white hover:text-cyan-400 drop-shadow-[0_0_10px_#22d3ee] transition-colors duration-200 flex items-center"
               @click.prevent="toggleDropdown" aria-haspopup="true" :aria-expanded="isDropdownOpen">
@@ -49,6 +49,93 @@
             class="text-sm font-medium text-white hover:text-cyan-400 drop-shadow-[0_0_10px_#22d3ee] transition-colors duration-200 cursor-pointer">
             Collaborations
           </button>
+          <div class="relative" ref="dropdownCenter">
+            <a href="#"
+              class="text-sm font-medium text-white transition-all duration-200 flex items-center gap-1.5 px-3 py-1 rounded-md
+                    border border-cyan-400/60 hover:border-cyan-400 hover:text-cyan-400
+                    drop-shadow-[0_0_6px_rgba(34,211,238,0.3)] hover:drop-shadow-[0_0_10px_#22d3ee]
+                    bg-cyan-400/5 hover:bg-cyan-400/10"
+              @click.prevent="toggleDropdownCenter"
+              aria-haspopup="true"
+              :aria-expanded="isDropdownCenter">
+              
+              <!-- Icon nhạc -->
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 flex-shrink-0" viewBox="0 0 24 24" fill="currentColor">
+                <rect x="3" y="3" width="7" height="7" rx="1.5"/>
+                <rect x="14" y="3" width="7" height="7" rx="1.5"/>
+                <rect x="3" y="14" width="7" height="7" rx="1.5"/>
+                <rect x="14" y="14" width="7" height="7" rx="1.5"/>
+              </svg>
+
+              MelodyHub Center
+
+              <span class="text-xs opacity-70">▼</span>
+            </a>
+            <!-- Dropdown menu -->
+            <div v-show="isDropdownCenter"
+              class="center-dropdown absolute left-0 mt-2 text-white rounded-2xl shadow-2xl z-50 border border-white/10"
+              role="menu">
+              <!-- Header -->
+              <div class="center-dropdown__header">Select a feature</div>
+
+              <!-- Item 1: Copyright Registration -->
+              <router-link to="/center/copyright-registration" class="center-dropdown__item" role="menuitem">
+                <div class="center-dropdown__icon center-dropdown__icon--blue">
+                  <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+                    <rect x="4" y="3" width="16" height="18" rx="2"/>
+                    <path stroke-linecap="round" d="M8 7h8M8 11h8M8 15h5"/>
+                    <circle cx="17" cy="16" r="3" fill="currentColor" stroke="none" opacity="0.3"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15.5 16l1 1 2-2"/>
+                  </svg>
+                </div>
+                <div class="center-dropdown__content">
+                  <div class="center-dropdown__title">
+                    Copyright Registration
+                    <span class="center-dropdown__badge center-dropdown__badge--free">Free</span>
+                  </div>
+                  <div class="center-dropdown__desc">
+                    Step-by-step guide to protect your work on MelodyHub.
+                  </div>
+                </div>
+                <svg class="center-dropdown__arrow" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/>
+                </svg>
+              </router-link>
+
+              <!-- Item 2: Copyright Violation Report -->
+              <router-link to="/center/copyright-report" class="center-dropdown__item" role="menuitem">
+                <div class="center-dropdown__icon center-dropdown__icon--red">
+                  <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+                    <circle cx="12" cy="12" r="9"/>
+                    <line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/>
+                  </svg>
+                </div>
+                <div class="center-dropdown__content">
+                  <div class="center-dropdown__title">
+                    Copyright Violation Report
+                    <span class="center-dropdown__badge center-dropdown__badge--new">New</span>
+                  </div>
+                  <div class="center-dropdown__desc">
+                    Detected duplicate songs? AI auto-comparison and report submission to MelodyHub for review.
+                  </div>
+                </div>
+                <svg class="center-dropdown__arrow" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/>
+                </svg>
+              </router-link>
+
+              <!-- Footer -->
+              <div class="center-dropdown__footer">
+                <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+                  <circle cx="12" cy="12" r="10"/>
+                  <line x1="12" y1="8" x2="12" y2="12"/>
+                  <line x1="12" y1="16" x2="12.01" y2="16"/>
+                </svg>
+                Need help? Contact MelodyHub at
+                <a href="mailto:support@melodyhub.vn" class="center-dropdown__footer-link">support@melodyhub.vn</a>
+              </div>
+            </div>
+          </div>
         </nav>
       </div>
 
@@ -173,7 +260,7 @@
             Try for Free
           </button>
         </div>
-
+        
         <!-- If you are already logged in, please display your avatar or menu. -->
         <div class="hidden sm:flex relative" ref="profileDropdownRef" v-else>
           <!-- Trigger dropdown -->
@@ -263,6 +350,148 @@
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
           </svg>
         </button>
+        <!-- Notification Bell (chỉ hiện khi đã login) -->
+        <div v-if="authStore.isAuthenticated" class="relative hidden sm:block" ref="notifDropdownRef">
+          <button
+            class="client-notif-btn"
+            :class="{ 'client-notif-btn--active': notifDropdownOpen }"
+            @click="toggleNotifDropdown"
+            aria-label="Notifications"
+          >
+            <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+            </svg>
+            <span v-if="unreadCount > 0" class="client-notif-badge" :class="{ 'badge-pulse': unreadCount > 0 }">
+              {{ unreadCount > 9 ? '9+' : unreadCount }}
+            </span>
+          </button>
+
+          <!-- Notification Dropdown -->
+          <Transition name="notif-drop">
+            <div v-if="notifDropdownOpen" class="client-notif-panel">
+
+              <!-- Header -->
+              <div class="cnotif__header">
+                <div class="cnotif__header-left">
+                  <span class="cnotif__title">Copyright</span>
+                  <span v-if="unreadCount > 0" class="cnotif__unread-badge">{{ unreadCount }} unread</span>
+                </div>
+                <button v-if="unreadCount > 0" class="cnotif__mark-all" @click.stop="markAllRead">
+                  Mark all read
+                </button>
+              </div>
+
+              <!-- Tabs -->
+              <div class="cnotif__tabs">
+                <button
+                  v-for="tab in notifTabs"
+                  :key="tab.key"
+                  class="cnotif__tab"
+                  :class="{ 'cnotif__tab--active': activeNotifTab === tab.key }"
+                  @click.stop="activeNotifTab = tab.key"
+                >
+                  {{ tab.label }}
+                </button>
+              </div>
+
+              <!-- Loading -->
+              <div v-if="notifLoading" class="cnotif__state">
+                <div class="cnotif__spinner"></div>
+                <span>Loading...</span>
+              </div>
+
+              <!-- Empty -->
+              <div v-else-if="filteredNotifications.length === 0" class="cnotif__state">
+                <svg width="32" height="32" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" style="opacity:0.2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                <span>All caught up!</span>
+              </div>
+
+              <!-- List -->
+              <div v-else class="cnotif__list">
+                <div
+                  v-for="n in filteredNotifications"
+                  :key="n.id"
+                  class="cnotif__item"
+                  :class="[
+                    'cnotif__item--' + n.type,
+                    { 'cnotif__item--unread': !n.is_read }
+                  ]"
+                  @click="handleNotifClick(n)"
+                >
+                  <!-- Icon -->
+                  <div class="cnotif__icon" :class="notifIconClass(n.type)">
+                    <!-- copyright_unverified → warning -->
+                    <svg v-if="n.type === 'copyright_unverified'" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                    </svg>
+                    <!-- copyright_approved → success -->
+                    <svg v-else-if="n.type === 'copyright_approved'" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    <!-- copyright_rejected → danger -->
+                    <svg v-else-if="n.type === 'copyright_rejected'" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    <!-- copyright_disputed → warn -->
+                    <svg v-else-if="n.type === 'copyright_disputed'" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    <!-- copyright_pending → info -->
+                    <svg v-else width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                  </div>
+
+                  <!-- Content -->
+                  <div class="cnotif__content">
+                    <p class="cnotif__item-title">{{ n.title }}</p>
+                    <p class="cnotif__item-msg">{{ n.message }}</p>
+                    <div class="cnotif__item-footer">
+                      <span class="cnotif__item-time">{{ timeAgo(n.created_at) }}</span>
+                      <!-- CTA for unverified copyright -->
+                      <router-link
+                        v-if="n.type === 'copyright_unverified' && n.action_url"
+                        :to="n.action_url"
+                        class="cnotif__cta"
+                        @click.stop="notifDropdownOpen = false"
+                      >
+                        Register now
+                      </router-link>
+                      <router-link
+                        v-else-if="n.type === 'copyright_rejected' && n.action_url"
+                        :to="n.action_url"
+                        class="cnotif__cta cnotif__cta--danger"
+                        @click.stop="notifDropdownOpen = false"
+                      >
+                        Resubmit
+                      </router-link>
+                      <router-link
+                        v-else-if="n.type === 'copyright_disputed' && n.action_url"
+                        :to="n.action_url"
+                        class="cnotif__cta cnotif__cta--warn"
+                        @click.stop="notifDropdownOpen = false"
+                      >
+                        View report
+                      </router-link>
+                    </div>
+                  </div>
+
+                  <!-- Unread dot -->
+                  <div v-if="!n.is_read" class="cnotif__dot"></div>
+                </div>
+              </div>
+
+              <!-- Footer -->
+              <div class="cnotif__footer" @click="notifDropdownOpen = false">
+                <router-link to="/center/copyright-registration" class="cnotif__footer-link">
+                  View all copyright notifications →
+                </router-link>
+              </div>
+            </div>
+          </Transition>
+        </div>
       </div>
 
       <!-- Mobile Menu (Visible when toggled) -->
@@ -331,7 +560,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, onMounted, onBeforeUnmount } from "vue";
+import { ref, watch, onMounted, onBeforeUnmount, computed } from "vue";
 import { useAuthStore, getFullImageUrl } from "@/store/authStore";
 import { useRouter } from "vue-router";
 import { useUserStore } from '@/modules/client/stores/users/UserStore';
@@ -411,10 +640,21 @@ const ToUpgrade = () => {
 }
 
 const isDropdownOpen      = ref(false);
+const isDropdownCenter    = ref(false);
 const isMobileMenuOpen    = ref(false);
 const dropdownProfileOpen = ref(false);
 const profileDropdownRef  = ref<HTMLElement | null>(null);
 const dropdown            = ref<HTMLElement | null>(null);
+const dropdownLibrary     = ref<HTMLElement | null>(null);
+const dropdownCenter      = ref<HTMLElement | null>(null);
+
+// ── Notification tabs ─────────────────────────────────────────────────────────
+const activeNotifTab = ref<'all' | 'unread' | 'copyright'>('all')
+const notifTabs = [
+  { key: 'all',       label: 'All' },
+  { key: 'unread',    label: 'Unread' },
+  { key: 'copyright', label: 'Copyright' },
+] as const
 
 const logo = new URL(
   "../assets/images/logo/melody-high-resolution-logo-white.png",
@@ -424,19 +664,26 @@ const logo = new URL(
 const toggleDropdown        = () => { isDropdownOpen.value = !isDropdownOpen.value }
 const toggleMobileMenu      = () => { isMobileMenuOpen.value = !isMobileMenuOpen.value }
 const toggleProfileDropdown = () => { dropdownProfileOpen.value = !dropdownProfileOpen.value }
+const toggleDropdownCenter        = () => { isDropdownCenter.value = !isDropdownCenter.value }
 
 const handleRegister = () => { alert("Register clicked!") }
 const handleLogin    = () => { router.push({ name: "Login" }) }
 
 const handleClickOutside = (event: MouseEvent) => {
-  if (dropdown.value && !dropdown.value.contains(event.target as Node)) {
+  if (dropdownLibrary.value && !dropdownLibrary.value.contains(event.target as Node)) {
     isDropdownOpen.value = false
+  }
+  if (dropdownCenter.value && !dropdownCenter.value.contains(event.target as Node)) {
+    isDropdownCenter.value = false
   }
   if (profileDropdownRef.value && !profileDropdownRef.value.contains(event.target as Node)) {
     dropdownProfileOpen.value = false
   }
   if (searchWrapRef.value && !searchWrapRef.value.contains(event.target as Node)) {
     searchFocused.value = false
+  }
+  if (notifDropdownRef.value && !notifDropdownRef.value.contains(event.target as Node)) {
+    notifDropdownOpen.value = false
   }
 }
 
@@ -464,7 +711,110 @@ const getAvatarColor = (name?: string) => {
   return colors[Math.abs(hash) % colors.length]
 }
 
-onMounted(() => { document.addEventListener("click", handleClickOutside) })
+// ── Notifications ─────────────────────────────────────────────────────────────
+import clientApi from '@/plugins/axios'
+
+interface NotifItem {
+  id: number
+  type: string
+  title: string
+  message: string
+  action_url: string | null
+  is_read: boolean
+  created_at: string
+}
+
+const notifications     = ref<NotifItem[]>([])
+const unreadCount       = ref(0)
+const notifLoading      = ref(false)
+const notifDropdownOpen = ref(false)
+const notifDropdownRef  = ref<HTMLElement | null>(null)
+let   notifPollTimer: ReturnType<typeof setInterval> | null = null
+
+const fetchNotifications = async () => {
+  if (!authStore.isAuthenticated) return
+  try {
+    notifLoading.value = true
+    const res = await clientApi.get('/notifications')
+    notifications.value = res.data?.data ?? []
+    unreadCount.value   = res.data?.unread_count ?? 0
+  } catch {
+    // silent fail — không làm crash layout
+  } finally {
+    notifLoading.value = false
+  }
+}
+
+const toggleNotifDropdown = () => {
+  notifDropdownOpen.value = !notifDropdownOpen.value
+  if (notifDropdownOpen.value) {
+    fetchNotifications()
+  }
+}
+
+// Computed filtered list by tab
+const filteredNotifications = computed(() => {
+  if (activeNotifTab.value === 'unread')    return notifications.value.filter(n => !n.is_read)
+  if (activeNotifTab.value === 'copyright') return notifications.value.filter(n => n.type.startsWith('copyright'))
+  return notifications.value
+})
+
+const markAllRead = async () => {
+  try {
+    await clientApi.patch('/notifications/read-all')
+    notifications.value.forEach(n => { n.is_read = true })
+    unreadCount.value = 0
+  } catch { /* silent */ }
+}
+
+const handleNotifClick = async (n: NotifItem) => {
+  if (!n.is_read) {
+    try {
+      await clientApi.patch(`/notifications/${n.id}/read`)
+      n.is_read = true
+      unreadCount.value = Math.max(0, unreadCount.value - 1)
+    } catch { /* silent */ }
+  }
+  notifDropdownOpen.value = false
+  if (n.action_url) router.push(n.action_url)
+}
+
+const notifIconClass = (type: string) => ({
+  'notif-item__icon--warn':    type === 'copyright_unverified' || type === 'copyright_disputed',
+  'notif-item__icon--success': type === 'copyright_approved'  || type === 'report_resolved',
+  'notif-item__icon--danger':  type === 'copyright_rejected',
+  'notif-item__icon--info':    type === 'system' || type === 'copyright_pending',
+})
+
+const timeAgo = (dateStr: string): string => {
+  const diff = Date.now() - new Date(dateStr).getTime()
+  const m = Math.floor(diff / 60000)
+  if (m < 1)  return 'Just now'
+  if (m < 60) return `${m}m ago`
+  const h = Math.floor(m / 60)
+  if (h < 24) return `${h}h ago`
+  return `${Math.floor(h / 24)}d ago`
+}
+
+onMounted(() => {
+  document.addEventListener("click", handleClickOutside)
+  if (authStore.isAuthenticated) {
+    fetchNotifications()
+    // Poll unread count mỗi 60s
+    notifPollTimer = setInterval(async () => {
+      if (!authStore.isAuthenticated) return
+      try {
+        const res = await clientApi.get('/notifications/unread-count')
+        unreadCount.value = res.data?.unread_count ?? 0
+      } catch { /* silent */ }
+    }, 60000)
+  }
+})
+
+onBeforeUnmount(() => {
+  document.removeEventListener('click', handleClickOutside)
+  if (notifPollTimer) clearInterval(notifPollTimer)
+})
 onBeforeUnmount(() => { document.removeEventListener("click", handleClickOutside) })
 </script>
 
@@ -836,4 +1186,458 @@ header {
   text-transform: uppercase;
   flex-shrink: 0;
 }
+
+/* ── MelodyHub Center Dropdown ───────────────────────────────────────────── */
+.center-dropdown {
+  width: 420px;
+  padding: 0;
+  overflow: hidden;
+  background: #1c2734 !important;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.center-dropdown__header {
+  padding: 16px 20px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  color: rgba(255,255,255,0.5);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+
+.center-dropdown__item {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 18px 20px;
+  cursor: pointer;
+  transition: background 0.2s;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+  text-decoration: none;
+  color: inherit;
+}
+
+.center-dropdown__item:hover {
+  background: rgba(255,255,255,0.04);
+}
+
+.center-dropdown__item:hover .center-dropdown__arrow {
+  transform: translateX(3px);
+  opacity: 1;
+}
+
+.center-dropdown__icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.center-dropdown__icon--blue {
+  background: rgba(59, 130, 246, 0.15);
+  color: #3b82f6;
+}
+
+.center-dropdown__icon--red {
+  background: rgba(239, 68, 68, 0.15);
+  color: #ef4444;
+}
+
+.center-dropdown__content {
+  flex: 1;
+  min-width: 0;
+}
+
+.center-dropdown__title {
+  font-size: 14px;
+  font-weight: 600;
+  color: rgba(255,255,255,0.95);
+  margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.center-dropdown__badge {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.center-dropdown__badge--free {
+  background: rgba(34, 197, 94, 0.15);
+  color: #22c55e;
+}
+
+.center-dropdown__badge--new {
+  background: rgba(249, 115, 22, 0.15);
+  color: #f97316;
+}
+
+.center-dropdown__desc {
+  font-size: 12px;
+  line-height: 1.5;
+  color: rgba(255,255,255,0.45);
+}
+
+.center-dropdown__arrow {
+  color: rgba(255,255,255,0.25);
+  flex-shrink: 0;
+  margin-top: 12px;
+  transition: transform 0.2s, opacity 0.2s;
+  opacity: 0.5;
+}
+
+.center-dropdown__footer {
+  padding: 14px 20px;
+  font-size: 11px;
+  color: rgba(255,255,255,0.4);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(0,0,0,0.2);
+}
+
+.center-dropdown__footer svg {
+  flex-shrink: 0;
+  opacity: 0.6;
+}
+
+.center-dropdown__footer-link {
+  color: #3b82f6;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.center-dropdown__footer-link:hover {
+  text-decoration: underline;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   CLIENT NOTIFICATION BELL + PANEL
+   Mirrors admin Header.vue but adapted for the transparent client header
+═══════════════════════════════════════════════════════════════════════════ */
+
+/* Bell button */
+.client-notif-btn {
+  position: relative;
+  background: transparent;
+  border: 1px solid rgba(0,198,255,0.4);
+  border-radius: 10px;
+  width: 38px;
+  height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: rgba(255,255,255,0.8);
+  transition: all 0.25s ease;
+}
+
+.client-notif-btn:hover,
+.client-notif-btn--active {
+  background: rgba(0,198,255,0.12);
+  border-color: rgba(0,198,255,0.8);
+  box-shadow: 0 0 10px rgba(0,198,255,0.35);
+  color: #fff;
+}
+
+/* Badge */
+.client-notif-badge {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  background: #ff4757;
+  color: #fff;
+  font-size: 9px;
+  font-weight: 700;
+  min-width: 17px;
+  height: 17px;
+  padding: 0 4px;
+  border-radius: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid rgba(7,13,20,0.9);
+  line-height: 1;
+}
+
+.badge-pulse {
+  animation: badgePulse 2s ease-in-out infinite;
+}
+
+@keyframes badgePulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(255,71,87,0.6); }
+  50%       { box-shadow: 0 0 0 5px rgba(255,71,87,0); }
+}
+
+/* Dropdown panel */
+.client-notif-panel {
+  position: absolute;
+  top: calc(100% + 12px);
+  right: 0;
+  width: 370px;
+  background: rgba(8, 14, 26, 0.97);
+  border: 1px solid rgba(0,198,255,0.3);
+  border-radius: 16px;
+  box-shadow:
+    0 0 20px rgba(0,198,255,0.12),
+    0 24px 64px rgba(0,0,0,0.7);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  overflow: hidden;
+  z-index: 9999;
+}
+
+/* ── Header ── */
+.cnotif__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px 10px;
+  border-bottom: 1px solid rgba(255,255,255,0.07);
+}
+
+.cnotif__header-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.cnotif__title {
+  font-size: 13px;
+  font-weight: 700;
+  color: rgba(255,255,255,0.9);
+  letter-spacing: 0.02em;
+}
+
+.cnotif__unread-badge {
+  font-size: 10px;
+  font-weight: 700;
+  background: rgba(0,198,255,0.15);
+  color: #00c6ff;
+  padding: 2px 7px;
+  border-radius: 8px;
+  letter-spacing: 0.02em;
+}
+
+.cnotif__mark-all {
+  font-size: 11px;
+  color: rgba(255,255,255,0.35);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  transition: color 0.2s;
+}
+.cnotif__mark-all:hover { color: rgba(255,255,255,0.7); }
+
+/* ── Tabs ── */
+.cnotif__tabs {
+  display: flex;
+  gap: 2px;
+  padding: 8px 12px;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+
+.cnotif__tab {
+  flex: 1;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 600;
+  color: rgba(255,255,255,0.35);
+  padding: 5px 10px;
+  border-radius: 8px;
+  transition: all 0.18s;
+  letter-spacing: 0.02em;
+}
+
+.cnotif__tab:hover {
+  background: rgba(255,255,255,0.05);
+  color: rgba(255,255,255,0.7);
+}
+
+.cnotif__tab--active {
+  background: rgba(0,198,255,0.12);
+  color: #00c6ff;
+}
+
+/* ── State (loading / empty) ── */
+.cnotif__state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 32px 16px;
+  color: rgba(255,255,255,0.25);
+  font-size: 13px;
+}
+
+.cnotif__spinner {
+  width: 18px;
+  height: 18px;
+  border: 2px solid rgba(0,198,255,0.15);
+  border-top-color: #00c6ff;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
+/* ── List ── */
+.cnotif__list {
+  max-height: 380px;
+  overflow-y: auto;
+  padding: 4px 0;
+}
+
+.cnotif__list::-webkit-scrollbar { width: 4px; }
+.cnotif__list::-webkit-scrollbar-track { background: transparent; }
+.cnotif__list::-webkit-scrollbar-thumb { background: rgba(0,198,255,0.18); border-radius: 2px; }
+
+/* ── Item ── */
+.cnotif__item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 11px 14px;
+  cursor: pointer;
+  transition: background 0.15s;
+  position: relative;
+  border-left: 2px solid transparent;
+}
+
+.cnotif__item--unread                 { background: rgba(0,198,255,0.03); }
+.cnotif__item--copyright_unverified   { border-left-color: #fbbf24; }
+.cnotif__item--copyright_approved     { border-left-color: #34d399; }
+.cnotif__item--copyright_rejected     { border-left-color: #f87171; }
+.cnotif__item--copyright_disputed     { border-left-color: #fb923c; }
+.cnotif__item--copyright_pending      { border-left-color: #60a5fa; }
+
+.cnotif__item:hover { background: rgba(255,255,255,0.04); }
+
+/* ── Icon ── */
+.cnotif__icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+/* reuse notifIconClass from script */
+.notif-item__icon--warn    { background: rgba(251,191,36,0.12);  color: #fbbf24; }
+.notif-item__icon--success { background: rgba(52,211,153,0.12);  color: #34d399; }
+.notif-item__icon--danger  { background: rgba(248,113,113,0.12); color: #f87171; }
+.notif-item__icon--info    { background: rgba(96,165,250,0.12);  color: #60a5fa; }
+
+/* ── Content ── */
+.cnotif__content {
+  flex: 1;
+  min-width: 0;
+}
+
+.cnotif__item-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: rgba(255,255,255,0.88);
+  margin: 0 0 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cnotif__item-msg {
+  font-size: 11px;
+  color: rgba(255,255,255,0.42);
+  margin: 0 0 5px;
+  line-height: 1.5;
+  /* allow 2 lines */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.cnotif__item-footer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.cnotif__item-time {
+  font-size: 10px;
+  color: rgba(255,255,255,0.2);
+}
+
+/* ── CTA buttons ── */
+.cnotif__cta {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 3px 9px;
+  border-radius: 6px;
+  background: rgba(0,198,255,0.15);
+  color: #00c6ff;
+  text-decoration: none;
+  letter-spacing: 0.03em;
+  transition: background 0.15s;
+  white-space: nowrap;
+}
+.cnotif__cta:hover { background: rgba(0,198,255,0.28); }
+
+.cnotif__cta--danger {
+  background: rgba(248,113,113,0.15);
+  color: #f87171;
+}
+.cnotif__cta--danger:hover { background: rgba(248,113,113,0.28); }
+
+.cnotif__cta--warn {
+  background: rgba(251,191,36,0.15);
+  color: #fbbf24;
+}
+.cnotif__cta--warn:hover { background: rgba(251,191,36,0.28); }
+
+/* ── Unread dot ── */
+.cnotif__dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #00c6ff;
+  flex-shrink: 0;
+  margin-top: 6px;
+  box-shadow: 0 0 6px rgba(0,198,255,0.6);
+}
+
+/* ── Footer ── */
+.cnotif__footer {
+  padding: 10px 16px;
+  border-top: 1px solid rgba(255,255,255,0.06);
+  text-align: center;
+  background: rgba(0,0,0,0.15);
+}
+
+.cnotif__footer-link {
+  font-size: 12px;
+  font-weight: 500;
+  color: #00c6ff;
+  text-decoration: none;
+  opacity: 0.8;
+  transition: opacity 0.2s;
+}
+.cnotif__footer-link:hover { opacity: 1; }
+
+/* Transition (reuse existing notif-drop keyframes already defined above) */
+
 </style>

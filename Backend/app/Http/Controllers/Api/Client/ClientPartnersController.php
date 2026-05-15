@@ -75,15 +75,22 @@ class ClientPartnersController extends Controller
 
             DB::beginTransaction();
 
-            $file     = $request->file('contract_file');
+            $file = $request->file('contract_file');
+
+            $ext = strtolower($file->getClientOriginalExtension());
+
             $fileName = $request->contract_number . '_' . time();
 
             $uploaded = $this->cloudinary->uploadApi()->upload(
                 $file->getRealPath(),
                 [
-                    'folder'        => 'contracts',
-                    'public_id'     => $fileName,
+                    'folder' => 'contracts',
+                    'public_id' => $fileName,
                     'resource_type' => 'raw',
+                    'format' => $ext,
+                    'use_filename' => true,
+                    'unique_filename' => false,
+                    'filename_override' => $fileName . '.' . $ext,
                 ]
             );
 

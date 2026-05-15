@@ -394,6 +394,7 @@ class ClientSongsController extends Controller
                 'partner_id'        => $request->partner_id     ?: null,
                 'genre_id'          => $request->genre_id       ?: null,
                 'status'            => $request->status,
+                'copyright_status'  => 'unverified',
             ]);
 
             if ($request->album_id) {

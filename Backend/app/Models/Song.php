@@ -142,6 +142,7 @@ class Song extends Model
         'copyright_owner',
         'license_type',
         'status',
+        'copyright_status',
 		'audio_processing_error',
         'Descriptions'
     ];

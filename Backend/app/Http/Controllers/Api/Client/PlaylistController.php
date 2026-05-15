@@ -143,10 +143,9 @@ class PlaylistController extends Controller
         }
 
         $songs = $playlist->songs()
-            ->with(['artist:id,name,slug', 'album:id,title,cover_url'])
+            ->with(['artist:id,name,slug', 'album:id,name,cover_url'])
             ->orderBy('playlist_songs.position')
-            ->get()
-            ->map(fn($s) => $this->formatSong($s, $playlist->id));
+            ->get();
 
         return response()->json([
             'data'  => $this->formatPlaylist($playlist),
@@ -350,7 +349,7 @@ class PlaylistController extends Controller
             ] : null,
             'album'       => $s->album ? [
                 'id'        => $s->album->id,
-                'title'     => $s->album->title,
+                'title'     => $s->album->name,
                 'cover_url' => $s->album->cover_url 
                     ? (str_starts_with($s->album->cover_url, 'http') 
                         ? $s->album->cover_url 

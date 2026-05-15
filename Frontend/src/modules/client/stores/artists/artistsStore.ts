@@ -158,6 +158,7 @@ export const useArtistStore = defineStore("client_artist", {
                 this.loading = true;
                 this.error = null;
                 const response = await ArtistService.deleteArtist(id);
+                this.artists = this.artists.filter(a => a.id !== id);
                 return response;
             } catch (error) {
                 if (error instanceof Error) {
@@ -227,26 +228,23 @@ export const useArtistStore = defineStore("client_artist", {
             this.loading = true
             try {
                 const response = await ArtistService.getAritstByIdPartner(id)
-                if (response && response.data) {
-                    this.artists = response.data
-                } else if (Array.isArray(response)) {
-                    this.artists = response;        
-                } else {
-                    this.artists = [];               
-                }
-                
+
+                // ArtistService trả về AxiosResponse, data nằm ở response.data
+                // Backend ResourceCollection trả về { data: [...] }
+                const raw = response?.data?.data ?? response?.data ?? response ?? []
+                this.artists = Array.isArray(raw) ? raw : Object.values(raw)
+
                 console.log(`Loaded ${this.artists.length} artists for partner ${id}`)
                 return response
-                
+
             } catch (err: any) {
                 this.error = err.response?.data?.message || 'Failed to fetch artists'
                 console.error('Error fetching artists:', this.error)
                 this.artists = []
                 throw err
             } finally {
-            this.loading = false
+                this.loading = false
             }
-             return await ArtistService.getAritstByIdPartner(id);
         },   
         resetStatistics() {
             this.statistics = null;

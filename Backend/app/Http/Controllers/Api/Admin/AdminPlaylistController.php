@@ -56,7 +56,7 @@ class AdminPlaylistController extends Controller
             ->findOrFail($id);
 
         $songs = $playlist->songs()
-            ->with(['artist:id,name,slug', 'album:id,title,cover_url'])
+            ->with(['artist:id,name,slug', 'album:id,name,cover_url'])
             ->orderBy('playlist_songs.position')
             ->get()
             ->map(fn($s) => [
@@ -68,7 +68,7 @@ class AdminPlaylistController extends Controller
                 'duration'    => $s->duration,
                 'is_explicit' => $s->is_explicit,
                 'artist'      => $s->artist ? ['id' => $s->artist->id, 'name' => $s->artist->name] : null,
-                'album'       => $s->album  ? ['id' => $s->album->id,  'title' => $s->album->title] : null,
+                'album'       => $s->album  ? ['id' => $s->album->id, 'title' => $s->album->name] : null,
                 'position'    => $s->pivot->position ?? null,
                 'added_at'    => $s->pivot->added_at ?? null,
             ]);

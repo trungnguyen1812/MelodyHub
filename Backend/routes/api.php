@@ -37,6 +37,7 @@ use App\Http\Controllers\Api\Admin\AdminPlaylistController;
 use App\Http\Controllers\Api\Client\SongDownloadController;
 use App\Http\Controllers\Api\Client\AdPriorityTierController;
 use App\Http\Controllers\Api\Admin\SettingAdPriorityTierController;
+use App\Http\Controllers\Api\Client\NotificationController;
 use App\Models\Partner;
 use App\Models\Song;
 
@@ -204,6 +205,14 @@ Route::prefix('client')->group(function () {
 
     // Ad Priority Tiers — public, used by partner ad wizard
     Route::get('/ad-priority-tiers', [AdPriorityTierController::class, 'index']);
+
+    // Notifications
+    Route::middleware('auth:sanctum')->group(function () {
+        Route::get('/notifications', [NotificationController::class, 'index']);
+        Route::get('/notifications/unread-count', [NotificationController::class, 'unreadCount']);
+        Route::patch('/notifications/read-all', [NotificationController::class, 'markAllRead']);
+        Route::patch('/notifications/{id}/read', [NotificationController::class, 'markRead']);
+    });
     
     // ── PUBLIC routes (không cần login) ─────────────────────────────────────────
     Route::prefix('albums')->group(function () {

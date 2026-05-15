@@ -11,6 +11,7 @@ use App\Services\ArtistSlugService;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Resources\ArtistResource;
+use App\Rules\UniqueArtistName;
 
 
 class ClientArtistsController extends Controller
@@ -128,6 +129,24 @@ class ClientArtistsController extends Controller
         ]);
     }
 
+    public function delete(Artist $artist)
+    {
+        try {
+            $artist->forceDelete();
+
+            return response()->json([
+                'status'  => 'success',
+                'message' => 'Artist deleted successfully',
+            ], 200);
+
+        } catch (\Throwable $e) {
+            return response()->json([
+                'status'  => 'error',
+                'message' => $e->getMessage(),
+            ], 400);
+        }
+    }
+
     public function update(Request $request, $id)
     {
         try {
@@ -139,7 +158,7 @@ class ClientArtistsController extends Controller
             ]);
 
             $data = $request->validate([
-                'name' => 'required|string|max:255',
+                'name' => ['required', 'string', 'max:255', new UniqueArtistName($artist->id)],
                 'slug' => 'nullable|string|max:255|unique:artists,slug,' . $artist->id,
                 'monthly_listeners' => 'nullable|integer|min:0',
                 'bio' => 'nullable|string',
@@ -205,12 +224,12 @@ class ClientArtistsController extends Controller
             ]);
             
             $data = $request->validate([
-                'name' => 'required|string|max:255',
+                'name' => ['required', 'string', 'max:255', new UniqueArtistName()],
                 'slug' => 'nullable|string|max:255|unique:artists,slug',
                 'monthly_listeners' => 'nullable|integer|min:0',
                 'bio' => 'nullable|string',
-                'avatar' => 'nullable|image|max:5120', 
-                'banner' => 'nullable|image|max:5120', 
+                'avatar' => 'nullable|image|max:5120',
+                'banner' => 'nullable|image|max:5120',
                 'country' => 'nullable|string|max:100',
                 'website' => 'nullable|url|max:255',
                 'facebook_url' => 'nullable|url|max:255',
@@ -225,7 +244,7 @@ class ClientArtistsController extends Controller
                 'seo_description' => 'nullable|string|max:500',
                 'seo_keywords' => 'nullable|string|max:255',
             ]);
-            
+
             $avatarPath = null;
             if ($request->hasFile('avatar') && $request->file('avatar')->isValid()) {
                 $avatarPath = FileUploadHelper::upload($request->file('avatar'), 'avatars/artists');

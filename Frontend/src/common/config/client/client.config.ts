@@ -47,6 +47,9 @@ import UserUpgradeView from '@/modules/client/views/user/UserUpgrade.view.vue';
 // playlist
 import AllListPlaylist from '@/modules/client/views/playlists/AllListPlaylist.view.vue';
 import PlaylistDetail from '@/modules/client/views/playlists/PlaylistDetail.view.vue';
+// MelodyHub Center
+import CopyrightRegistrationView from '@/modules/client/views/center/CopyrightRegistration.view.vue';
+import CopyrightReportView from '@/modules/client/views/center/CopyrightReport.view.vue';
 
 
 export const CLIENT_ROUTES = [
@@ -238,6 +241,17 @@ export const CLIENT_ROUTES = [
         path: 'Playlist/:slug',
         name: 'client.Playlist.detail',
         component: PlaylistDetail
+      },
+      // MelodyHub Center
+      {
+        path: 'center/copyright-registration',
+        name: 'client.center.copyright-registration',
+        component: CopyrightRegistrationView
+      },
+      {
+        path: 'center/copyright-report',
+        name: 'client.center.copyright-report',
+        component: CopyrightReportView
       },
     ]
   }

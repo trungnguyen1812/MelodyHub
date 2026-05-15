@@ -202,6 +202,7 @@ const currentPage = ref(1);
 const itemsPerPage = 10;
 const artistStore = useArtistStore();
 const usePartner = usePartnerStore()
+const idPartner = ref<number | null>(null)
 
 const { artists, loading } = storeToRefs(artistStore);
 
@@ -236,7 +237,7 @@ async function deleteArtist(id: number) {
 
         loading.value = true;
         await artistStore.fetchDelete(id);
-        await artistStore.fetchArtists();
+        if (idPartner.value) await artistStore.fetchGetAritistByIdPartner(idPartner.value);
         notificationStore.notify("Delete artist successful", "success");
         router.push({ name: "client.partner.artists" });
 
@@ -293,16 +294,15 @@ const formatDate = (dateString?: string): string => {
 
 const loadInfoPartner = async () => {
     await usePartner.fetchPartnerInfo()
-    const idPartner = usePartner.partner?.id
-    if (idPartner) await artistStore.fetchGetAritistByIdPartner(idPartner)
+    idPartner.value = usePartner.partner?.id ?? null
+    if (idPartner.value) await artistStore.fetchGetAritistByIdPartner(idPartner.value)
 }
 
 const onSearch = () => {
     if (searchTimeout) clearTimeout(searchTimeout);
     searchTimeout = window.setTimeout(async () => {
         if (!keyword.value.trim()) {
-            const idPartner = usePartner.partner?.id
-            if (idPartner) await artistStore.fetchGetAritistByIdPartner(idPartner)
+            if (idPartner.value) await artistStore.fetchGetAritistByIdPartner(idPartner.value)
             return;
         }
         await artistStore.fetchSearchArtitst(keyword.value);

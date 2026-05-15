@@ -56,7 +56,7 @@ class ClientAdvertisingController extends Controller
      * Store a new advertisement.
      */
     public function store(Request $request)
-    {log::info($request);
+    {
         $user = $request->user();
         
         // 1. Kiểm tra user có phải partner không (đã được duyệt)
