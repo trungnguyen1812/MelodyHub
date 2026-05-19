@@ -71,6 +71,12 @@
                 <span>Genres</span>
               </li>
             </router-link>
+            <router-link :to="{ name: 'admin.copyright' }" custom v-slot="{ navigate, isActive }">
+              <li :class="{ active: isActive }" @click.stop="navigate" @keyup.enter="navigate" role="link" tabindex="0">
+                <span class="icon-wrap sub"><img src="@/assets/images/icon/Tick.svg" alt="" /></span>
+                <span>Copyright</span>
+              </li>
+            </router-link>
           </ul>
         </transition>
       </ul>

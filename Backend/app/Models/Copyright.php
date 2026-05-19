@@ -79,4 +79,17 @@ class Copyright extends Model
 	{
 		return $this->belongsTo(Song::class);
 	}
+
+	public function getDocumentUrlAttribute($value)
+    {
+        if ($value && !str_starts_with($value, 'http')) {
+            return config('app.url') . '/storage/' . $value;
+        }
+        return $value;
+    }
+	
+	public function hasDocument()
+    {
+        return !is_null($this->document_url);
+    }
 }

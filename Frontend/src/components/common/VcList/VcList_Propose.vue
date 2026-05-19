@@ -53,6 +53,7 @@
         <div class="relative z-10">
           <div
             class="relative w-16 h-16 rounded-xl overflow-hidden shadow-lg group"
+            :class="song.copyright_status === 'verified' ? 'ring-2 ring-[#22d3ee]' : ''"
           >
             <img
               :src="song.image || song.cover"
@@ -60,6 +61,15 @@
               class="w-full h-full object-cover transition-all duration-300 transform group-hover:scale-110 group-hover:brightness-75"
               @error="handleImageError"
             />
+            <!-- Copyright verified badge -->
+            <div v-if="song.copyright_status === 'verified'"
+              class="absolute top-0.5 right-0.5 w-4 h-4 bg-[#22d3ee] rounded-full flex items-center justify-center shadow-md z-20"
+              title="Copyright Verified"
+            >
+              <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="20 6 9 17 4 12"/>
+              </svg>
+            </div>
             <!-- Play overlay -->
             <div
               class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 bg-black/50"

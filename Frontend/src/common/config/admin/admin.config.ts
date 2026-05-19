@@ -48,6 +48,9 @@ import PlaylistAdminDetailView from '@/modules/admin/views/playlists/PlaylistDet
 
 // setting manager
 import SettingManagerView  from '@/modules/admin/views/setting/SettingManager.view.vue';
+
+// Copyright manager
+import CopyrightManagerView from '@/modules/admin/views/copyright/CopyrightManager.view.vue';
 // ĐẢM BẢO EXPORT ĐÚNG
 export const ROUTER_ADMIN = [
   {
@@ -394,6 +397,13 @@ export const ROUTER_ADMIN = [
         path: "setting",
         name: "admin.setting",
         component: SettingManagerView,
+        meta: { requiresAuth: true, requiresAdmin: true }
+      },
+      /*================================================ COPYRIGHT ================================================*/
+      {
+        path: "copyright",
+        name: "admin.copyright",
+        component: CopyrightManagerView,
         meta: { requiresAuth: true, requiresAdmin: true }
       },
     ]

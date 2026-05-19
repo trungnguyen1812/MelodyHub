@@ -43,19 +43,33 @@
           :class="{ 'is-playing': isCurrentSongPlaying(song) }"
         >
           <div
-            class="song-cover relative w-50 h-50 rounded-lg overflow-hidden mb-4"
-            :class="{ 'playing-ring': isCurrentSongPlaying(song) && player.isPlaying }"
+            class="song-cover relative w-50 h-50 rounded-lg mb-4"
+            :class="[
+              isCurrentSongPlaying(song) && player.isPlaying ? 'playing-ring' : '',
+              song.copyright_status === 'verified' ? 'copyright-ring' : ''
+            ]"
           >
             <img
               :src="getSongCover(song)"
               :alt="song.title"
-              class="object-cover w-full h-full transition duration-300 transform group-hover:scale-105"
+              class="object-cover w-full h-full rounded-lg transition duration-300 transform group-hover:scale-105"
               :class="{ 
                 'brightness-75': isCurrentSongPlaying(song) || isHovered === song.id,
                 'animate-pulse-slow': isCurrentSongPlaying(song) && player.isPlaying
               }"
               @error="handleImageError"
             />
+
+            <!-- Copyright verified badge -->
+            <div
+              v-if="song.copyright_status === 'verified' && !(isCurrentSongPlaying(song) && player.isPlaying)"
+              class="copyright-badge absolute top-2 right-2 z-10"
+              title="Copyright Verified"
+            >
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="20 6 9 17 4 12"/>
+              </svg>
+            </div>
 
             <!-- Playing indicator badge -->
             <div 
@@ -269,6 +283,7 @@ onUnmounted(() => {
   padding-top: 10px;
   will-change: transform;
   gap: 2rem;
+  margin-left: 5px;
 }
 
 .song-card {
@@ -283,6 +298,23 @@ onUnmounted(() => {
 .song-cover {
   transition: all 0.3s ease;
   position: relative;
+  overflow: hidden;
+}
+
+/* Copyright verified ring — dùng outline để không clip badge */
+.song-cover.copyright-ring {
+  outline: 2px solid #22d3ee;
+  outline-offset: 1px;
+}
+
+/* Copyright badge */
+.copyright-badge {
+  width: 20px; height: 20px;
+  background: #22d3ee;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.5);
+  animation: slideIn 0.3s ease-out;
 }
 
 .song-cover.playing-ring {

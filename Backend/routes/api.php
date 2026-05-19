@@ -37,6 +37,8 @@ use App\Http\Controllers\Api\Admin\AdminPlaylistController;
 use App\Http\Controllers\Api\Client\SongDownloadController;
 use App\Http\Controllers\Api\Client\AdPriorityTierController;
 use App\Http\Controllers\Api\Admin\SettingAdPriorityTierController;
+use App\Http\Controllers\Api\Client\ClientCopyrightController;
+use App\Http\Controllers\Api\Admin\AdminCopyrightController;
 use App\Http\Controllers\Api\Client\NotificationController;
 use App\Models\Partner;
 use App\Models\Song;
@@ -305,6 +307,16 @@ Route::prefix('client')->group(function () {
                 ->where('id', '[0-9]+');
         });
 
+        // copyrights
+        Route::prefix('copyrights')->group(function () {
+            Route::get('/',                        [ClientCopyrightController::class, 'index']);
+            Route::post('/add',                    [ClientCopyrightController::class, 'add']);
+            Route::get('/{id}',                    [ClientCopyrightController::class, 'show'])->where('id', '[0-9]+');
+            Route::post('/{id}',                   [ClientCopyrightController::class, 'update'])->where('id', '[0-9]+');
+            Route::post('/{id}/upload-contract',   [ClientCopyrightController::class, 'uploadContract'])->where('id', '[0-9]+');
+            Route::delete('/{id}',                 [ClientCopyrightController::class, 'destroy'])->where('id', '[0-9]+');
+        });
+
         // Album Like
         Route::prefix('albumLike')->group(function () {
             Route::post('/{album}/like', [AlbumInteractionController::class, 'like'])
@@ -492,6 +504,18 @@ Route::prefix('admin')->middleware(['admin.token'])->group(function () {
         Route::patch('/{id}/status',                 [AdminPlaylistController::class, 'updateStatus']);
         Route::delete('/{id}',                       [AdminPlaylistController::class, 'destroy']);
         Route::delete('/{id}/songs/{songId}',        [AdminPlaylistController::class, 'removeSong']);
+    });
+
+    // =========================================================
+    // Copyright Management
+    // =========================================================
+    Route::prefix('copyrights')->group(function () {
+        Route::get('/',                  [AdminCopyrightController::class, 'index']);
+        Route::get('/stats',             [AdminCopyrightController::class, 'stats']);
+        Route::get('/{id}',              [AdminCopyrightController::class, 'show']);
+        Route::post('/{id}/approve',     [AdminCopyrightController::class, 'approve']);
+        Route::post('/{id}/reject',      [AdminCopyrightController::class, 'reject']);
+        Route::patch('/{id}',            [AdminCopyrightController::class, 'update']);
     });
 
     // =========================================================

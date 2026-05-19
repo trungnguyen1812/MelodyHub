@@ -355,6 +355,7 @@
 import { ref, reactive, computed, onMounted, onUnmounted, nextTick } from 'vue'
 import { useSongStore } from '@/modules/client/stores/songs/songsStore'
 import { usePartnerStore } from '@/modules/client/stores/partners/partnersStore'
+import { useCopyrightStore } from '@/modules/client/stores/copyrights/copyrightsStore'
 import type { Song, SongFilterParams } from '@/interfaces/songs.interface'
 
 // ── Step config ──
@@ -386,8 +387,9 @@ const showSuccess = ref(false)
 const fileInput  = ref<HTMLInputElement | null>(null)
 
 // ── Stores ──
-const partnerStore  = usePartnerStore()
-const songStoreData = useSongStore()
+const partnerStore    = usePartnerStore()
+const songStoreData   = useSongStore()
+const copyrightStore  = useCopyrightStore()
 
 // ── Static data ──
 const copyrightTypes = [
@@ -471,11 +473,12 @@ const getSelectedCoverStyle = () => form.selectedSong ? getSongCoverStyle(form.s
 
 const buildSongParams = (page = 1): SongFilterParams => ({
   page,
-  per_page:   20,
-  search:     songSearchQuery.value || undefined,
-  sort_by:    'created_at',
-  sort_dir:   'desc',
-  partner_id: partnerStore.partner?.id,
+  per_page:                 20,
+  search:                   songSearchQuery.value || undefined,
+  sort_by:                  'created_at',
+  sort_dir:                 'desc',
+  partner_id:               partnerStore.partner?.id,
+  exclude_copyright_status: 'verified',
 } as SongFilterParams)
 
 const loadSongOptions = async (page = 1, append = false) => {
@@ -546,22 +549,69 @@ const handleDrop = (e: DragEvent) => {
 const removeFile = (i: number) => form.files.splice(i, 1)
 
 // ── Submit ──
+const submitError = ref<string | null>(null)
+const submitErrors = ref<Record<string, string[]>>({})
+
 const handleSubmit = async () => {
   if (!form.selectedSong) return
   submitting.value = true
-  // TODO: call API when backend is ready
-  await new Promise(r => setTimeout(r, 1500))
-  submitting.value = false
-  showSuccess.value = true
-  currentStep.value = 0
-  setTimeout(() => (showSuccess.value = false), 4000)
-  
-  Object.assign(form, {
-    selectedSong: null, artistName: '', owner_name: '', copyright_type: 'author',
-    registration_number: '', registration_date: '', registration_country: '',
-    valid_from: '', valid_until: '', territory: 'Vietnam', territory_custom: '',
-    rights_included: [], notes: '', files: [], agreed: false,
-  })
+  submitError.value = null
+  submitErrors.value = {}
+
+  try {
+    const fd = new FormData()
+
+    // Required fields
+    fd.append('song_id',        String(form.selectedSong.id))
+    fd.append('copyright_type', form.copyright_type)
+    fd.append('owner_name',     form.owner_name)
+    fd.append('valid_from',     form.valid_from)
+
+    // Optional fields
+    if (form.registration_number)  fd.append('registration_number',  form.registration_number)
+    if (form.registration_date)    fd.append('registration_date',    form.registration_date)
+    if (form.registration_country) fd.append('registration_country', form.registration_country)
+    if (form.valid_until)          fd.append('valid_until',          form.valid_until)
+    if (form.notes)                fd.append('notes',                form.notes)
+
+    // Territory
+    const territory = form.territory === 'Custom' ? form.territory_custom : form.territory
+    if (territory) fd.append('territory', territory)
+
+    // Rights included — gửi dưới dạng JSON string
+    if (form.rights_included.length > 0) {
+      fd.append('rights_included', JSON.stringify(form.rights_included))
+    }
+
+    // File đầu tiên (backend nhận 1 file)
+    if (form.files.length > 0) {
+      fd.append('contract_file', form.files[0])
+    }
+
+    const result = await copyrightStore.addCopyright(fd)
+
+    if (result?.success) {
+      showSuccess.value = true
+      currentStep.value = 0
+      setTimeout(() => (showSuccess.value = false), 4000)
+
+      Object.assign(form, {
+        selectedSong: null, artistName: '', owner_name: '', copyright_type: 'author',
+        registration_number: '', registration_date: '', registration_country: '',
+        valid_from: '', valid_until: '', territory: 'Vietnam', territory_custom: '',
+        rights_included: [], notes: '', files: [], agreed: false,
+      })
+    } else {
+      submitError.value = result?.message ?? 'Đã xảy ra lỗi, vui lòng thử lại.'
+      if (result?.errors) {
+        submitErrors.value = result.errors as Record<string, string[]>
+      }
+    }
+  } catch {
+    submitError.value = 'Không thể kết nối đến server. Vui lòng thử lại.'
+  } finally {
+    submitting.value = false
+  }
 }
 
 onMounted(async () => {

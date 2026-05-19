@@ -47,6 +47,8 @@ class ClientSongsController extends Controller
         if ($request->filled('quality'))    $query->where('quality',    $request->quality);
         if ($request->filled('year')) $query->where('year', $request->year);
         if ($request->filled('genre_id'))   $query->where('genre_id',   $request->genre_id);
+        if ($request->filled('copyright_status')) $query->where('copyright_status', $request->copyright_status);
+        if ($request->filled('exclude_copyright_status')) $query->where('copyright_status', '!=', $request->exclude_copyright_status);
 
         if ($request->filled('is_premium'))
             $query->where('is_premium',  filter_var($request->is_premium,  FILTER_VALIDATE_BOOLEAN));

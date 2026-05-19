@@ -46,6 +46,7 @@ class SongResource extends JsonResource
             'status'         => $this->status,
             'copyright_owner' => $this->copyright_owner,
             'license_type'   => $this->license_type,
+            'copyright_status'=> $this->copyright_status,
 
             // ── Audio URLs theo quyền ──
             'urls' => [

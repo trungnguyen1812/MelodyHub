@@ -80,42 +80,65 @@ class NotificationController extends Controller
     }
 
     /**
-     * Tự động tạo notification nhắc nhở bản quyền cho partner.
-     * Chỉ tạo nếu chưa có notification unread cùng loại trong 24h.
+     * Tự động tạo/cập nhật notification nhắc nhở bản quyền cho partner.
+     * Chiến lược: chỉ giữ đúng 1 notification unread loại này — upsert thay vì tạo mới.
      */
     private function generateCopyrightReminders($user): void
     {
-        // Chỉ áp dụng cho partner
+        // Chỉ áp dụng cho partner active
         $partner = Partner::where('user_id', $user->id)
             ->where('status', 'active')
             ->first();
 
         if (!$partner) return;
 
-        // Đếm bài chưa đăng ký bản quyền
+        // Đếm bài chưa đăng ký bản quyền (unverified hoặc pending chưa được duyệt)
         $unverifiedCount = Song::where('partner_id', $partner->id)
             ->where('copyright_status', 'unverified')
             ->where('status', 'published')
             ->count();
 
-        if ($unverifiedCount === 0) return;
-
-        // Kiểm tra đã có notification nhắc trong 24h chưa
-        $recentReminder = Notification::where('user_id', $user->id)
+        // Tìm notification unread hiện có (nếu có)
+        $existing = Notification::where('user_id', $user->id)
             ->where('type', 'copyright_unverified')
             ->where('is_read', false)
+            ->latest()
+            ->first();
+
+        // Không còn bài nào unverified → xóa notification cũ nếu có
+        if ($unverifiedCount === 0) {
+            if ($existing) {
+                $existing->delete();
+            }
+            return;
+        }
+
+        $message = "You have {$unverifiedCount} song(s) without copyright registration. Register now to protect your work and get a verified ✓ badge.";
+        $data    = json_encode(['unverified_count' => $unverifiedCount, 'partner_id' => $partner->id]);
+
+        if ($existing) {
+            // Cập nhật notification hiện có thay vì tạo mới
+            $existing->update([
+                'message' => $message,
+                'data'    => $data,
+            ]);
+            return;
+        }
+
+        // Chưa có notification unread nào → kiểm tra 24h trước khi tạo mới
+        $recentlyCreated = Notification::where('user_id', $user->id)
+            ->where('type', 'copyright_unverified')
             ->where('created_at', '>=', now()->subHours(24))
             ->exists();
 
-        if ($recentReminder) return;
+        if ($recentlyCreated) return;
 
-        // Tạo notification mới
         Notification::create([
             'user_id'    => $user->id,
             'type'       => 'copyright_unverified',
             'title'      => 'Copyright Registration Reminder',
-            'message'    => "You have {$unverifiedCount} song(s) without copyright registration. Register now to protect your work and get a verified ✓ badge.",
-            'data'       => json_encode(['unverified_count' => $unverifiedCount, 'partner_id' => $partner->id]),
+            'message'    => $message,
+            'data'       => $data,
             'action_url' => '/center/copyright-registration',
             'is_read'    => false,
         ]);

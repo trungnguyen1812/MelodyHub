@@ -60,6 +60,7 @@ export interface Song {
   is_explicit:     boolean
   is_featured:     boolean
   allow_download:  boolean
+  copyright_status: 'verified' | 'pending' | 'unverified'
   status:          'draft' | 'published' | 'blocked' | 'processing' | 'processing_failed'
   copyright_owner: string | null
   license_type:    string | null
@@ -99,18 +100,20 @@ export interface SongDetailResponse {
  
 // ── Filter params ──
 export interface SongFilterParams {
-  page?:        number
-  per_page?:    number
-  search?:      string
-  artist_id?:   number
-  album_id?:    number
-  partner_id?:  number
-  status?:      'draft' | 'published' | 'blocked' | 'processing'
-  quality?:     'standard' | 'high' | 'lossless'
-  is_premium?:  boolean
-  is_featured?: boolean
-  year?:        number
-  sort_by?:     'created_at' | 'title' | 'total_plays' | 'total_likes' | 'duration' | 'year'
-  sort_dir?:    'asc' | 'desc'
+  page?:             number
+  per_page?:         number
+  search?:           string
+  artist_id?:        number
+  album_id?:         number
+  partner_id?:       number
+  status?:           'draft' | 'published' | 'blocked' | 'processing'
+  quality?:          'standard' | 'high' | 'lossless'
+  is_premium?:       boolean
+  is_featured?:      boolean
+  year?:             number
+  sort_by?:          'created_at' | 'title' | 'total_plays' | 'total_likes' | 'duration' | 'year'
+  sort_dir?:         'asc' | 'desc'
+  copyright_status?: 'verified' | 'pending' | 'unverified'
+  exclude_copyright_status?: string
 }
  

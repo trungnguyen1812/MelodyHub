@@ -110,8 +110,11 @@
 
               <!-- Cover + Info -->
               <div class="s-info">
-                <div class="s-cover">
+                <div class="s-cover" :class="song.copyright_status === 'verified' ? 's-cover--verified' : ''">
                   <img :src="getFullImageUrl(song.cover_url)" alt="cover" />
+                  <span v-if="song.copyright_status === 'verified'" class="s-cover-badge" title="Copyright Verified">
+                    <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                  </span>
                   <div class="s-cover-overlay">
                     <svg v-if="!(player.currentSong?.id === song.id && player.isPlaying)"
                       xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="16" height="16">
@@ -599,15 +602,24 @@ const onFollowSuccess = async (result: any) => {
   position: relative;
   width: 42px; height: 42px;
   border-radius: 7px;
-  overflow: hidden;
+  overflow: visible;
   flex-shrink: 0;
   background: rgba(255,255,255,0.05);
 }
-
-.s-cover img {
+.s-cover > img {
   width: 100%; height: 100%;
   object-fit: cover;
   display: block;
+  border-radius: 7px;
+}
+.s-cover--verified { box-shadow: 0 0 0 2px #22d3ee; border-radius: 7px; }
+.s-cover-badge {
+  position: absolute; top: -4px; right: -4px; z-index: 10;
+  width: 15px; height: 15px;
+  background: #22d3ee;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.5);
 }
 
 .s-cover-overlay {
