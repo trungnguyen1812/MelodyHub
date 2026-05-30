@@ -1,0 +1,147 @@
+// =============================================
+// MelodyHub - Nhóm 2: MUSIC CORE
+// Bảng: songs, artists, albums, genres,
+//        album_tracks, song_artists
+// =============================================
+
+Table genres {
+  id          bigint       [pk, increment]
+  name        varchar(100) [unique, not null]
+  slug        varchar(100) [unique, not null]
+  description text
+  cover_url   varchar(500)
+  color       varchar(20)
+  parent_id   bigint       [ref: > genres.id, note: 'Sub-genre']
+  order       int          [default: 0]
+  is_active   tinyint(1)   [default: 1]
+  total_songs int          [default: 0]
+  created_at  timestamp
+  updated_at  timestamp
+}
+
+Table artists {
+  id               bigint       [pk, increment]
+  name             varchar(255) [not null]
+  slug             varchar(255) [unique, not null]
+  bio              text
+  avatar_url       varchar(500)
+  banner_url       varchar(500)
+  country          varchar(100)
+  website          varchar(255)
+  facebook_url     varchar(255)
+  instagram_url    varchar(255)
+  twitter_url      varchar(255)
+  youtube_url      varchar(255)
+  verified         tinyint(1)   [default: 0]
+  is_featured      tinyint(1)   [default: 0]
+  monthly_listeners int         [default: 0]
+  total_followers  int          [default: 0]
+  total_plays      bigint       [default: 0]
+  total_songs      int          [default: 0]
+  total_albums     int          [default: 0]
+  partner_id       bigint       [ref: > partners.id, note: 'Nullable - thuộc partner nào']
+  status           varchar(20)  [default: 'active', note: 'active|inactive|pending']
+  seo_title        varchar(255)
+  seo_description  text
+  seo_keywords     text
+  created_at       timestamp
+  updated_at       timestamp
+  deleted_at       timestamp
+}
+
+Table albums {
+  id             bigint       [pk, increment]
+  name           varchar(255) [not null]
+  slug           varchar(255) [unique, not null]
+  artist_id      bigint       [ref: > artists.id]
+  cover_url      varchar(500)
+  description    text
+  release_date   date
+  album_type     varchar(20)  [default: 'album', note: 'album|single|ep|compilation|live']
+  label          varchar(255)
+  total_tracks   int          [default: 0]
+  total_duration int          [default: 0]
+  total_plays    bigint       [default: 0]
+  total_likes    bigint       [default: 0]
+  is_featured    tinyint(1)   [default: 0]
+  is_premium     tinyint(1)   [default: 0]
+  partner_id     bigint       [ref: > partners.id]
+  status         varchar(20)  [default: 'draft', note: 'published|draft|pending|rejected|archived']
+  published_at   timestamp
+  seo_title      varchar(255)
+  seo_description text
+  created_at     timestamp
+  updated_at     timestamp
+  deleted_at     timestamp
+}
+
+Table songs {
+  id                   bigint       [pk, increment]
+  title                varchar(255) [not null]
+  slug                 varchar(255) [unique, not null]
+  artist_id            bigint       [ref: > artists.id, note: 'Primary artist']
+  album_id             bigint       [ref: > albums.id]
+  genre_id             bigint       [ref: > genres.id]
+  partner_id           bigint       [ref: > partners.id]
+  duration             int          [not null, note: 'seconds']
+  track_number         int
+  disc_number          int
+  year                 int
+  lyrics               longtext     [note: 'JSON synced lyrics']
+  lyrics_status        varchar(20)  [note: 'pending|processing|completed|failed']
+  lyrics_processed_at  timestamp
+  lyrics_error         text
+  song_url             varchar(500) [note: 'Standard quality URL']
+  audio_public_id      varchar(255) [note: 'Cloudinary public_id']
+  song_url_hq          varchar(500)
+  song_url_lossless    varchar(500)
+  cover_url            varchar(500)
+  waveform_data        text
+  file_size            bigint
+  bitrate              int
+  quality              varchar(20)  [default: 'standard', note: 'standard|hq|lossless']
+  isrc                 varchar(20)  [unique]
+  is_premium           tinyint(1)   [default: 0]
+  is_explicit          tinyint(1)   [default: 0]
+  is_featured          tinyint(1)   [default: 0]
+  allow_download       tinyint(1)   [default: 0]
+  total_plays          bigint       [default: 0]
+  total_likes          int          [default: 0]
+  total_comments       int          [default: 0]
+  total_shares         int          [default: 0]
+  total_downloads      int          [default: 0]
+  copyright_owner      varchar(255)
+  license_type         varchar(100)
+  copyright_status     varchar(20)  [default: 'unverified', note: 'unverified|pending|verified|disputed']
+  status               varchar(20)  [default: 'draft', note: 'published|draft|pending|rejected|blocked']
+  Descriptions         text
+  created_at           timestamp
+  updated_at           timestamp
+}
+
+// Pivot: album ↔ song (thứ tự track)
+Table album_tracks {
+  id         bigint [pk, increment]
+  album_id   bigint [ref: > albums.id]
+  track_id   bigint [ref: > songs.id, note: 'song_id']
+  position   int    [not null]
+  created_at timestamp
+  updated_at timestamp
+
+  indexes {
+    (album_id, track_id) [unique]
+  }
+}
+
+// Pivot: song ↔ artist (nhiều nghệ sĩ / featured)
+Table song_artists {
+  id        bigint      [pk, increment]
+  song_id   bigint      [ref: > songs.id]
+  artist_id bigint      [ref: > artists.id]
+  role      varchar(50) [default: 'main', note: 'main|featured|producer|composer']
+  order     int         [default: 0]
+
+  indexes {
+    (song_id, artist_id) [unique]
+  }
+}

@@ -14,7 +14,7 @@ export interface SongArtist {
  
 export interface SongAlbum {
   id:        number
-  title:     string
+  name:     string
   slug:      string
   cover_url: string | null
 }

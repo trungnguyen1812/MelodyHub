@@ -39,7 +39,7 @@ class NotificationController extends Controller
     }
 
     /**
-     * Đánh dấu một notification là đã đọc.
+     * Đánh dấu một notification là đã đọc rồi xóa luôn.
      */
     public function markRead($id)
     {
@@ -47,22 +47,17 @@ class NotificationController extends Controller
             ->where('user_id', Auth::id())
             ->firstOrFail();
 
-        $notification->update([
-            'is_read' => true,
-            'read_at' => now(),
-        ]);
+        $notification->delete();
 
         return response()->json(['success' => true]);
     }
 
     /**
-     * Đánh dấu tất cả là đã đọc.
+     * Đánh dấu tất cả là đã đọc rồi xóa luôn toàn bộ notifications của user.
      */
     public function markAllRead()
     {
-        Notification::where('user_id', Auth::id())
-            ->where('is_read', false)
-            ->update(['is_read' => true, 'read_at' => now()]);
+        Notification::where('user_id', Auth::id())->delete();
 
         return response()->json(['success' => true]);
     }

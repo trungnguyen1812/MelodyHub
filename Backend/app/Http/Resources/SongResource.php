@@ -68,7 +68,7 @@ class SongResource extends JsonResource
             // ── Album ──
             'album' => $this->whenLoaded('album', fn() => $this->album ? [
                 'id'        => $this->album->id,
-                'title'     => $this->album->title,
+                'name'     => $this->album->name,
                 'slug'      => $this->album->slug,
                 'cover_url' => $this->album->cover_url ?? null,
             ] : null),

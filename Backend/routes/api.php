@@ -39,7 +39,9 @@ use App\Http\Controllers\Api\Client\AdPriorityTierController;
 use App\Http\Controllers\Api\Admin\SettingAdPriorityTierController;
 use App\Http\Controllers\Api\Client\ClientCopyrightController;
 use App\Http\Controllers\Api\Admin\AdminCopyrightController;
+use App\Http\Controllers\Api\Admin\AdminCopyrightReportController;
 use App\Http\Controllers\Api\Client\NotificationController;
+use App\Http\Controllers\Api\Client\CopyrightReportController;
 use App\Models\Partner;
 use App\Models\Song;
 
@@ -317,6 +319,12 @@ Route::prefix('client')->group(function () {
             Route::delete('/{id}',                 [ClientCopyrightController::class, 'destroy'])->where('id', '[0-9]+');
         });
 
+        // report song
+        Route::prefix('report')->group(function () {
+            Route::post('/add', [CopyrightReportController::class, 'store']);
+            Route::get('/my-reports', [CopyrightReportController::class, 'myReports']);
+        });
+
         // Album Like
         Route::prefix('albumLike')->group(function () {
             Route::post('/{album}/like', [AlbumInteractionController::class, 'like'])
@@ -421,9 +429,13 @@ Route::prefix('admin')->middleware(['admin.token'])->group(function () {
         Route::post('/search',                  [AlbumsManagerController::class, 'search']);
         Route::post('/add',                     [AlbumsManagerController::class, 'add']);
 
+        // Static routes phải đứng TRƯỚC dynamic {album}
+        Route::get('/statistics',               [AlbumsManagerController::class, 'statistics']);
+
         Route::get('/{album}',                  [AlbumsManagerController::class, 'show']);
         Route::post('/update/{album}',          [AlbumsManagerController::class, 'update']);
         Route::put('/{album}/tracks',           [AlbumsManagerController::class, 'updateTracks']);
+        Route::delete('/delete/{album}',        [AlbumsManagerController::class, 'destroy']);
     });
 
     // type partner
@@ -510,116 +522,28 @@ Route::prefix('admin')->middleware(['admin.token'])->group(function () {
     // Copyright Management
     // =========================================================
     Route::prefix('copyrights')->group(function () {
-        Route::get('/',                  [AdminCopyrightController::class, 'index']);
-        Route::get('/stats',             [AdminCopyrightController::class, 'stats']);
-        Route::get('/{id}',              [AdminCopyrightController::class, 'show']);
-        Route::post('/{id}/approve',     [AdminCopyrightController::class, 'approve']);
-        Route::post('/{id}/reject',      [AdminCopyrightController::class, 'reject']);
-        Route::patch('/{id}',            [AdminCopyrightController::class, 'update']);
+        Route::get('/',                          [AdminCopyrightController::class, 'index']);
+        Route::get('/stats',                     [AdminCopyrightController::class, 'stats']);
+        Route::get('/reports/{reportId}',        [AdminCopyrightController::class, 'getReport']);
+        Route::get('/{id}',                      [AdminCopyrightController::class, 'show']);
+        Route::post('/{id}/approve',             [AdminCopyrightController::class, 'approve']);
+        Route::post('/{id}/reject',              [AdminCopyrightController::class, 'reject']);
+        Route::post('/{id}/analyze',             [AdminCopyrightController::class, 'analyze']);
+        Route::get('/{id}/songs-for-compare',    [AdminCopyrightController::class, 'songsForCompare']);
+        Route::patch('/{id}',                    [AdminCopyrightController::class, 'update']);
     });
 
     // =========================================================
-    // Settings — Partner Types
+    // Copyright Report Management (Infringement Reports)
     // =========================================================
-    Route::prefix('settings/partner-types')->group(function () {
-        Route::get('/',                [App\Http\Controllers\Api\Admin\SettingPartnerTypeController::class, 'index']);
-        Route::post('/',               [App\Http\Controllers\Api\Admin\SettingPartnerTypeController::class, 'store']);
-        Route::get('/{id}',            [App\Http\Controllers\Api\Admin\SettingPartnerTypeController::class, 'show']);
-        Route::put('/{id}',            [App\Http\Controllers\Api\Admin\SettingPartnerTypeController::class, 'update']);
-        Route::delete('/{id}',         [App\Http\Controllers\Api\Admin\SettingPartnerTypeController::class, 'destroy']);
-        Route::patch('/{id}/toggle',   [App\Http\Controllers\Api\Admin\SettingPartnerTypeController::class, 'toggleActive']);
+    Route::prefix('copyright-reports')->group(function () {
+        Route::get('/',              [AdminCopyrightReportController::class, 'index']);
+        Route::get('/stats',         [AdminCopyrightReportController::class, 'stats']);
+        Route::get('/{id}',          [AdminCopyrightReportController::class, 'show']);
+        Route::patch('/{id}',        [AdminCopyrightReportController::class, 'update']);
+        Route::delete('/{id}',       [AdminCopyrightReportController::class, 'destroy']);
+        Route::post('/{id}/reprocess', [AdminCopyrightReportController::class, 'reprocess']);
     });
-
-    // =========================================================
-    // Settings — Roles
-    // =========================================================
-    Route::prefix('settings/roles')->group(function () {
-        Route::get('/permissions',     [App\Http\Controllers\Api\Admin\SettingRoleController::class, 'permissions']);
-        Route::get('/',                [App\Http\Controllers\Api\Admin\SettingRoleController::class, 'index']);
-        Route::post('/',               [App\Http\Controllers\Api\Admin\SettingRoleController::class, 'store']);
-        Route::get('/{id}',            [App\Http\Controllers\Api\Admin\SettingRoleController::class, 'show']);
-        Route::put('/{id}',            [App\Http\Controllers\Api\Admin\SettingRoleController::class, 'update']);
-        Route::delete('/{id}',         [App\Http\Controllers\Api\Admin\SettingRoleController::class, 'destroy']);
-    });
-
-    // =========================================================
-    // Settings — Subscription Plans
-    // =========================================================
-    Route::prefix('settings/subscription-plans')->group(function () {
-        Route::get('/',                [App\Http\Controllers\Api\Admin\SettingSubscriptionController::class, 'index']);
-        Route::post('/',               [App\Http\Controllers\Api\Admin\SettingSubscriptionController::class, 'store']);
-        Route::get('/{id}',            [App\Http\Controllers\Api\Admin\SettingSubscriptionController::class, 'show']);
-        Route::put('/{id}',            [App\Http\Controllers\Api\Admin\SettingSubscriptionController::class, 'update']);
-        Route::delete('/{id}',         [App\Http\Controllers\Api\Admin\SettingSubscriptionController::class, 'destroy']);
-        Route::patch('/{id}/toggle',   [App\Http\Controllers\Api\Admin\SettingSubscriptionController::class, 'toggleActive']);
-    });
-});
-
-// =========================================================
-// TEST ROUTE: Lyric Align Service (XÓA SAU KHI TEST XONG)
-// =========================================================
-Route::post('/test-align', function (Request $request) {
-    // Validate input
-    if (!$request->hasFile('audio') || !$request->input('lyrics')) {
-        return response()->json([
-            'success' => false,
-            'message' => 'Thiếu audio file hoặc lyrics text',
-        ], 422);
-    }
-
-    $serviceUrl = config('services.lyric_align.url', 'http://localhost:8001');
-
-    try {
-        // Lưu file upload vào temp
-        $audioFile = $request->file('audio');
-        $tmpPath   = $audioFile->getPathname();
-        $fileName  = $audioFile->getClientOriginalName() ?: 'audio.mp3';
-
-        // Gọi Python service
-        $response = \Illuminate\Support\Facades\Http::timeout(120)
-            ->attach('audio', file_get_contents($tmpPath), $fileName)
-            ->post($serviceUrl . '/align', [
-                'lyrics' => $request->input('lyrics'),
-            ]);
-
-        if ($response->failed()) {
-            return response()->json([
-                'success'     => false,
-                'message'     => 'Python service trả về lỗi',
-                'status_code' => $response->status(),
-                'body'        => $response->body(),
-            ], 502);
-        }
-
-        $lrc = $response->json('lrc');
-
-        if (!$lrc) {
-            return response()->json([
-                'success'  => false,
-                'message'  => 'Response không có trường lrc',
-                'raw_body' => $response->body(),
-            ], 502);
-        }
-
-        // Parse LRC sang array để dễ đọc
-        $lyricsService = app(\App\Services\LyricsService::class);
-        $parsed        = $lyricsService->parseLrc($lrc);
-
-        return response()->json([
-            'success'      => true,
-            'message'      => 'Align thành công',
-            'lrc_raw'      => $lrc,
-            'lrc_parsed'   => $parsed,
-            'total_lines'  => count($parsed),
-        ]);
-
-    } catch (\Exception $e) {
-        return response()->json([
-            'success' => false,
-            'message' => 'Lỗi kết nối tới Python service',
-            'error'   => $e->getMessage(),
-        ], 500);
-    }
 });
 
 // Route 404 fallback

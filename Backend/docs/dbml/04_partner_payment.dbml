@@ -1,0 +1,169 @@
+// =============================================
+// MelodyHub - Nhóm 4: PARTNER & PAYMENT
+// Bảng: partner_types, partners,
+//        partner_revenues, partner_payouts,
+//        subscription_plans, user_subscriptions,
+//        payments
+// =============================================
+
+Table partner_types {
+  id                        bigint       [pk, increment]
+  code                      varchar(50)  [unique, not null, note: 'music_distribution|advertising']
+  name                      varchar(100) [not null]
+  description               text
+  can_upload_songs          tinyint(1)   [default: 0]
+  can_manage_artists        tinyint(1)   [default: 0]
+  can_book_ads              tinyint(1)   [default: 0]
+  default_revenue_share     decimal(5,2) [default: 0]
+  default_payment_frequency varchar(20)  [note: 'monthly|quarterly']
+  default_payment_threshold decimal(15,2)[default: 0]
+  is_active                 tinyint(1)   [default: 1]
+  created_at                timestamp
+  updated_at                timestamp
+}
+
+Table partners {
+  id                       bigint       [pk, increment]
+  user_id                  bigint       [ref: > users.id]
+  partner_type_id          bigint       [ref: > partner_types.id]
+  company_name             varchar(255) [not null]
+  company_email            varchar(255) [not null]
+  company_phone            varchar(20)
+  company_address          text
+  tax_code                 varchar(50)
+  website                  varchar(255)
+  logo_url                 varchar(500)
+  description              text
+  contract_number          varchar(100)
+  contract_file_url        varchar(500)
+  contract_start_date      date
+  contract_end_date        date
+  revenue_share_percentage decimal(5,2)
+  payment_threshold        decimal(15,2)
+  payment_frequency        varchar(20)
+  bank_name                varchar(100)
+  bank_branch              varchar(100)
+  bank_account_number      varchar(50)
+  bank_account_name        varchar(100)
+  status                   varchar(20)  [default: 'pending', note: 'pending|active|suspended|terminated']
+  verified_at              timestamp
+  verified_by              bigint       [ref: > users.id]
+  notes                    text
+  created_at               timestamp
+  updated_at               timestamp
+  deleted_at               timestamp
+}
+
+Table partner_revenues {
+  id                      bigint       [pk, increment]
+  partner_id              bigint       [ref: > partners.id]
+  song_id                 bigint       [ref: > songs.id]
+  period_type             varchar(20)  [note: 'daily|monthly']
+  period_start            date         [not null]
+  period_end              date         [not null]
+  total_plays             bigint       [default: 0]
+  total_downloads         int          [default: 0]
+  ad_revenue              decimal(15,2)[default: 0]
+  subscription_revenue    decimal(15,2)[default: 0]
+  total_revenue           decimal(15,2)[default: 0]
+  partner_share_percentage decimal(5,2)[default: 0]
+  partner_share_amount    decimal(15,2)[default: 0]
+  platform_share_amount   decimal(15,2)[default: 0]
+  tax_amount              decimal(15,2)[default: 0]
+  net_payout              decimal(15,2)[default: 0]
+  status                  varchar(20)  [default: 'pending', note: 'pending|approved|paid']
+  calculated_at           timestamp
+  approved_at             timestamp
+  approved_by             bigint
+  paid_at                 timestamp
+  payment_reference       varchar(255)
+  notes                   text
+  created_at              timestamp
+  updated_at              timestamp
+}
+
+Table partner_payouts {
+  id                   bigint       [pk, increment]
+  partner_id           bigint       [ref: > partners.id]
+  payout_period_start  date         [not null]
+  payout_period_end    date         [not null]
+  total_revenue_ids    text         [note: 'JSON array of partner_revenue IDs']
+  total_amount         decimal(15,2)[not null]
+  fee_amount           decimal(15,2)[default: 0]
+  net_amount           decimal(15,2)[not null]
+  currency             varchar(10)  [default: 'VND']
+  payment_method       varchar(50)
+  transaction_reference varchar(255)
+  bank_name            varchar(100)
+  account_number       varchar(50)
+  status               varchar(20)  [default: 'pending', note: 'pending|processing|completed|failed']
+  processed_at         timestamp
+  processed_by         bigint
+  completed_at         timestamp
+  failed_reason        text
+  notes                text
+  created_at           timestamp
+  updated_at           timestamp
+}
+
+// ---------- Subscription ----------
+
+Table subscription_plans {
+  id                              bigint       [pk, increment]
+  name                            varchar(50)  [unique, not null, note: 'user_free|user_vip_monthly|user_vip_yearly']
+  display_name                    varchar(100) [not null]
+  description                     text
+  price                           decimal(15,2)[not null]
+  original_price                  decimal(15,2)
+  currency                        varchar(10)  [default: 'VND']
+  duration_days                   int          [not null]
+  trial_days                      int          [default: 0]
+  max_playlists                   int
+  max_songs_per_playlist          int
+  max_offline_downloads           int
+  max_devices                     int
+  can_download                    tinyint(1)   [default: 0]
+  audio_quality                   varchar(20)  [note: 'standard|hq|lossless']
+  ads_free                        tinyint(1)   [default: 0]
+  can_skip_unlimited              tinyint(1)   [default: 0]
+  can_create_collaborative_playlist tinyint(1) [default: 0]
+  priority_support                tinyint(1)   [default: 0]
+  early_access                    tinyint(1)   [default: 0]
+  is_active                       tinyint(1)   [default: 1]
+  is_featured                     tinyint(1)   [default: 0]
+  sort_order                      int          [default: 0]
+  created_at                      timestamp
+  updated_at                      timestamp
+}
+
+Table user_subscriptions {
+  id         bigint      [pk, increment]
+  user_id    bigint      [ref: > users.id]
+  plan_id    bigint      [ref: > subscription_plans.id]
+  status     varchar(20) [default: 'active', note: 'active|expired|cancelled']
+  starts_at  timestamp   [not null]
+  ends_at    timestamp   [not null]
+  canceled_at timestamp
+}
+
+Table payments {
+  id                     bigint       [pk, increment]
+  user_id                bigint       [ref: > users.id]
+  subscription_id        bigint       [ref: > user_subscriptions.id]
+  subscription_plan_id   bigint       [ref: > subscription_plans.id]
+  payment_type           varchar(30)  [note: 'subscription|topup|upgrade|renewal|refund']
+  amount                 decimal(15,2)[not null]
+  currency               varchar(10)  [default: 'VND']
+  status                 varchar(20)  [default: 'pending', note: 'pending|processing|completed|failed|refunded|cancelled']
+  transfer_content       varchar(255) [note: 'SePay transfer content']
+  gateway_transaction_id varchar(255)
+  bank_code              varchar(20)
+  payment_details        json
+  paid_at                timestamp
+  failed_reason          text
+  refunded_amount        decimal(15,2)[default: 0]
+  refunded_at            timestamp
+  notes                  text
+  created_at             timestamp
+  updated_at             timestamp
+}

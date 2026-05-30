@@ -179,7 +179,7 @@ class Partner extends Model
     public function getTotalPaidAttribute(): float
     {
         try {
-            return (float) ($this->partner_payouts()->sum('amount') ?? 0);
+            return (float) ($this->partner_payouts()->sum('net_amount') ?? 0);
         } catch (\Exception $e) {
             return 0;
         }

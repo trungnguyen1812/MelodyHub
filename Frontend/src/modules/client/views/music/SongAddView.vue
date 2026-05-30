@@ -403,7 +403,7 @@
           <div class="field">
             <label class="field-label">Publish Status <span class="required">*</span></label>
             <div class="status-options">
-              <label v-for="s in ['draft', 'published', 'blocked']" :key="s" class="status-option"
+              <label v-for="s in ['draft', 'published']" :key="s" class="status-option"
                 :class="{ active: form.status === s, ['status-option--' + s]: true }">
                 <input type="radio" :value="s" v-model="form.status" hidden />
                 <span class="status-dot"></span>

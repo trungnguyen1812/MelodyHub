@@ -1,0 +1,79 @@
+// =============================================
+// MelodyHub - Nhóm 5: ADVERTISING
+// Bảng: ad_priority_tiers, advertisements,
+//        ad_tracking
+// =============================================
+
+Table ad_priority_tiers {
+  id           bigint       [pk, increment]
+  value        varchar(50)  [unique, not null, note: 'basic|standard|premium|exclusive']
+  label        varchar(100) [not null]
+  color        varchar(20)  [note: 'Hex color for UI badge']
+  min_cpm      decimal(10,4)[default: 0, note: 'Min cost per 1000 impressions']
+  min_cpc      decimal(10,4)[default: 0, note: 'Min cost per click']
+  max_priority int          [default: 0, note: 'Higher = shown first']
+  description  text
+  sort_order   int          [default: 0]
+  is_active    tinyint(1)   [default: 1]
+  created_at   timestamp
+  updated_at   timestamp
+}
+
+Table advertisements {
+  id                      bigint       [pk, increment]
+  partner_id              bigint       [ref: > partners.id, note: 'Nullable - platform ad']
+  name                    varchar(255) [not null]
+  type                    varchar(30)  [not null, note: 'audio|banner|video|interstitial']
+  advertiser_name         varchar(255) [not null]
+  advertiser_url          varchar(500)
+  media_url               varchar(500)
+  thumbnail_url           varchar(500)
+  click_url               varchar(500)
+  duration                int          [note: 'seconds - for audio/video']
+  file_size               bigint
+  // Targeting
+  target_age_min          int
+  target_age_max          int
+  target_gender           varchar(20)  [note: 'male|female|all']
+  target_location         json
+  target_audience         varchar(50)  [note: 'free|vip|all']
+  target_genres           json
+  // Budget
+  budget_total            decimal(15,2)
+  budget_spent            decimal(15,2)[default: 0]
+  cost_per_play           decimal(10,4)
+  cost_per_click          decimal(10,4)
+  max_plays_per_user_per_day int
+  frequency_cap           int          [note: 'Max impressions per user per day']
+  priority                int          [default: 0]
+  // Schedule
+  start_date              date         [not null]
+  end_date                date
+  // Stats
+  total_impressions       bigint       [default: 0]
+  total_plays             bigint       [default: 0]
+  total_clicks            bigint       [default: 0]
+  total_skips             bigint       [default: 0]
+  total_revenue           decimal(15,2)[default: 0]
+  // Status
+  status                  varchar(20)  [note: 'draft|pending|active|paused|completed|rejected']
+  approved_at             timestamp
+  approved_by             bigint       [ref: > users.id]
+  rejected_reason         text
+  created_at              timestamp
+  updated_at              timestamp
+}
+
+Table ad_tracking {
+  id          bigint       [pk, increment]
+  ad_id       bigint       [ref: > advertisements.id]
+  user_id     bigint       [ref: > users.id, note: 'Nullable - guest']
+  session_id  varchar(255)
+  event_type  varchar(20)  [not null, note: 'impression|click|complete|skip|dismiss']
+  ip_address  varchar(45)
+  user_agent  text
+  referrer    varchar(500)
+  tracked_at  timestamp    [not null]
+  created_at  timestamp
+  updated_at  timestamp
+}

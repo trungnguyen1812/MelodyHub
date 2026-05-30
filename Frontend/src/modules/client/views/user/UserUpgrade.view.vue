@@ -26,7 +26,7 @@
                             <h2>Payment for {{ selectedPlan.display_name }}</h2>
                             <div class="plan-price-qr">
                                 <span class="price">{{ formatPrice(selectedPlan.price) }}</span>
-                                <span class="currency">{{ selectedPlan.currency }}</span>
+                                <span class="currency">₫</span>
                                 <span class="period">{{ getPricePeriod(selectedPlan.duration_days) }}</span>
                             </div>
                         </div>
@@ -102,7 +102,7 @@
                             <h3 class="plan-name">{{ plan.display_name }}</h3>
                             
                             <div class="plan-price">
-                                <span v-if="plan.price > 0" class="price-currency">$</span>
+                                <span v-if="plan.price > 0" class="price-currency">₫</span>
                                 <span class="price-amount">
                                     {{ plan.price > 0 ? formatPrice(plan.price) : 'FREE OF CHARGE' }}
                                 </span>
@@ -195,7 +195,7 @@
                         <div v-if="plan.original_price && plan.original_price > plan.price" class="price-comparison">
                             <p class="comparison-text">
                                 <i class="fas fa-check-circle"></i>
-                                Save ${{ formatPrice(plan.original_price - plan.price) }}
+                                Save {{ formatPrice(plan.original_price - plan.price) }} ₫
                             </p>
                         </div>
                     </div>
@@ -233,7 +233,7 @@
                                 <td>Price</td>
                                 <td v-for="plan in sortedPlans" :key="plan.id">
                                     <span v-if="plan.price === 0">Free</span>
-                                    <span v-else>{{ formatPrice(plan.price) }} {{ plan.currency }}{{ getPricePeriod(plan.duration_days) }}</span>
+                                    <span v-else>{{ formatPrice(plan.price) }} ₫{{ getPricePeriod(plan.duration_days) }}</span>
                                 </td>
                             </tr>
                             <tr>
@@ -421,8 +421,7 @@ const getPricePeriod = (days: number): string => {
 
 const getDailyPrice = (price: number, days: number): string => {
     if (days === 0) return ''
-    const dailyPrice = (price / days).toFixed(2)
-    return `Only ~ $${dailyPrice}/day`
+    return `Only ~ ${Math.round(price / days).toLocaleString('vi-VN')} ₫/ngày`
 }
 
 const getFeatureIcon = (hasFeature: boolean): string => {

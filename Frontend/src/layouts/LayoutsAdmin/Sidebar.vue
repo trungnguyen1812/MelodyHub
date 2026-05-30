@@ -106,7 +106,7 @@
             <span>Advertising</span>
           </li>
         </router-link>
-        <router-link :to="{ name: 'admin.advtisingmanager' }" custom v-slot="{ navigate, isActive }">
+        <router-link :to="{ name: 'admin.report' }" custom v-slot="{ navigate, isActive }">
           <li :class="{ active: isActive }" @click="navigate" @keyup.enter="navigate" role="link" tabindex="0">
             <span class="icon-wrap"><img src="@/assets/images/icon/report.svg" alt="" /></span>
             <span>Report</span>
@@ -120,7 +120,7 @@
 
     <!-- BOTTOM: Setting -->
     <div class="bottomSidebar">
-       <router-link :to="{ name: 'admin.setting' }" ">
+       <router-link :to="{ name: 'admin.setting' }">
           <div class="setting-btn">
             <span class="icon-wrap"><img src="@/assets/images/icon/setting.svg" alt="" /></span>
             <span>Settings</span>

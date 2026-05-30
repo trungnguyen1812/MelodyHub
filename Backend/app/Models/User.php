@@ -96,6 +96,7 @@ class User extends Authenticatable
 	protected $table = 'users';
 	protected $casts = [
 		'phone_verified_at' => 'datetime',
+		'email_verified_at' => 'datetime',
 		'date_of_birth' => 'datetime',
 		'published_at' => 'datetime',
 		'play_count_last_24h' => 'int',
@@ -116,6 +117,8 @@ class User extends Authenticatable
 		'name',
 		'slug',
 		'email',
+		'google_id',
+		'email_verified_at',
 		'phone',
 		'username',
 		'password',

@@ -1,0 +1,108 @@
+// =============================================
+// MelodyHub - Nhóm 1: USERS & AUTH
+// Bảng thực sự đang dùng: users, roles, user_roles,
+//   personal_access_tokens, permissions, modules
+// =============================================
+
+Table users {
+  id              bigint       [pk, increment]
+  name            varchar(255) [not null]
+  slug            varchar(255) [unique, not null]
+  email           varchar(255) [unique, not null]
+  google_id       varchar(255) [unique]
+  email_verified_at timestamp
+  phone           varchar(20)
+  username        varchar(100) [unique]
+  password        varchar(255) [not null]
+  avatar_url      varchar(500)
+  date_of_birth   date
+  gender          varchar(30)  [note: 'male|female|other|prefer_not_to_say']
+  country         varchar(100)
+  timezone        varchar(50)  [default: 'Asia/Ho_Chi_Minh']
+  bio             text
+  status          varchar(20)  [default: 'pending', note: 'active|inactive|banned|pending']
+  wallet_balance  decimal(15,2)[default: 0]
+  is_vip          tinyint(1)   [default: 0]
+  vip_expires_at  timestamp
+  play_count_last_24h  int     [default: 0]
+  play_count_last_7d   int     [default: 0]
+  play_count_last_30d  int     [default: 0]
+  trending_score  decimal(10,2)[default: 0]
+  has_used_trial  tinyint(1)   [default: 0]
+  created_at      timestamp
+  updated_at      timestamp
+  deleted_at      timestamp
+}
+
+Table roles {
+  id           bigint      [pk, increment]
+  name         varchar(50) [unique, not null, note: 'boss|admin|content_manager|partner|moderator|user_vip_yearly|user_vip_monthly|user_free']
+  display_name varchar(100)[not null]
+  description  text
+  level        tinyint     [default: 0, note: 'Higher = more permissions']
+  is_system    tinyint(1)  [default: 0]
+  created_at   timestamp
+  updated_at   timestamp
+}
+
+Table user_roles {
+  id          bigint    [pk, increment]
+  user_id     bigint    [ref: > users.id]
+  role_id     bigint    [ref: > roles.id]
+  is_primary  tinyint(1)[default: 0]
+  assigned_by bigint
+  assigned_at timestamp
+  expires_at  timestamp
+
+  indexes {
+    (user_id, role_id) [unique]
+  }
+}
+
+Table personal_access_tokens {
+  id             bigint       [pk, increment]
+  tokenable_type varchar(255) [not null]
+  tokenable_id   bigint       [not null]
+  name           varchar(255) [not null]
+  token          varchar(64)  [unique, not null]
+  abilities      text
+  last_used_at   timestamp
+  expires_at     timestamp
+  created_at     timestamp
+  updated_at     timestamp
+}
+
+Table modules {
+  id           bigint      [pk, increment]
+  name         varchar(100)[unique, not null]
+  display_name varchar(150)[not null]
+  description  text
+  icon         varchar(100)
+  route_prefix varchar(100)
+  parent_id    bigint      [ref: > modules.id]
+  order        int         [default: 0]
+  is_active    tinyint(1)  [default: 1]
+  is_system    tinyint(1)  [default: 0]
+  created_at   timestamp
+  updated_at   timestamp
+}
+
+Table permissions {
+  id           bigint      [pk, increment]
+  module_id    bigint      [ref: > modules.id]
+  name         varchar(100)[unique, not null]
+  display_name varchar(150)[not null]
+  description  text
+  created_at   timestamp
+  updated_at   timestamp
+}
+
+Table role_permissions {
+  id            bigint [pk, increment]
+  role_id       bigint [ref: > roles.id]
+  permission_id bigint [ref: > permissions.id]
+
+  indexes {
+    (role_id, permission_id) [unique]
+  }
+}

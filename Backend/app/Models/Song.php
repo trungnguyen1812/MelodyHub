@@ -6,7 +6,7 @@ use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Auth;
-
+use App\Models\CopyrightReport;
 /**
  * Class Song
  * 
@@ -326,5 +326,50 @@ class Song extends Model
         return $this->song_likes()
             ->where('user_id', Auth::id())
             ->exists();
+    }
+
+    // Thêm vào phần Relationships trong Song Model
+
+    /**
+     * Copyright reports where this song is the ORIGINAL (bị xâm phạm)
+     */
+    public function originalCopyrightReports()
+    {
+        return $this->hasMany(CopyrightReport::class, 'original_song_id');
+    }
+
+    /**
+     * Copyright reports where this song is the INFRINGING (bị report)
+     */
+    public function infringingCopyrightReports()
+    {
+        return $this->hasMany(CopyrightReport::class, 'infringing_song_id');
+    }
+
+    /**
+     * Check if this song is blocked due to copyright violation
+     */
+    public function isBlocked(): bool
+    {
+        return $this->status === 'blocked' || 
+            ($this->copyright_status === 'disputed' && $this->status === 'blocked');
+    }
+
+    /**
+     * Get active copyright reports for this song (as infringing)
+     */
+    public function getActiveReportsAttribute()
+    {
+        return $this->infringingCopyrightReports()
+            ->whereIn('status', ['pending', 'ai_scanning', 'reviewing'])
+            ->get();
+    }
+
+    /**
+     * Get the fingerprint cache for this song
+     */
+    public function fingerprint()
+    {
+        return $this->hasOne(SongFingerprint::class);
     }
 }

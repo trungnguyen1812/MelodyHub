@@ -143,7 +143,7 @@ class PlaylistController extends Controller
         }
 
         $songs = $playlist->songs()
-            ->with(['artist:id,name,slug', 'album:id,name,cover_url'])
+            ->with(['artist:id,name,slug,avatar_url', 'album:id,name,cover_url'])
             ->orderBy('playlist_songs.position')
             ->get();
 

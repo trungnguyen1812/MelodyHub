@@ -214,7 +214,7 @@
               <div class="card-header">
                 <div class="artist-info">
                   <div class="artist-avatar-card">
-                    <img :src="getArtistAvatarUrl(player.currentSong?.artist)"
+                    <img :src="getFullImageUrl(player.currentSong?.artist?.avatar_url)"
                       :alt="player.currentSong?.artist?.name || 'Artist'" @error="handleImageError">
                   </div>
                   <div class="artist-details-card">
@@ -580,10 +580,12 @@ const getLyricGradient = (song: Song) => {
   return list[song.id % list.length]
 }
 
-const getArtistAvatarUrl = (artist: any) => {
-  if (!artist?.avatar_url) return '/images/default-avatar.png'
-  return getFullImageUrl(artist.avatar_url)
-}
+// const getArtistAvatarUrl = (artist: any) => {
+//   if (!artist?.avatar_url) return '/images/default-avatar.png'
+//   return getFullImageUrl(artist.avatar_url)
+// }
+// console.log(player.currentSong?.artist?.avatar_url);
+
 
 const handleImageError = (event: Event) => {
   const img = event.target as HTMLImageElement

@@ -50,7 +50,7 @@ import PlaylistDetail from '@/modules/client/views/playlists/PlaylistDetail.view
 // MelodyHub Center
 import CopyrightRegistrationView from '@/modules/client/views/center/CopyrightRegistration.view.vue';
 import CopyrightReportView from '@/modules/client/views/center/CopyrightReport.view.vue';
-
+import ReportList from '@/modules/client/views/center/ReportList.vue';
 
 export const CLIENT_ROUTES = [
   {
@@ -252,6 +252,11 @@ export const CLIENT_ROUTES = [
         path: 'center/copyright-report',
         name: 'client.center.copyright-report',
         component: CopyrightReportView
+      },
+      {
+        path: 'center/my-reports',
+        name: 'client.center.my-reports',
+        component: ReportList
       },
     ]
   }

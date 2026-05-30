@@ -114,7 +114,7 @@
                 <span class="song-artist">{{ song.artist?.name || 'Unknown Artist' }}</span>
               </div>
               <div class="song-stats">
-                <span class="stats-val text-rose-400">{{ formatNumber(song.stats?.total_likes || song.like_count || 0) }}</span>
+                <span class="stats-val text-rose-400">{{ formatNumber(song.stats?.total_likes  || 0) }}</span>
                 <span class="stats-label">likes</span>
               </div>
             </div>

@@ -1,0 +1,127 @@
+// =============================================
+// MelodyHub - Nhóm 3: INTERACTIONS
+// Bảng: song_plays, song_likes, song_downloads,
+//        artist_followers, album_likes,
+//        comments, playlists, playlist_songs
+// =============================================
+
+// ---------- Song interactions ----------
+
+Table song_plays {
+  id              bigint      [pk, increment]
+  user_id         bigint      [ref: > users.id, note: 'Nullable - guest play']
+  song_id         bigint      [ref: > songs.id]
+  playlist_id     bigint      [ref: > playlists.id]
+  played_duration int         [note: 'seconds actually listened']
+  play_percentage decimal(5,2)[note: '0-100']
+  is_completed    tinyint(1)  [default: 0]
+  played_at       timestamp   [not null]
+  device_type     varchar(20) [note: 'mobile|tablet|desktop|web']
+  device_info     text
+  ip_address      varchar(45)
+  country         varchar(100)
+  city            varchar(100)
+}
+
+Table song_likes {
+  id         bigint    [pk, increment]
+  user_id    bigint    [ref: > users.id]
+  song_id    bigint    [ref: > songs.id]
+  created_at timestamp
+
+  indexes {
+    (user_id, song_id) [unique]
+  }
+}
+
+Table song_downloads {
+  id            bigint      [pk, increment]
+  user_id       bigint      [ref: > users.id]
+  song_id       bigint      [ref: > songs.id]
+  quality       varchar(20) [note: 'low|hq']
+  file_size     bigint
+  downloaded_at timestamp   [not null]
+  ip_address    varchar(45)
+  device_info   text
+}
+
+// ---------- Artist interactions ----------
+
+Table artist_followers {
+  id          bigint    [pk, increment]
+  user_id     bigint    [ref: > users.id]
+  artist_id   bigint    [ref: > artists.id]
+  followed_at timestamp [not null]
+
+  indexes {
+    (user_id, artist_id) [unique]
+  }
+}
+
+// ---------- Album interactions ----------
+
+Table album_likes {
+  id         bigint    [pk, increment]
+  user_id    bigint    [ref: > users.id]
+  album_id   bigint    [ref: > albums.id]
+  created_at timestamp
+
+  indexes {
+    (user_id, album_id) [unique]
+  }
+}
+
+// ---------- Comments ----------
+
+Table comments {
+  id            bigint      [pk, increment]
+  user_id       bigint      [ref: > users.id]
+  song_id       bigint      [ref: > songs.id]
+  parent_id     bigint      [ref: > comments.id, note: 'Nullable - reply to comment']
+  content       text        [not null]
+  timestamp     int         [note: 'Song position in seconds when commented']
+  total_likes   int         [default: 0]
+  total_replies int         [default: 0]
+  is_pinned     tinyint(1)  [default: 0]
+  is_edited     tinyint(1)  [default: 0]
+  status        varchar(20) [default: 'active', note: 'active|hidden|deleted']
+  created_at    timestamp
+  updated_at    timestamp
+  deleted_at    timestamp
+}
+
+// ---------- Playlists ----------
+
+Table playlists {
+  id                  bigint       [pk, increment]
+  user_id             bigint       [ref: > users.id]
+  name                varchar(255) [not null]
+  slug                varchar(255)
+  description         text
+  cover_url           varchar(500)
+  is_public           tinyint(1)   [default: 0]
+  is_collaborative    tinyint(1)   [default: 0]
+  is_system           tinyint(1)   [default: 0]
+  total_songs         int          [default: 0]
+  total_duration      int          [default: 0]
+  total_followers     int          [default: 0]
+  total_plays         int          [default: 0]
+  play_count_last_30d int          [default: 0]
+  status              varchar(20)  [default: 'active']
+  created_at          timestamp
+  updated_at          timestamp
+  deleted_at          timestamp
+}
+
+Table playlist_songs {
+  id          bigint    [pk, increment]
+  playlist_id bigint    [ref: > playlists.id]
+  song_id     bigint    [ref: > songs.id]
+  added_by    bigint    [ref: > users.id]
+  position    int       [not null]
+  added_at    timestamp [not null]
+
+  indexes {
+    (playlist_id, song_id) [unique]
+  }
+}

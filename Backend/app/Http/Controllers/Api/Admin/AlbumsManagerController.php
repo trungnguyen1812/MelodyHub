@@ -137,13 +137,41 @@ class AlbumsManagerController extends Controller
         }
     }
 
-    public function show(Album $album)
+    public function show($id)
     {
+        $album = Album::findOrFail($id);
         return response()->json($album->load('artist', 'tracks.artist'));
     }
 
-    public function update(Request $request, Album $album)
+    public function statistics()
     {
+        $total = Album::count();
+        $thisMonth = Album::whereMonth('created_at', now()->month)
+            ->whereYear('created_at', now()->year)
+            ->count();
+        $lastMonth = Album::whereMonth('created_at', now()->subMonth()->month)
+            ->whereYear('created_at', now()->subMonth()->year)
+            ->count();
+
+        $growthPercentage = $lastMonth > 0
+            ? round((($thisMonth - $lastMonth) / $lastMonth) * 100, 2)
+            : ($thisMonth > 0 ? 100 : 0);
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'total_albums'           => $total,
+                'new_albums_this_month'  => $thisMonth,
+                'new_albums_last_month'  => $lastMonth,
+                'growth_percentage'      => $growthPercentage,
+                'status'                 => $growthPercentage >= 0 ? 'increase' : 'decrease',
+            ],
+        ]);
+    }
+
+    public function update(Request $request, $id)
+    {
+        $album = Album::findOrFail($id);
         DB::beginTransaction();
         try {
             $request->merge([
@@ -236,8 +264,9 @@ class AlbumsManagerController extends Controller
         }
     }
 
-    public function destroy(Album $album)
+    public function destroy($id)
     {
+        $album = Album::findOrFail($id);
         try {
             // Remove associated songs constraint (set album_id to null)
             Song::where('album_id', $album->id)->update(['album_id' => null]);
@@ -262,8 +291,9 @@ class AlbumsManagerController extends Controller
      * Update album tracks specifically
      * PUT /albums/{id}/tracks
      */
-    public function updateTracks(Request $request, Album $album)
+    public function updateTracks(Request $request, $id)
     {
+        $album = Album::findOrFail($id);
         DB::beginTransaction();
         try {
             $data = $request->validate([

@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use App\Services\ArtistSlugService;
+use App\Http\Resources\ArtistResource;
 
 
 
@@ -110,7 +111,10 @@ class ArtistsManagerController extends Controller
 
     public function show(Artist $artist)
     {
-        return response()->json($artist);
+        return response()->json([
+            'success' => true,
+            'data' => new ArtistResource($artist),
+        ]);
     }
 
     public function update(Request $request, $id)

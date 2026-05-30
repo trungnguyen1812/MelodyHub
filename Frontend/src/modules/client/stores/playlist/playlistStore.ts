@@ -18,7 +18,7 @@ export interface PlaylistSong {
   duration: number
   is_premium: boolean
   is_explicit: boolean
-  artist: { id: number; name: string; slug: string } | null
+  artist: { id: number; name: string; slug: string; avatar_url: string | null } | null
   album: { id: number; title: string; cover_url: string | null } | null
   position: number
   added_at: string | null

@@ -247,8 +247,14 @@ class PartnersManagerController extends Controller
             
             // 2. Tổng doanh thu từ bảng partner_revenues (TẤT CẢ, không lọc tháng)
             $totalRevenueAll = PartnerRevenue::sum('total_revenue') ?? 0;
-            $totalPaidAll = PartnerRevenue::where('status', 'paid')->sum('net_payout') ?? 0;
-            $totalPendingPayoutAll = PartnerRevenue::where('status', 'calculated')->sum('net_payout') ?? 0;
+
+            // total_paid = tổng số tiền đã thực sự thanh toán qua partner_payouts
+            $totalPaidAll = DB::table('partner_payouts')->sum('net_amount') ?? 0;
+
+            // pending_payout = tổng net_payout chưa thanh toán (revenue - paid), nhất quán với Partner accessor
+            $totalPendingPayoutAll = max(0, 
+                (PartnerRevenue::sum('net_payout') ?? 0) - $totalPaidAll
+            );
             
             // 3. Thống kê theo tháng (6 tháng gần nhất)
             $monthlyStats = $this->getMonthlyStatistics();

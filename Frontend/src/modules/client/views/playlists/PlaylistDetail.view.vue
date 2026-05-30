@@ -126,7 +126,6 @@
               <span class="th-rank">#</span>
               <span class="th-info">Title / Artist</span>
               <span class="th-album hide-mobile">Album</span>
-              <span class="th-added hide-mobile">Added</span>
               <span class="th-duration">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" width="14" height="14">
                   <path fill-rule="evenodd" d="M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16Zm.75-13a.75.75 0 0 0-1.5 0v5c0 .414.336.75.75.75h4a.75.75 0 0 0 0-1.5h-3.25V5Z" clip-rule="evenodd" />
@@ -177,8 +176,7 @@
                 </div>
               </div>
 
-              <div class="t-album hide-mobile">{{ song.album?.title || 'Single' }}</div>
-              <div class="t-added hide-mobile">{{ formatDate(song.added_at) }}</div>
+              <div class="t-album hide-mobile">{{ song.album?.name || 'Single' }}</div>
               <div class="t-duration">{{ formatTrackDuration(song.duration) }}</div>
 
               <div v-if="isOwner" class="t-actions" @click.stop>
@@ -475,7 +473,18 @@ const loadPlaylist = async () => {
 // ── Player ────────────────────────────────────────────────────────────────────
 const mapSong = (song: PlaylistSong) => ({
   ...song,
-  urls: { standard: song.song_url ?? null },
+  urls: { standard: song.song_url ?? null, low: null, lossless: null },
+  artist: song.artist ? {
+    ...song.artist,
+    avatar_url: (song.artist as any).avatar_url ?? null,
+  } : null,
+  // Provide defaults for Song fields not present in PlaylistSong
+  stats: { total_plays: 0, total_likes: 0, total_comments: 0, total_shares: 0, total_downloads: 0 },
+  is_liked: false,
+  is_followed: false,
+  follower_count: 0,
+  total_likes: 0,
+  total_plays: null,
 })
 
 const playSong = (song: PlaylistSong) => {

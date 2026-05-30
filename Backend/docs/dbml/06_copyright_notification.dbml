@@ -1,0 +1,79 @@
+// =============================================
+// MelodyHub - Nhóm 6: COPYRIGHT & NOTIFICATION
+// Bảng: copyrights, copyright_reports,
+//        song_fingerprints, notifications
+// =============================================
+
+Table copyrights {
+  id                    bigint       [pk, increment]
+  song_id               bigint       [ref: > songs.id]
+  partner_id            bigint       [ref: > partners.id]
+  copyright_type        varchar(50)  [not null, note: 'master|composition|publishing|neighboring|sync|full']
+  owner_name            varchar(255) [not null]
+  registration_number   varchar(100)
+  registration_date     date
+  registration_country  varchar(100)
+  valid_from            date         [not null]
+  valid_until           date
+  territory             varchar(255) [note: 'worldwide|VN|...']
+  rights_included       text
+  document_url          varchar(500)
+  notes                 text
+  status                varchar(20)  [default: 'pending', note: 'pending|verified|rejected|expired']
+  verified_at           timestamp
+  verified_by           bigint       [ref: > users.id]
+  created_at            timestamp
+  updated_at            timestamp
+}
+
+Table copyright_reports {
+  id                      bigint       [pk, increment]
+  reporter_type           varchar(20)  [not null, note: 'partner|user']
+  reporter_partner_id     bigint       [ref: > partners.id, note: 'Nullable']
+  reporter_user_id        bigint       [ref: > users.id, note: 'Nullable']
+  claimant_copyright_id   bigint       [ref: > copyrights.id, note: 'Nullable']
+  original_song_id        bigint       [ref: > songs.id, note: 'Bài gốc bị xâm phạm']
+  infringing_song_id      bigint       [ref: > songs.id, note: 'Bài bị report']
+  violation_type          varchar(50)  [note: 'melody|lyrics|full_copy|arrangement']
+  description             text
+  evidence_files          json
+  // AI Soundalike result
+  similarity_score        decimal(5,2) [note: '0-100 percent']
+  similarity_raw          decimal(10,6)[note: 'Raw cosine similarity']
+  ai_report_path          text         [note: 'JSON AI analysis result']
+  comparison_duration_ms  int
+  fingerprint_cache_hit   tinyint(1)   [default: 0]
+  // Resolution
+  status                  varchar(30)  [default: 'pending', note: 'pending|ai_scanning|auto_rejected|reviewing|resolved_removed|resolved_kept|rejected']
+  resolution_note         text
+  resolved_by             bigint       [ref: > users.id]
+  resolved_at             timestamp
+  created_at              timestamp
+  updated_at              timestamp
+}
+
+Table song_fingerprints {
+  id                  bigint       [pk, increment]
+  song_id             bigint       [unique, ref: > songs.id]
+  fingerprint_hash    varchar(255) [not null, note: 'AcoustID fingerprint hash']
+  fpcalc_raw_output   text         [note: 'Raw fpcalc output']
+  duration            int          [note: 'seconds']
+  fpcalc_version      varchar(20)
+  generated_at        timestamp    [not null]
+}
+
+// ---------- Notifications ----------
+
+Table notifications {
+  id          bigint       [pk, increment]
+  user_id     bigint       [ref: > users.id]
+  type        varchar(50)  [not null, note: 'copyright_unverified|copyright_report|payment|system']
+  title       varchar(255) [not null]
+  message     text         [not null]
+  data        json
+  action_url  varchar(500)
+  is_read     tinyint(1)   [default: 0]
+  read_at     timestamp
+  created_at  timestamp
+  updated_at  timestamp
+}

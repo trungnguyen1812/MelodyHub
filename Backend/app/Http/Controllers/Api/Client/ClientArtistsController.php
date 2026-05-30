@@ -199,12 +199,8 @@ class ClientArtistsController extends Controller
             ]);
 
             return response()->json([
-                'status' => 'success',
-                'data' => [
-                    'name' => $artist->name,
-                    'avatar_url' => $avatarPath ? Storage::url($avatarPath) : null,
-                    'banner_url' => $bannerPath ? Storage::url($bannerPath) : null,
-                ]
+                'success' => true,
+                'data' => new ArtistResource($artist->fresh()),
             ], 200);
 
         } catch (\Throwable $e) {
@@ -265,12 +261,8 @@ class ClientArtistsController extends Controller
             ]);
 
             return response()->json([
-                'status' => 'success',
-                'data' => [
-                    'name' => $artist->name,
-                    'avatar_url' => $avatarPath ? Storage::url($avatarPath) : null,
-                    'banner_url' => $bannerPath ? Storage::url($bannerPath) : null,
-                ]
+                'success' => true,
+                'data' => new ArtistResource($artist),
             ], 201);
             
         } catch (\Throwable $e) {

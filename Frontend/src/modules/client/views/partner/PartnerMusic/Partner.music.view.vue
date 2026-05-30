@@ -3,7 +3,7 @@
     <!-- Header -->
     <div class="header">
       <div class="header-left">
-        <h1 class="title"> {{ partnerStore.partnerTypeName }} </h1>
+        <h1 class="title"> Music partner </h1>
         <p class="subtitle">Manages all music tracks from {{ partnerStore.companyName }}</p>
       </div>
       <div class="header-right">
@@ -55,7 +55,6 @@
         <div class="stat-info">
           <span class="stat-label">Total Songs</span>
           <span class="stat-value">{{ songStore.meta?.total ?? 0 }}</span>
-          <span class="stat-change positive">↑ 18% from last month</span>
         </div>
       </div>
 
@@ -67,36 +66,33 @@
         </div>
         <div class="stat-info">
           <span class="stat-label">Published</span>
-          <span class="stat-value">{{  0 }}</span>
-          <span class="stat-change positive">↑ 12% from last month</span>
+          <span class="stat-value">{{ songStats.published }}</span>
         </div>
       </div>
 
       <div class="stat-card stat-card--purple">
         <div class="stat-icon">
           <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
-            <path d="M3 18v-6a9 9 0 0 1 18 0v6"/>
-            <path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3z"/>
-            <path d="M3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/>
+            <circle cx="12" cy="12" r="10"/>
+            <line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/>
           </svg>
         </div>
         <div class="stat-info">
-          <span class="stat-label">Top Liked</span>
-          <span class="stat-value">{{ 0 }}</span>
-          <span class="stat-change positive">↑ 5% from last month</span>
+          <span class="stat-label">Blocked</span>
+          <span class="stat-value">{{ songStats.blocked }}</span>
         </div>
       </div>
 
       <div class="stat-card stat-card--orange">
         <div class="stat-icon">
           <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
-            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+            <path d="M12 20h9"/>
+            <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
           </svg>
         </div>
         <div class="stat-info">
-          <span class="stat-label">Monney</span>
-          <span class="stat-value">{{ 0 }}</span>
-          <span class="stat-change positive">↑ 30% from last month</span>
+          <span class="stat-label">Draft</span>
+          <span class="stat-value">{{ songStats.draft }}</span>
         </div>
       </div>
     </div>
@@ -563,6 +559,7 @@ import clientApi from '@/plugins/axios'
 import { usePartnerStore } from '@/modules/client/stores/partners/partnersStore';
 import Swal from 'sweetalert2';
 import artists from '@/common/data/artists'
+import songsService from '@/modules/client/services/songs/songs.service'
 
 
 type SortBy   = 'newest' | 'oldest' | 'title' | 'plays' | 'duration'
@@ -765,6 +762,7 @@ async function deleteSong(id: number) {
         loading.value = true;
         await songStore.fetchDelete(id);
         await partnerStore.fetchPartnerInfo();
+        await loadSongStats();
         notificationStore.notify("Delete song successful", "success");
 
         router.push({name:"client.partner.music"});
@@ -791,11 +789,33 @@ const loadPartner = async () => {
 
 const statistics = computed(() => artistStore.statistics)
 
+// ── Song statistics by status ──
+const songStats = ref({ published: 0, blocked: 0, draft: 0 })
+
+const loadSongStats = async () => {
+  const partnerId = partnerStore.partner?.id
+  if (!partnerId) return
+
+  try {
+    const [publishedRes, blockedRes, draftRes] = await Promise.all([
+      songsService.getAllSongs({ partner_id: partnerId, status: 'published', per_page: 1 }),
+      songsService.getAllSongs({ partner_id: partnerId, status: 'blocked',   per_page: 1 }),
+      songsService.getAllSongs({ partner_id: partnerId, status: 'draft',     per_page: 1 }),
+    ])
+    songStats.value = {
+      published: publishedRes.data.meta?.total ?? 0,
+      blocked:   blockedRes.data.meta?.total   ?? 0,
+      draft:     draftRes.data.meta?.total     ?? 0,
+    }
+  } catch (err) {
+    console.error('Failed to load song stats', err)
+  }
+}
+
 // ── Lifecycle ──
 onMounted(async () => {
-  await loadPartner(); 
-  
-  await loadSongs(); 
+  await loadPartner()
+  await Promise.all([loadSongs(), loadSongStats()])
 })
 
 </script>
@@ -1003,8 +1023,8 @@ onMounted(async () => {
 
 .stat-card--blue  { border-top-color: #00c6ff; }
 .stat-card--green { border-top-color: #43e97b; }
-.stat-card--purple{ border-top-color: #a78bfa; }
-.stat-card--orange{ border-top-color: #f59e0b; }
+.stat-card--purple{ border-top-color: #ea2b2bff; }
+.stat-card--orange{ border-top-color: #545454ff; }
 
 .stat-icon {
   width: 52px;

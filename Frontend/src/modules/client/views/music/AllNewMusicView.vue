@@ -137,7 +137,7 @@
             </div>
 
             <!-- Album -->
-            <div class="s-album hide-mobile">{{ song.album?.title || 'Single' }}</div>
+            <div class="s-album hide-mobile">{{ song.album?.name || 'Single' }}</div>
 
             <!-- Date -->
             <div class="s-date hide-mobile">{{ formatDate(song.created_at) }}</div>

@@ -48,8 +48,20 @@ return [
     'groq' => [
         'api_key' => env('GROQ_API_KEY'),
     ],
+
+    'google' => [
+        'client_id'     => env('GOOGLE_CLIENT_ID'),
+        'client_secret' => env('GOOGLE_CLIENT_SECRET'),
+        'redirect'      => env('GOOGLE_REDIRECT_URI', 'http://localhost:8000/auth/google/callback'),
+    ],
         'lyric_align' => [
         'url' => env('LYRIC_ALIGN_URL', 'http://localhost:8001'),
+    ],
+
+    'soundalike' => [
+        'url'          => env('SOUNDALIKE_URL', 'http://localhost:8002'),
+        'threshold'    => env('SOUNDALIKE_THRESHOLD', 60),
+        'fpcalc_length'=> env('SOUNDALIKE_FPCALC_LENGTH', 60),
     ],
 
 ];

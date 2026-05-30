@@ -120,10 +120,10 @@
             </div>
 
             <!-- Album -->
-            <div class="s-album hide-mobile">{{ song.album?.title || 'Single' }}</div>
+            <div class="s-album hide-mobile">{{ song.album?.name || 'Single' }}</div>
 
             <!-- Plays -->
-            <div class="s-plays hide-mobile">{{ formatNumber(player.currentSong?.stats?.total_plays ?? 0) }}</div>
+            <div class="s-plays hide-mobile">{{ formatNumber(song.stats.total_plays ?? 0) }}</div>
 
             <!-- Duration -->
             <div class="s-duration">{{ formatDuration(song.duration) }}</div>

@@ -124,6 +124,27 @@
                 </svg>
               </router-link>
 
+              <router-link to="/center/my-reports" class="center-dropdown__item" role="menuitem">
+                <div class="center-dropdown__icon center-dropdown__icon--green">
+                  <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M16 2v4h4"/>
+                  </svg>
+                </div>
+                <div class="center-dropdown__content">
+                  <div class="center-dropdown__title">
+                    My Reports
+                    <span class="center-dropdown__badge center-dropdown__badge--history">History</span>
+                  </div>
+                  <div class="center-dropdown__desc">
+                    Track your submitted copyright reports and view AI analysis results.
+                  </div>
+                </div>
+                <svg class="center-dropdown__arrow" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/>
+                </svg>
+              </router-link>
+
               <!-- Footer -->
               <div class="center-dropdown__footer">
                 <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
@@ -762,19 +783,17 @@ const filteredNotifications = computed(() => {
 const markAllRead = async () => {
   try {
     await clientApi.patch('/notifications/read-all')
-    notifications.value.forEach(n => { n.is_read = true })
+    notifications.value = []
     unreadCount.value = 0
   } catch { /* silent */ }
 }
 
 const handleNotifClick = async (n: NotifItem) => {
-  if (!n.is_read) {
-    try {
-      await clientApi.patch(`/notifications/${n.id}/read`)
-      n.is_read = true
-      unreadCount.value = Math.max(0, unreadCount.value - 1)
-    } catch { /* silent */ }
-  }
+  try {
+    await clientApi.patch(`/notifications/${n.id}/read`)
+    notifications.value = notifications.value.filter(item => item.id !== n.id)
+    if (!n.is_read) unreadCount.value = Math.max(0, unreadCount.value - 1)
+  } catch { /* silent */ }
   notifDropdownOpen.value = false
   if (n.action_url) router.push(n.action_url)
 }
@@ -1639,5 +1658,13 @@ header {
 .cnotif__footer-link:hover { opacity: 1; }
 
 /* Transition (reuse existing notif-drop keyframes already defined above) */
+.center-dropdown__badge--history {
+  background: rgba(59, 130, 246, 0.15);
+  color: #3b82f6;
+}
 
+.center-dropdown__icon--green {
+  background: rgba(34, 197, 94, 0.15);
+  color: #22c55e;
+}
 </style>

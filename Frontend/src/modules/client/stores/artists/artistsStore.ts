@@ -6,6 +6,8 @@ import type { ArtistStatistics, FormattedArtistStatistics } from '@/modules/clie
 import clientApi from '@/plugins/axios';
 
 export const getFullImageUrl = (path?: string | null) => {
+    console.log(path);
+    
     if (!path) return '/images/default-avatar.png';
     if (path.startsWith('http')) return path;
     return `http://localhost:8000/storage/${path}`;
