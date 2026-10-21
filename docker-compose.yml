@@ -2,7 +2,7 @@ services:
   mysql:
     image: mysql:8.0
     environment:
-      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:-root}
       MYSQL_DATABASE: melodyhub
     volumes:
       - ./melodyhub.sql:/docker-entrypoint-initdb.d/melodyhub.sql:ro
@@ -18,21 +18,18 @@ services:
 
   backend:
     build: ./Backend
-    env_file: .env
+    env_file: ./Backend/.env
     environment:
-      APP_ENV: local
-      APP_DEBUG: "true"
-      APP_URL: http://localhost:8000
       DB_CONNECTION: mysql
       DB_HOST: mysql
       DB_PORT: 3306
       DB_DATABASE: melodyhub
       DB_USERNAME: root
-      SESSION_DRIVER: file
-      CACHE_STORE: file
-      QUEUE_CONNECTION: sync
-      LYRIC_SERVICE_URL: http://lyric-service:8001
+      DB_PASSWORD: ${DB_PASSWORD:-root}
+      FFMPEG_BINARIES: /usr/bin/ffmpeg
+      FFPROBE_BINARIES: /usr/bin/ffprobe
       SOUNDALIKE_URL: http://soundalike-service:8002
+      LYRIC_ALIGN_URL: http://lyric-service:8001
     ports:
       - "8000:8000"
     depends_on:
