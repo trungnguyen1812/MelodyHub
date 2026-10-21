@@ -1,0 +1,45 @@
+services:
+  mysql:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+      MYSQL_DATABASE: melodyhub
+    volumes:
+      - ./melodyhub.sql:/docker-entrypoint-initdb.d/melodyhub.sql:ro
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -p$$MYSQL_ROOT_PASSWORD --silent"]
+      interval: 5s
+      timeout: 5s
+      retries: 40
+
+  soundalike-service:
+    build: ./soundalike-service
+
+  backend:
+    build: ./Backend
+    env_file: .env
+    environment:
+      APP_ENV: local
+      APP_DEBUG: "true"
+      APP_URL: http://localhost:8000
+      DB_CONNECTION: mysql
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_DATABASE: melodyhub
+      DB_USERNAME: root
+      SESSION_DRIVER: file
+      CACHE_STORE: file
+      QUEUE_CONNECTION: sync
+      LYRIC_SERVICE_URL: http://lyric-service:8001
+      SOUNDALIKE_URL: http://soundalike-service:8002
+    ports:
+      - "8000:8000"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      soundalike-service:
+        condition: service_started
+
+volumes:
+  mysql_data:
